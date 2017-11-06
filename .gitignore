@@ -36,3 +36,7 @@ sysinfo.txt
 # Asset store
 /Assets/Standard Assets/
 /Assets/Standard Assets.meta
+
+# Database files
+auth.db
+profiles.db
