@@ -2,11 +2,14 @@
 
 namespace Assets.Scripts.Msf
 {
-    public class MsfContext
+    public static class MsfContext
     {
-        public static IClientSocket Connection => Barebones.MasterServer.Msf.Connection;
-        
-        public static MsfClient Client { get; }
+        public static IClientSocket Connection
+        {
+            get { return Barebones.MasterServer.Msf.Connection; }
+        }
+
+        public static MsfClient Client { get; private set; }
 
         static MsfContext()
         {

@@ -12,7 +12,12 @@ namespace Assets.Scripts.Msf.Modules.Auth
         public void Register(string username, string password, SuccessCallback callback)
         {
             Register(
-                new Dictionary<string, string> {{"username", username}, {"password", password}},
+                new Dictionary<string, string>
+                {
+                    {"username", username},
+                    {"password", password},
+                    {"email", username}
+                },
                 callback);
         }
     }
