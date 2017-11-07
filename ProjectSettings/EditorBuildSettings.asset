@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Test/Scenes/TestGame.unity
+    guid: fc87eb974a1d47e43aa76d5dcf744768
+  - enabled: 1
+    path: Assets/Test/Scenes/ClientMenu.unity
+    guid: ef46f21e29cdead4ab12eea3d814136d
+  - enabled: 1
+    path: Assets/Test/Scenes/TestClient.unity
+    guid: df69e791e47410e4f8edea908ec19221
+  - enabled: 1
+    path: Assets/Test/Scenes/TestMasterServer.unity
+    guid: 35700f497bd1d794da5866e21fc1e5e7
+  - enabled: 1
+    path: Assets/Test/Scenes/TestServer.unity
+    guid: 8a8ff1a41e5707443a6d8a0c58d844d3
+  - enabled: 1
+    path: Assets/Test/Scenes/TestSpawner.unity
+    guid: f934707b25fa3a745bf15ec26464eaa3
