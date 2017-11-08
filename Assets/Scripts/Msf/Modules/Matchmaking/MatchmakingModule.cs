@@ -96,8 +96,7 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                     player1.Type = ServerController.PlayerType.PlayerA;
                     player2.Type = ServerController.PlayerType.PlayerB;
                     var task =
-                        mSpawnersModule.Spawn(
-                            new Dictionary<string, string> {{MsfDictKeys.SceneName, ""}});
+                        mSpawnersModule.Spawn(null);
                     if (task == null)
                     {
                         AddPlayer(player1);
