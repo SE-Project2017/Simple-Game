@@ -16,6 +16,10 @@ namespace Assets.Editor
                 WindowsBuildPath(true) + "MasterServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
+            BuildSpawnerServer(
+                WindowsBuildPath(true) + "SpawnerServer.exe",
+                BuildTarget.StandaloneWindows64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildClient(
                 WindowsBuildPath(true) + "Client.exe",
                 BuildTarget.StandaloneWindows64,
@@ -27,6 +31,16 @@ namespace Assets.Editor
             string[] scenes =
             {
                 SceneRoot() + "MasterServer.unity",
+            };
+            BuildPipeline.BuildPlayer(scenes, path, target, options);
+        }
+
+        private static void BuildSpawnerServer(string path, BuildTarget target,
+            BuildOptions options)
+        {
+            string[] scenes =
+            {
+                SceneRoot() + "SpawnerServer.unity",
             };
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }
