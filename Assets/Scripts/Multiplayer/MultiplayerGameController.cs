@@ -8,6 +8,8 @@ namespace Assets.Scripts.Multiplayer
     public class MultiplayerGameController : Singleton<MultiplayerGameController>
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
+        public GameGrid LocalGameGrid;
+        public GameGrid RemoteGameGrid;
         public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
 
         private State mState = State.Connecting;
@@ -22,9 +24,23 @@ namespace Assets.Scripts.Multiplayer
             manager.StartClient();
         }
 
-        public void OnGameStart()
+        public void FixedUpdate()
+        {
+            if (mState != State.Playing)
+            {
+                return;
+            }
+            LocalGameGrid.UpdateFrame(new GameGrid.GameButtonEvent[] { });
+            RemoteGameGrid.UpdateFrame(new GameGrid.GameButtonEvent[] { });
+        }
+
+        public void OnGameStart(ServerController.GameInfo info)
         {
             mState = State.Playing;
+            LocalGameGrid.SeedGenerator(info.GeneratorSeed);
+            RemoteGameGrid.SeedGenerator(info.GeneratorSeed);
+            LocalGameGrid.StartGame();
+            RemoteGameGrid.StartGame();
         }
 
         private enum State

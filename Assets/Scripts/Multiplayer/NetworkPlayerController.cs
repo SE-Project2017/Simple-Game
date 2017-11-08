@@ -78,11 +78,11 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [ClientRpc]
-        public void RpcOnRegisterComplete()
+        public void RpcOnRegisterComplete(ServerController.GameInfo info)
         {
             if (isLocalPlayer)
             {
-                MultiplayerGameController.Instance.OnGameStart();
+                MultiplayerGameController.Instance.OnGameStart(info);
             }
         }
 

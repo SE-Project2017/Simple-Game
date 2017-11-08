@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Security.Cryptography;
 
 using Assets.Scripts.Msf;
 using Assets.Scripts.Utils;
@@ -15,6 +16,7 @@ namespace Assets.Scripts.Multiplayer
         private State mState = State.Connecting;
         private NetworkPlayerController mPlayerA;
         private NetworkPlayerController mPlayerB;
+        private readonly GameInfo mGameInfo = new GameInfo {GeneratorSeed = NewGeneratorSeed()};
 
         public IEnumerator Start()
         {
@@ -53,6 +55,8 @@ namespace Assets.Scripts.Multiplayer
             if (mPlayerA != null && mPlayerB != null)
             {
                 mState = State.Running;
+                mPlayerA.RpcOnRegisterComplete(mGameInfo);
+                mPlayerB.RpcOnRegisterComplete(mGameInfo);
             }
         }
 
@@ -90,10 +94,28 @@ namespace Assets.Scripts.Multiplayer
             Application.Quit();
         }
 
+        private static RandomTetrominoGenerator.Seed NewGeneratorSeed()
+        {
+            var provider = new RNGCryptoServiceProvider();
+            var bytes = new byte[2496];
+            provider.GetBytes(bytes);
+            var seed = new ulong[312];
+            for (int i = 0; i < seed.Length; ++i)
+            {
+                seed[i] = BitConverter.ToUInt64(bytes, i * 8);
+            }
+            return new RandomTetrominoGenerator.Seed {Data = seed};
+        }
+
         public struct PlayerInfo
         {
             public PlayerType Type;
             public string Username;
+        }
+
+        public struct GameInfo
+        {
+            public RandomTetrominoGenerator.Seed GeneratorSeed;
         }
 
         public enum PlayerType
