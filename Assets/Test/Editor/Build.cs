@@ -8,7 +8,7 @@ namespace Assets.Test.Editor
         public static void BuildDebug()
         {
             PlayerSettings.runInBackground = true;
-            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.Disabled;
+            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
             FileUtil.DeleteFileOrDirectory(GetWindowsBuildPath(true));
             FileUtil.DeleteFileOrDirectory(GetLinuxBuildPath(true));
 
@@ -51,7 +51,7 @@ namespace Assets.Test.Editor
         public static void BuildRelease()
         {
             PlayerSettings.runInBackground = true;
-            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.Disabled;
+            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
             FileUtil.DeleteFileOrDirectory(GetWindowsBuildPath(false));
             FileUtil.DeleteFileOrDirectory(GetLinuxBuildPath(false));
 

@@ -62,23 +62,6 @@ namespace Assets.Test.Scripts
             }
         }
 
-        public void UpdatePlayer(PlayerType type, int frameCount, PlayerEvent[] playerEvents)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    mPlayerA.RpcOnFrameUpdated(frameCount, playerEvents);
-                    break;
-                case PlayerType.PlayerB:
-                    mPlayerB.RpcOnFrameUpdated(frameCount, playerEvents);
-                    break;
-                case PlayerType.Observer:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
-            }
-        }
-
         public void OnGameEnd(GameResult result)
         {
             StartCoroutine(StopServer());

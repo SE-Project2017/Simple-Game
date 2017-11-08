@@ -126,10 +126,9 @@ namespace Assets.Test.Scripts
         }
 
         [Command]
-        private void CmdUpdateFrame(PlayerType playerType, int frameCount,
-            PlayerEvent[] playerEvents)
+        private void CmdUpdateFrame(int frameCount, PlayerEvent[] playerEvents)
         {
-            ServerController.Instance.UpdatePlayer(playerType, frameCount, playerEvents);
+            RpcOnFrameUpdated(frameCount, playerEvents);
         }
 
         [ClientRpc]
@@ -178,7 +177,7 @@ namespace Assets.Test.Scripts
             }
             var events = mPlayerEvents.ToArray();
             mPlayerEvents.Clear();
-            CmdUpdateFrame(Type, mFrameCount, events);
+            CmdUpdateFrame(mFrameCount, events);
             FixedUpdateClient(events);
             ++mFrameCount;
         }

@@ -2,13 +2,21 @@
 
 namespace Assets.Test.Scripts
 {
-    public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
+    public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         private static T sInstance;
 
         public void Awake()
         {
-            DontDestroyOnLoad(transform.gameObject);
+            if (sInstance == null)
+            {
+                DontDestroyOnLoad(gameObject);
+                sInstance = (T) this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         public static T Instance
