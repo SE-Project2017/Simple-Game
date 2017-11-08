@@ -7,17 +7,51 @@ namespace Assets.Editor
         [MenuItem("Build/Build Debug", false, 100)]
         public static void BuildDebug()
         {
-            PlayerSettings.runInBackground = true;
-            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
+            ApplySettings();
+            InternalBuildDebugWindows();
+            InternalBuildDebugLinux();
+        }
+
+        [MenuItem("Build/Build Debug Windows", false, 110)]
+        public static void BuildDebugWindows()
+        {
+            ApplySettings();
             InternalBuildDebugWindows();
         }
 
-        [MenuItem("Build/Build Release", false, 110)]
+        [MenuItem("Build/Build Debug Linux", false, 120)]
+        public static void BuildDebugLinux()
+        {
+            ApplySettings();
+            InternalBuildDebugLinux();
+        }
+
+        [MenuItem("Build/Build Release", false, 200)]
         public static void BuildRelease()
+        {
+            ApplySettings();
+            InternalBuildReleaseWindows();
+            InternalBuildReleaseLinux();
+        }
+
+        [MenuItem("Build/Build Release Windows", false, 210)]
+        public static void BuildReleaseWindows()
+        {
+            ApplySettings();
+            InternalBuildReleaseWindows();
+        }
+
+        [MenuItem("Build/Build Release Linux", false, 220)]
+        public static void BuildReleaseLinux()
+        {
+            ApplySettings();
+            InternalBuildReleaseLinux();
+        }
+
+        private static void ApplySettings()
         {
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
-            InternalBuildReleaseWindows();
         }
 
         private static void InternalBuildDebugWindows()
@@ -41,6 +75,27 @@ namespace Assets.Editor
                 BuildOptions.Development | BuildOptions.AllowDebugging);
         }
 
+        private static void InternalBuildDebugLinux()
+        {
+            FileUtil.DeleteFileOrDirectory(LinuxBuildPath(true));
+            BuildMasterServer(
+                LinuxBuildPath(true) + "master",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+            BuildSpawnerServer(
+                LinuxBuildPath(true) + "spawner",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+            BuildGameServer(
+                LinuxBuildPath(true) + "server",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+            BuildClient(
+                LinuxBuildPath(true) + "client",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+        }
+
         private static void InternalBuildReleaseWindows()
         {
             FileUtil.DeleteFileOrDirectory(WindowsBuildPath(false));
@@ -59,6 +114,27 @@ namespace Assets.Editor
             BuildClient(
                 WindowsBuildPath(false) + "Client.exe",
                 BuildTarget.StandaloneWindows64,
+                BuildOptions.None);
+        }
+
+        private static void InternalBuildReleaseLinux()
+        {
+            FileUtil.DeleteFileOrDirectory(LinuxBuildPath(false));
+            BuildMasterServer(
+                LinuxBuildPath(false) + "master",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.EnableHeadlessMode);
+            BuildSpawnerServer(
+                LinuxBuildPath(false) + "spawner",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.EnableHeadlessMode);
+            BuildGameServer(
+                LinuxBuildPath(false) + "server",
+                BuildTarget.StandaloneLinux64,
+                BuildOptions.EnableHeadlessMode);
+            BuildClient(
+                LinuxBuildPath(false) + "client",
+                BuildTarget.StandaloneLinux64,
                 BuildOptions.None);
         }
 

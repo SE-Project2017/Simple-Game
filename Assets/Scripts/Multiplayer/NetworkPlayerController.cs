@@ -16,6 +16,7 @@ namespace Assets.Scripts.Multiplayer
 
         private const int MaxFrameDiff = 30;
 
+        private bool mConnected;
         private int mFrameCount;
         private MultiplayerGameController mGameController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
@@ -79,14 +80,17 @@ namespace Assets.Scripts.Multiplayer
         [Client]
         private void FixedUpdateLocal()
         {
-            if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
-                MaxFrameDiff)
+            if (mConnected)
             {
-                return;
+                if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
+                    MaxFrameDiff)
+                {
+                    return;
+                }
+                ++mFrameCount;
+                CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
+                mGameController.OnLocalUpdateFrame(mPlayerEvents);
             }
-            ++mFrameCount;
-            CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-            mGameController.OnLocalUpdateFrame(mPlayerEvents);
             mPlayerEvents.Clear();
         }
 
@@ -119,6 +123,7 @@ namespace Assets.Scripts.Multiplayer
             {
                 mGameController.OnGameStart(info);
             }
+            mConnected = true;
         }
 
         [ClientRpc]
