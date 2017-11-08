@@ -27,8 +27,11 @@ namespace Assets.Test.Scripts
 
         public void Start()
         {
-            mGameController = FindObjectOfType<GameController>();
-            mGameController.Players.Add(this);
+            if (isClient)
+            {
+                mGameController = FindObjectOfType<GameController>();
+                StartClient();
+            }
             if (isLocalPlayer)
             {
                 Type = ClientController.Instance.PlayerType;
@@ -87,9 +90,9 @@ namespace Assets.Test.Scripts
 
         public void OnDestroy()
         {
-            mGameController.Players.Remove(this);
             if (isClient)
             {
+                OnDestroyClient();
                 switch (Type)
                 {
                     case PlayerType.PlayerA:
@@ -168,6 +171,12 @@ namespace Assets.Test.Scripts
         }
 
         [Client]
+        private void StartClient()
+        {
+            mGameController.Players.Add(this);
+        }
+
+        [Client]
         private void FixedUpdateClientLocal()
         {
             if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
@@ -180,6 +189,12 @@ namespace Assets.Test.Scripts
             CmdUpdateFrame(mFrameCount, events);
             FixedUpdateClient(events);
             ++mFrameCount;
+        }
+
+        [Client]
+        private void OnDestroyClient()
+        {
+            mGameController.Players.Remove(this);
         }
 
         [Client]

@@ -3,7 +3,6 @@
 using UnityEditor;
 #endif
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Assets.Test.Scripts
 {
