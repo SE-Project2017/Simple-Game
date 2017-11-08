@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using Assets.Scripts.App;
 using Assets.Scripts.Msf;
 
+using UnityEngine.Assertions;
 using UnityEngine.Networking;
 
 namespace Assets.Scripts.Multiplayer
@@ -12,6 +14,10 @@ namespace Assets.Scripts.Multiplayer
         public ServerController.PlayerType Type { get; private set; }
         public string Username { get; private set; }
 
+        private const int MaxFrameDiff = 30;
+
+        private int mFrameCount;
+        private MultiplayerGameController mGameController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
 
         public void Start()
@@ -26,6 +32,14 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
+        public void FixedUpdate()
+        {
+            if (isLocalPlayer)
+            {
+                FixedUpdateLocal();
+            }
+        }
+
         public void OnDestroy()
         {
             if (isClient)
@@ -37,13 +51,14 @@ namespace Assets.Scripts.Multiplayer
         [Client]
         private void StartClient()
         {
-            MultiplayerGameController.Instance.Players.Add(this);
+            mGameController = MultiplayerGameController.Instance;
+            mGameController.Players.Add(this);
         }
 
         [Client]
         private void StartLocal()
         {
-            Type = MultiplayerGameController.Instance.LocalPlayerType;
+            Type = mGameController.LocalPlayerType;
             Username = MsfContext.Client.Auth.AccountInfo.Username;
             var inputController = gameObject.AddComponent<InputController>();
             inputController.ButtonDown += button =>
@@ -58,13 +73,27 @@ namespace Assets.Scripts.Multiplayer
                     Type = PlayerEvent.EventType.ButtonUp,
                     Data = (int) button,
                 });
-            CmdRegisterPlayer(new ServerController.PlayerInfo{Type = Type, Username = Username});
+            CmdRegisterPlayer(new ServerController.PlayerInfo {Type = Type, Username = Username});
+        }
+
+        [Client]
+        private void FixedUpdateLocal()
+        {
+            if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
+                MaxFrameDiff)
+            {
+                return;
+            }
+            ++mFrameCount;
+            CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
+            mGameController.OnLocalUpdateFrame(mPlayerEvents);
+            mPlayerEvents.Clear();
         }
 
         [Client]
         private void OnDestoryClient()
         {
-            MultiplayerGameController.Instance.Players.Remove(this);
+            mGameController.Players.Remove(this);
         }
 
         [Command]
@@ -77,12 +106,18 @@ namespace Assets.Scripts.Multiplayer
             ServerController.Instance.RegisterPlayer(this, info);
         }
 
+        [Command]
+        private void CmdUpdateFrame(int frameCount, PlayerEvent[] events)
+        {
+            RpcOnFrameUpdate(frameCount, events);
+        }
+
         [ClientRpc]
         public void RpcOnRegisterComplete(ServerController.GameInfo info)
         {
             if (isLocalPlayer)
             {
-                MultiplayerGameController.Instance.OnGameStart(info);
+                mGameController.OnGameStart(info);
             }
         }
 
@@ -96,6 +131,18 @@ namespace Assets.Scripts.Multiplayer
         private void RpcSetUsername(string username)
         {
             Username = username;
+        }
+
+        [ClientRpc]
+        private void RpcOnFrameUpdate(int frameCount, PlayerEvent[] events)
+        {
+            if (isLocalPlayer)
+            {
+                return;
+            }
+            Assert.IsTrue(frameCount == mFrameCount + 1);
+            mFrameCount = frameCount;
+            mGameController.OnRemoteUpdateFrame(events);
         }
 
         public struct PlayerEvent

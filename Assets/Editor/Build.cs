@@ -26,19 +26,19 @@ namespace Assets.Editor
             BuildMasterServer(
                 WindowsBuildPath(true) + "MasterServer.exe",
                 BuildTarget.StandaloneWindows64,
-                BuildOptions.Development);
+                BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildSpawnerServer(
                 WindowsBuildPath(true) + "SpawnerServer.exe",
                 BuildTarget.StandaloneWindows64,
-                BuildOptions.Development);
+                BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildGameServer(
                 WindowsBuildPath(true) + "GameServer.exe",
                 BuildTarget.StandaloneWindows64,
-                BuildOptions.Development);
+                BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildClient(
                 WindowsBuildPath(true) + "Client.exe",
                 BuildTarget.StandaloneWindows64,
-                BuildOptions.Development);
+                BuildOptions.Development | BuildOptions.AllowDebugging);
         }
 
         private static void InternalBuildReleaseWindows()
