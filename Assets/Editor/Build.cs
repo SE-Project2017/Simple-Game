@@ -9,15 +9,22 @@ namespace Assets.Editor
         {
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.Disabled;
-            FileUtil.DeleteFileOrDirectory(WindowsBuildPath(true));
-            FileUtil.DeleteFileOrDirectory(LinuxBuildPath(true));
+            InternalBuildDebugWindows();
+        }
 
+        private static void InternalBuildDebugWindows()
+        {
+            FileUtil.DeleteFileOrDirectory(WindowsBuildPath(true));
             BuildMasterServer(
                 WindowsBuildPath(true) + "MasterServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildSpawnerServer(
                 WindowsBuildPath(true) + "SpawnerServer.exe",
+                BuildTarget.StandaloneWindows64,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+            BuildGameServer(
+                WindowsBuildPath(true) + "GameServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildClient(
@@ -45,12 +52,22 @@ namespace Assets.Editor
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }
 
+        private static void BuildGameServer(string path, BuildTarget target, BuildOptions options)
+        {
+            string[] scenes =
+            {
+                SceneRoot() + "GameServer.unity",
+            };
+            BuildPipeline.BuildPlayer(scenes, path, target, options);
+        }
+
         private static void BuildClient(string path, BuildTarget target, BuildOptions options)
         {
             string[] scenes =
             {
                 SceneRoot() + "Login.unity",
                 SceneRoot() + "MainMenu.unity",
+                SceneRoot() + "MultiplayerGame.unity",
             };
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }

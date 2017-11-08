@@ -14,3 +14,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MasterServer.unity
     guid: 3560062e37d5f2444bfdc5acdfe7fee9
+  - enabled: 1
+    path: Assets/Scenes/GameServer.unity
+    guid: d4d66e5f85536b24aaee4d1b6b58a56a
+  - enabled: 1
+    path: Assets/Scenes/MultiplayerGame.unity
+    guid: f3d36a7fb2624534d9029c458754be63
+  - enabled: 1
+    path: Assets/Scenes/SpawnerServer.unity
+    guid: fc0c11e76b9d60f4397dd38793d8566d

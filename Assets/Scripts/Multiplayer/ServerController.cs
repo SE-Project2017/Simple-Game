@@ -25,6 +25,9 @@ namespace Assets.Scripts.Multiplayer
             {
                 yield return null;
             }
+            var manager = NetworkManager.Instance;
+            manager.networkPort = port;
+            manager.StartServer();
             MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameServerSpawned,
                 new GameServerDetailsPacket {Address = address, Port = port, SpawnID = spawnID});
             StartCoroutine(WaitForConnection());
