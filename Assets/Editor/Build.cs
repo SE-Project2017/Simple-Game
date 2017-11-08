@@ -64,6 +64,7 @@ namespace Assets.Editor
 
         private static void BuildMasterServer(string path, BuildTarget target, BuildOptions options)
         {
+            PlayerSettings.productName = "TetrisMasterServer";
             string[] scenes =
             {
                 SceneRoot() + "MasterServer.unity",
@@ -74,6 +75,7 @@ namespace Assets.Editor
         private static void BuildSpawnerServer(string path, BuildTarget target,
             BuildOptions options)
         {
+            PlayerSettings.productName = "TetrisSpawnerServer";
             string[] scenes =
             {
                 SceneRoot() + "SpawnerServer.unity",
@@ -83,6 +85,7 @@ namespace Assets.Editor
 
         private static void BuildGameServer(string path, BuildTarget target, BuildOptions options)
         {
+            PlayerSettings.productName = "TetrisGameServer";
             string[] scenes =
             {
                 SceneRoot() + "GameServer.unity",
@@ -92,6 +95,7 @@ namespace Assets.Editor
 
         private static void BuildClient(string path, BuildTarget target, BuildOptions options)
         {
+            PlayerSettings.productName = "Tetris";
             string[] scenes =
             {
                 SceneRoot() + "Login.unity",
