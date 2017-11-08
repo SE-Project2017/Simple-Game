@@ -48,6 +48,17 @@ namespace Assets.Editor
             InternalBuildReleaseLinux();
         }
 
+        [MenuItem("Build/Build Android", false, 300)]
+        public static void BuildAndroid()
+        {
+            ApplySettings();
+            FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
+            BuildClient(
+                AndroidBuildPath(false) + "client.apk",
+                BuildTarget.Android,
+                BuildOptions.None);
+        }
+
         private static void ApplySettings()
         {
             PlayerSettings.runInBackground = true;
