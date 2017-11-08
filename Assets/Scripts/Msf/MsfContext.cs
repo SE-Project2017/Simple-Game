@@ -10,10 +10,12 @@ namespace Assets.Scripts.Msf
         }
 
         public static MsfClient Client { get; private set; }
+        public static MsfArgs Args { get; private set; }
 
         static MsfContext()
         {
             Client = new MsfClient(Connection);
+            Args = new MsfArgs();
         }
     }
 }

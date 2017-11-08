@@ -93,8 +93,8 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                     username = mSearchingPlayers.Keys.First();
                     var player2 = mSearchingPlayers[username];
                     RemovePlayer(player2);
-                    player1.Type = PlayerType.PlayerA;
-                    player2.Type = PlayerType.PlayerB;
+                    player1.Type = ServerController.PlayerType.PlayerA;
+                    player2.Type = ServerController.PlayerType.PlayerB;
                     var task =
                         mSpawnersModule.Spawn(
                             new Dictionary<string, string> {{MsfDictKeys.SceneName, ""}});
@@ -127,7 +127,7 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
         {
             public string Name;
             public IPeer Peer;
-            public PlayerType Type;
+            public ServerController.PlayerType Type;
         }
 
         private struct Match

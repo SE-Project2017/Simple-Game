@@ -5,7 +5,7 @@ namespace Assets.Scripts.Multiplayer
     public class GameFoundPacket : SerializablePacket
     {
         public GameServerDetailsPacket GameServerDetails;
-        public PlayerType PlayerType;
+        public ServerController.PlayerType PlayerType;
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
@@ -17,7 +17,7 @@ namespace Assets.Scripts.Multiplayer
         {
             GameServerDetails = new GameServerDetailsPacket();
             GameServerDetails.FromBinaryReader(reader);
-            PlayerType = (PlayerType) reader.ReadInt32();
+            PlayerType = (ServerController.PlayerType) reader.ReadInt32();
         }
     }
 }
