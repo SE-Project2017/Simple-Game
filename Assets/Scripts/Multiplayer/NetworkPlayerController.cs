@@ -49,9 +49,13 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDestroy()
         {
+            if (isServer)
+            {
+                OnDestroyServer();
+            }
             if (isClient)
             {
-                OnDestoryClient();
+                OnDestroyClient();
             }
         }
 
@@ -66,6 +70,23 @@ namespace Assets.Scripts.Multiplayer
         private void StartServer()
         {
             mServerController = ServerController.Instance;
+        }
+
+        [Server]
+        public void OnRegisterComplete(ServerController.GameInfo info)
+        {
+            mPlaying = true;
+            RpcOnRegisterComplete(info);
+        }
+
+        [Server]
+        private void OnDestroyServer()
+        {
+            if (mPlaying)
+            {
+                mServerController.OnPlayerGameEnd(Type, mFrameCount);
+                mPlaying = false;
+            }
         }
 
         [Client]
@@ -119,7 +140,7 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [Client]
-        private void OnDestoryClient()
+        private void OnDestroyClient()
         {
             mGameController.Players.Remove(this);
         }
@@ -145,17 +166,8 @@ namespace Assets.Scripts.Multiplayer
         [Command]
         private void CmdPlayerEnded(int frameCount)
         {
+            mPlaying = false;
             mServerController.OnPlayerGameEnd(Type, frameCount);
-        }
-
-        [ClientRpc]
-        public void RpcOnRegisterComplete(ServerController.GameInfo info)
-        {
-            if (isLocalPlayer)
-            {
-                mGameController.OnGameStart(info);
-            }
-            mPlaying = true;
         }
 
         [ClientRpc]
@@ -169,6 +181,16 @@ namespace Assets.Scripts.Multiplayer
             {
                 mGameController.OnLocalPlayerLose();
             }
+        }
+
+        [ClientRpc]
+        private void RpcOnRegisterComplete(ServerController.GameInfo info)
+        {
+            if (isLocalPlayer)
+            {
+                mGameController.OnGameStart(info);
+            }
+            mPlaying = true;
         }
 
         [ClientRpc]

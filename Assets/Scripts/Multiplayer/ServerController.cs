@@ -60,8 +60,8 @@ namespace Assets.Scripts.Multiplayer
             if (mPlayerA != null && mPlayerB != null)
             {
                 mState = State.Running;
-                mPlayerA.RpcOnRegisterComplete(mGameInfo);
-                mPlayerB.RpcOnRegisterComplete(mGameInfo);
+                mPlayerA.OnRegisterComplete(mGameInfo);
+                mPlayerB.OnRegisterComplete(mGameInfo);
             }
         }
 
