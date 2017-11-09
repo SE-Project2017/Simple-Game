@@ -51,4 +51,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514589315431fe2488e4be70391b04c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LocalPlayerType: 0
+  LocalGameGrid: {fileID: 0}
+  RemoteGameGrid: {fileID: 0}
+  GameEndUI: {fileID: 0}
+  DisplayTetrominos:
+  - {fileID: 1018304926977326, guid: 3e29ed59d25b8f34b918ff97ca2489ad, type: 2}
+  - {fileID: 1064201719815406, guid: 378f9de3a88d69b408025b228efb68da, type: 2}
+  - {fileID: 1746823878848296, guid: d92f137f58e12c041b96b9276a8942c7, type: 2}
+  - {fileID: 1725830106921376, guid: 4f8655ffeab167140a9e8bf7cdd793b7, type: 2}
+  - {fileID: 1115860323663406, guid: 75b8dd8ad8752dc408e61c492fdd1e2f, type: 2}
+  - {fileID: 1534722377133142, guid: 4228fa881b48b0d4a87f9d71c83216d9, type: 2}
+  - {fileID: 1935195796813852, guid: cb1d233b8375d7f45bc6dd0da8aec880, type: 2}
+  NextPos: {x: -0.8, y: 4.15, z: 0}
+  Next2Pos: {x: 0.9, y: 4.15, z: 0}
+  Next3Pos: {x: 2, y: 4.15, z: 0}
+  HoldPos: {x: -2.3, y: 4.3, z: 0}
+  HoldDisabledColor: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
+  NextScale: 0.5
+  Next2Scale: 0.25
+  HoldScale: 0.25
