@@ -108,7 +108,8 @@ namespace Assets.Scripts.Multiplayer
                 }
                 ++mFrameCount;
                 CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                if (mGameController.OnLocalUpdateFrame(mPlayerEvents) || mFrameCount > mMaxFrame)
+                if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents) ||
+                    mFrameCount > mMaxFrame)
                 {
                     CmdPlayerEnded(mFrameCount);
                     mPlaying = false;
@@ -191,7 +192,7 @@ namespace Assets.Scripts.Multiplayer
             }
             Assert.IsTrue(frameCount == mFrameCount + 1);
             mFrameCount = frameCount;
-            mGameController.OnRemoteUpdateFrame(events);
+            mGameController.OnRemoteUpdateFrame(mFrameCount, events);
         }
 
         [ClientRpc]

@@ -107,7 +107,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
-  m_StereoMirrorMode: 0
 --- !u!92 &92441428392778054
 Behaviour:
   m_ObjectHideFlags: 1
@@ -134,6 +133,8 @@ MonoBehaviour:
   - {fileID: 1015325629374784, guid: ca44aac73ae224b4b8373e0ab759ec73, type: 2}
   - {fileID: 1576101166108104, guid: d4294454979951a4599c96a69a72269c, type: 2}
   - {fileID: 1200248959963566, guid: 91bb2f6d5d278a04da9fd7478dacc8d7, type: 2}
+  BlockPrefab: {fileID: 1867223170100994, guid: 2fd8b6dac95d036418127eff6acf5b0c,
+    type: 2}
   TetrominoColors:
   - {r: 1, g: 0.2509804, b: 0, a: 1}
   - {r: 1, g: 1, b: 0, a: 1}

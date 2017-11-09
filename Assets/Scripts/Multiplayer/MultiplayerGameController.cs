@@ -6,6 +6,7 @@ using Assets.Scripts.UI;
 using Assets.Scripts.Utils;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.Multiplayer
@@ -27,6 +28,8 @@ namespace Assets.Scripts.Multiplayer
         public float HoldScale = 0.25f;
         public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
 
+        private const int BlockTransferDelay = 40;
+
         private Tetromino mHoldTetromino;
         private GameObject mNext;
         private GameObject mNext2;
@@ -34,7 +37,15 @@ namespace Assets.Scripts.Multiplayer
         private GameObject mHold;
         private bool mHoldEnabled;
         private bool mDisplayHold;
+        private int mLocalFrameCount;
+        private int mRemoteFrameCount;
         private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
+
+        private readonly Dictionary<int, GameGrid.TransferingBlocks> mLocalPendingBlocks =
+            new Dictionary<int, GameGrid.TransferingBlocks>();
+
+        private readonly Dictionary<int, GameGrid.TransferingBlocks> mRemotePendingBlocks =
+            new Dictionary<int, GameGrid.TransferingBlocks>();
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
@@ -52,22 +63,44 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnNextTetrominoConsumued += NextTetrominoConsumed;
             LocalGameGrid.OnHoldTetrominoChanged += HoldTetrominoChanged;
             LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
+            LocalGameGrid.OnLineCleared += blocks =>
+            {
+                Assert.IsTrue(mLocalFrameCount + BlockTransferDelay > mRemoteFrameCount);
+                mRemotePendingBlocks.Add(mLocalFrameCount + BlockTransferDelay, blocks);
+            };
+            RemoteGameGrid.OnLineCleared += blocks =>
+            {
+                Assert.IsTrue(mRemoteFrameCount + BlockTransferDelay > mLocalFrameCount);
+                mLocalPendingBlocks.Add(mRemoteFrameCount + BlockTransferDelay, blocks);
+            };
         }
 
         /// <returns>Returns true if local player lost in this frame</returns>
-        public bool OnLocalUpdateFrame(
+        public bool OnLocalUpdateFrame(int frameCount,
             IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents)
         {
             if (mState != State.Playing)
             {
                 return false;
             }
+            mLocalFrameCount = frameCount;
+            if (mLocalPendingBlocks.ContainsKey(frameCount))
+            {
+                LocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
+                mLocalPendingBlocks.Remove(frameCount);
+            }
             return UpdateFrame(playerEvents, LocalGameGrid);
         }
 
-        public void OnRemoteUpdateFrame(
+        public void OnRemoteUpdateFrame(int frameCount,
             IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents)
         {
+            mRemoteFrameCount = frameCount;
+            if (mRemotePendingBlocks.ContainsKey(frameCount))
+            {
+                RemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
+                mRemotePendingBlocks.Remove(frameCount);
+            }
             UpdateFrame(playerEvents, RemoteGameGrid);
         }
 

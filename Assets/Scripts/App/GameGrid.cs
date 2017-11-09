@@ -11,6 +11,7 @@ namespace Assets.Scripts.App
     public class GameGrid : MonoBehaviour
     {
         public GameObject[] TetrominoPrefabs;
+        public GameObject BlockPrefab;
         public Color[] TetrominoColors;
         public int Gravity;
         public int EntryDelay;
@@ -19,6 +20,7 @@ namespace Assets.Scripts.App
         public int LockDelay;
         public int ClearDelay;
 
+        public event Action<TransferingBlocks> OnLineCleared;
         public event Action<Tetromino> OnNewTetrominoGenerated;
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<bool> OnHoldEnableStateChanged;
@@ -114,6 +116,69 @@ namespace Assets.Scripts.App
                     throw new ArgumentOutOfRangeException();
             }
             return mState != GameState.Running;
+        }
+
+        public void AddBlocks(TransferingBlocks blocks)
+        {
+            var colors = blocks.Colors;
+            var valid = blocks.Valid;
+            bool endGame = false;
+            int lines = colors.GetLength(0);
+            for (int row = 0; row < lines; ++row)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (mGrid[row, col] != null)
+                    {
+                        endGame = true;
+                        Destroy(mGrid[row, col]);
+                        mGrid[row, col] = null;
+                    }
+                }
+            }
+            for (int row = lines; row < mGrid.GetLength(0); ++row)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (mGrid[row, col] != null)
+                    {
+                        mGrid[row - lines, col] = mGrid[row, col];
+                        mGrid[row, col].transform.localPosition =
+                            RowColToPosition(row - lines, col);
+                        mGrid[row, col] = null;
+                    }
+                }
+            }
+            for (int i = 0; i < lines; ++i)
+            {
+                int row = mGrid.GetLength(0) - lines + i;
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (valid[i, col])
+                    {
+                        mGrid[row, col] = Instantiate(BlockPrefab);
+                        mGrid[row, col].transform.parent = transform;
+                        mGrid[row, col].transform.localPosition = RowColToPosition(row, col);
+                        mGrid[row, col].GetComponent<SpriteRenderer>().color = colors[i, col];
+                    }
+                }
+            }
+            if (mActiveObject != null)
+            {
+                while (!CheckTetromino())
+                {
+                    --mRow;
+                    PlaceTetromino();
+                }
+            }
+            if (mGhostObject != null)
+            {
+                PlaceGhost();
+            }
+            if (endGame)
+            {
+                EndGame();
+            }
         }
 
         public void OnDestroy()
@@ -285,6 +350,7 @@ namespace Assets.Scripts.App
         private void LockTetromino()
         {
             var children = mActiveObject.transform.Cast<Transform>().ToList();
+            var newlyLockedCells = new bool[mGrid.GetLength(0), mGrid.GetLength(1)];
             foreach (var child in children)
             {
                 var position = child.transform.position - transform.position;
@@ -297,9 +363,10 @@ namespace Assets.Scripts.App
                     return;
                 }
                 mGrid[row, col] = child.gameObject;
+                newlyLockedCells[row, col] = true;
             }
             DestroyActiveTetromino();
-            if (!TryLineClear())
+            if (!TryLineClear(newlyLockedCells))
             {
                 StartNewTetromino();
             }
@@ -360,10 +427,14 @@ namespace Assets.Scripts.App
         private void PlaceTetromino()
         {
             PlaceTetromino(mActiveObject, mRow, mCol);
-            if (mGhostObject == null)
+            if (mGhostObject != null)
             {
-                return;
+                PlaceGhost();
             }
+        }
+
+        private void PlaceGhost()
+        {
             for (int i = 0; i < mGrid.GetLength(0); ++i)
             {
                 PlaceTetromino(mGhostObject, mRow + i, mCol);
@@ -933,7 +1004,7 @@ namespace Assets.Scripts.App
             PlaceTetromino();
         }
 
-        private bool TryLineClear()
+        private bool TryLineClear(bool[,] newlyLockedCells)
         {
             mClearingLines.Clear();
             for (int i = 0; i < mGrid.GetLength(0); ++i)
@@ -956,6 +1027,21 @@ namespace Assets.Scripts.App
             {
                 mTetrominoState = TetrominoState.Clearing;
                 mClearingFrames = ClearDelay;
+                if (OnLineCleared != null)
+                {
+                    var colors = new Color[mClearingLines.Count, mGrid.GetLength(1)];
+                    var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
+                    for (int i = 0; i < mClearingLines.Count; ++i)
+                    {
+                        int row = mClearingLines[i];
+                        for (int col = 0; col < mGrid.GetLength(1); ++col)
+                        {
+                            colors[i, col] = mGrid[row, col].GetComponent<SpriteRenderer>().color;
+                            valid[i, col] = !newlyLockedCells[row, col];
+                        }
+                    }
+                    OnLineCleared(new TransferingBlocks {Colors = colors, Valid = valid});
+                }
                 return true;
             }
             return false;
@@ -1064,6 +1150,12 @@ namespace Assets.Scripts.App
                 RotateRight,
                 Hold,
             }
+        }
+
+        public struct TransferingBlocks
+        {
+            public Color[,] Colors;
+            public bool[,] Valid;
         }
 
         private enum GameState
