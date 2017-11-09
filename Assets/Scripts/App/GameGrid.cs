@@ -23,6 +23,7 @@ namespace Assets.Scripts.App
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<bool> OnHoldEnableStateChanged;
         public event Action OnNextTetrominoConsumued;
+        public event Action OnGameEnd;
 
         private readonly GameObject[,] mGrid = new GameObject[20, 10];
         private readonly List<int> mClearingLines = new List<int>();
@@ -83,11 +84,12 @@ namespace Assets.Scripts.App
             StartNewTetromino();
         }
 
-        public void UpdateFrame(GameButtonEvent[] events)
+        /// <returns>Returns true if game is no longer running</returns>
+        public bool UpdateFrame(GameButtonEvent[] events)
         {
             if (mState != GameState.Running)
             {
-                return;
+                return true;
             }
             foreach (var buttonEvent in events)
             {
@@ -111,6 +113,7 @@ namespace Assets.Scripts.App
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            return mState != GameState.Running;
         }
 
         public void OnDestroy()
@@ -173,7 +176,7 @@ namespace Assets.Scripts.App
             PlaceTetromino();
             if (!CheckTetromino())
             {
-                GameOver();
+                EndGame();
                 return;
             }
             mAccumulatedGravity = Gravity;
@@ -290,7 +293,7 @@ namespace Assets.Scripts.App
                 int col = XToCol(position.x);
                 if (row < 0 || mGrid.GetLength(0) <= row || col < 0 || mGrid.GetLength(1) <= col)
                 {
-                    GameOver();
+                    EndGame();
                     return;
                 }
                 mGrid[row, col] = child.gameObject;
@@ -315,9 +318,13 @@ namespace Assets.Scripts.App
             mGhostObject = null;
         }
 
-        private void GameOver()
+        private void EndGame()
         {
             mState = GameState.Ended;
+            if (OnGameEnd != null)
+            {
+                OnGameEnd.Invoke();
+            }
         }
 
         private bool CheckTetromino()

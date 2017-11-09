@@ -16,13 +16,19 @@ namespace Assets.Scripts.Multiplayer
 
         private const int MaxFrameDiff = 30;
 
-        private bool mConnected;
+        private bool mPlaying;
         private int mFrameCount;
+        private int mMaxFrame = 311040000;
         private MultiplayerGameController mGameController;
+        private ServerController mServerController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
 
         public void Start()
         {
+            if (isServer)
+            {
+                StartServer();
+            }
             if (isClient)
             {
                 StartClient();
@@ -49,10 +55,23 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
+        [Server]
+        public void SetMaxFrame(int maxFrame)
+        {
+            mMaxFrame = maxFrame;
+            RpcSetMaxFrame(maxFrame);
+        }
+
+        [Server]
+        private void StartServer()
+        {
+            mServerController = ServerController.Instance;
+        }
+
         [Client]
         private void StartClient()
         {
-            mGameController = MultiplayerGameController.Instance;
+            mGameController = FindObjectOfType<MultiplayerGameController>();
             mGameController.Players.Add(this);
         }
 
@@ -80,7 +99,7 @@ namespace Assets.Scripts.Multiplayer
         [Client]
         private void FixedUpdateLocal()
         {
-            if (mConnected)
+            if (mPlaying)
             {
                 if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
                     MaxFrameDiff)
@@ -89,7 +108,11 @@ namespace Assets.Scripts.Multiplayer
                 }
                 ++mFrameCount;
                 CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                mGameController.OnLocalUpdateFrame(mPlayerEvents);
+                if (mGameController.OnLocalUpdateFrame(mPlayerEvents) || mFrameCount > mMaxFrame)
+                {
+                    CmdPlayerEnded(mFrameCount);
+                    mPlaying = false;
+                }
             }
             mPlayerEvents.Clear();
         }
@@ -107,13 +130,21 @@ namespace Assets.Scripts.Multiplayer
             Username = info.Username;
             RpcSetPlayerType(Type);
             RpcSetUsername(Username);
-            ServerController.Instance.RegisterPlayer(this, info);
+            mServerController.RegisterPlayer(this, info);
         }
 
         [Command]
         private void CmdUpdateFrame(int frameCount, PlayerEvent[] events)
         {
+            Assert.IsTrue(frameCount == mFrameCount + 1);
+            mFrameCount = frameCount;
             RpcOnFrameUpdate(frameCount, events);
+        }
+
+        [Command]
+        private void CmdPlayerEnded(int frameCount)
+        {
+            mServerController.OnPlayerGameEnd(Type, frameCount);
         }
 
         [ClientRpc]
@@ -123,7 +154,20 @@ namespace Assets.Scripts.Multiplayer
             {
                 mGameController.OnGameStart(info);
             }
-            mConnected = true;
+            mPlaying = true;
+        }
+
+        [ClientRpc]
+        public void RpcOnPlayerWin()
+        {
+            if (isLocalPlayer)
+            {
+                mGameController.OnLocalPlayerWin();
+            }
+            else
+            {
+                mGameController.OnLocalPlayerLose();
+            }
         }
 
         [ClientRpc]
@@ -148,6 +192,18 @@ namespace Assets.Scripts.Multiplayer
             Assert.IsTrue(frameCount == mFrameCount + 1);
             mFrameCount = frameCount;
             mGameController.OnRemoteUpdateFrame(events);
+        }
+
+        [ClientRpc]
+        private void RpcSetMaxFrame(int maxFrame)
+        {
+            mMaxFrame = maxFrame;
+        }
+
+        [TargetRpc]
+        public void TargetOnGameDraw(NetworkConnection connection)
+        {
+            mGameController.OnGameDraw();
         }
 
         public struct PlayerEvent

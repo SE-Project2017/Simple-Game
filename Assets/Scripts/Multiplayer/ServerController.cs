@@ -6,6 +6,7 @@ using Assets.Scripts.Msf;
 using Assets.Scripts.Utils;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Multiplayer
 {
@@ -13,6 +14,10 @@ namespace Assets.Scripts.Multiplayer
     {
         private const float MaxConnectTime = 10;
 
+        private bool mPlayerAEnded;
+        private bool mPlayerBEnded;
+        private int mPlayerAEndFrame;
+        private int mPlayerBEndFrame;
         private State mState = State.Connecting;
         private NetworkPlayerController mPlayerA;
         private NetworkPlayerController mPlayerB;
@@ -60,9 +65,52 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
-        public void OnGameEnd(GameResult result)
+        public void OnPlayerGameEnd(PlayerType type, int frameCount)
         {
-            StartCoroutine(EndGame(result));
+            switch (type)
+            {
+                case PlayerType.PlayerA:
+                    Assert.IsTrue(!mPlayerAEnded);
+                    mPlayerAEnded = true;
+                    mPlayerAEndFrame = frameCount;
+                    if (!mPlayerBEnded)
+                    {
+                        mPlayerB.SetMaxFrame(frameCount);
+                    }
+                    break;
+                case PlayerType.PlayerB:
+                    Assert.IsTrue(!mPlayerBEnded);
+                    mPlayerBEnded = true;
+                    mPlayerBEndFrame = frameCount;
+                    if (!mPlayerAEnded)
+                    {
+                        mPlayerA.SetMaxFrame(frameCount);
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("type", type, null);
+            }
+            if (mPlayerAEnded && mPlayerBEnded)
+            {
+                if (mPlayerAEndFrame < mPlayerBEndFrame)
+                {
+                    mPlayerB.RpcOnPlayerWin();
+                    StartCoroutine(EndGame(GameResult.PlayerBWon));
+                }
+                else if (mPlayerBEndFrame < mPlayerAEndFrame)
+                {
+                    mPlayerA.RpcOnPlayerWin();
+                    StartCoroutine(EndGame(GameResult.PlayerAWon));
+                }
+                else
+                {
+                    foreach (var player in new[] {mPlayerA, mPlayerB})
+                    {
+                        player.TargetOnGameDraw(player.connectionToClient);
+                    }
+                    StartCoroutine(EndGame(GameResult.Draw));
+                }
+            }
         }
 
         private IEnumerator EndGame(GameResult result)

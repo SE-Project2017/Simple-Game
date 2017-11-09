@@ -2,37 +2,44 @@
 using System.Collections.Generic;
 
 using Assets.Scripts.App;
-using Assets.Scripts.Utils;
+using Assets.Scripts.UI;
+
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.Multiplayer
 {
-    public class MultiplayerGameController : Singleton<MultiplayerGameController>
+    public class MultiplayerGameController : MonoBehaviour
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
         public GameGrid LocalGameGrid;
         public GameGrid RemoteGameGrid;
+        public MultiplayerGameEndUI GameEndUI;
         public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
 
         private State mState = State.Connecting;
+        private NetworkManager mNetworkManager;
 
         public void Start()
         {
-            var manager = NetworkManager.Instance;
+            mNetworkManager = NetworkManager.Instance;
             var controller = ClientController.Instance;
             LocalPlayerType = controller.GameInfo.PlayerType;
-            manager.networkAddress = controller.GameInfo.GameServerDetails.Address;
-            manager.networkPort = controller.GameInfo.GameServerDetails.Port;
-            manager.StartClient();
+            mNetworkManager.networkAddress = controller.GameInfo.GameServerDetails.Address;
+            mNetworkManager.networkPort = controller.GameInfo.GameServerDetails.Port;
+            mNetworkManager.StartClient();
+            LocalGameGrid.OnGameEnd += OnGameEnding;
         }
 
-        public void OnLocalUpdateFrame(
+        /// <returns>Returns true if local player lost in this frame</returns>
+        public bool OnLocalUpdateFrame(
             IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents)
         {
             if (mState != State.Playing)
             {
-                return;
+                return false;
             }
-            UpdateFrame(playerEvents, LocalGameGrid);
+            return UpdateFrame(playerEvents, LocalGameGrid);
         }
 
         public void OnRemoteUpdateFrame(
@@ -50,8 +57,42 @@ namespace Assets.Scripts.Multiplayer
             RemoteGameGrid.StartGame();
         }
 
-        private void UpdateFrame(IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents,
-            GameGrid grid)
+        public void OnLocalPlayerWin()
+        {
+            GameEndUI.ShowVictory();
+            OnGameEnded();
+        }
+
+        public void OnLocalPlayerLose()
+        {
+            GameEndUI.ShowDefeat();
+            OnGameEnded();
+        }
+
+        public void OnGameDraw()
+        {
+            GameEndUI.ShowDraw();
+            OnGameEnded();
+        }
+
+        public void GotoScoreScreen()
+        {
+            ClientController.Instance.OnGameEnd();
+            SceneManager.LoadScene("MainMenu");
+        }
+
+        private void OnGameEnding()
+        {
+            mState = State.Ending;
+        }
+
+        private void OnGameEnded()
+        {
+            mNetworkManager.StopClient();
+        }
+
+        private static bool UpdateFrame(
+            IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents, GameGrid grid)
         {
             var events = new List<GameGrid.GameButtonEvent>();
             foreach (var playerEvent in playerEvents)
@@ -76,10 +117,11 @@ namespace Assets.Scripts.Multiplayer
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            grid.UpdateFrame(events.ToArray());
+            return grid.UpdateFrame(events.ToArray());
         }
 
-        private GameGrid.GameButtonEvent.ButtonType ButtonToType(InputController.Button button)
+        private static GameGrid.GameButtonEvent.ButtonType ButtonToType(
+            InputController.Button button)
         {
             switch (button)
             {
@@ -106,6 +148,7 @@ namespace Assets.Scripts.Multiplayer
         {
             Connecting,
             Playing,
+            Ending,
         }
     }
 }
