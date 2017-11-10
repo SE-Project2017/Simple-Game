@@ -67,6 +67,9 @@ MonoBehaviour:
   Next3Pos: {x: 2, y: 4.15, z: 0}
   HoldPos: {x: -2.3, y: 4.3, z: 0}
   HoldDisabledColor: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
+  ClearParticlePrefab: {fileID: 1270237796246324, guid: 1d2029118a52a4949a703a155f51cdd3,
+    type: 2}
+  ClearParticleParent: {fileID: 0}
   NextScale: 0.5
   Next2Scale: 0.25
   HoldScale: 0.25

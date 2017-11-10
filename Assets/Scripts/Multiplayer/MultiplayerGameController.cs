@@ -23,6 +23,9 @@ namespace Assets.Scripts.Multiplayer
         public Vector3 Next3Pos = new Vector3(2.0f, 4.15f);
         public Vector3 HoldPos = new Vector3(-2.3f, 4.3f);
         public Color HoldDisabledColor;
+        public GameObject ClearParticlePrefab;
+        public GameObject ClearParticleParent;
+        public GameObject LocalGameArea;
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
         public float HoldScale = 0.25f;
@@ -40,12 +43,13 @@ namespace Assets.Scripts.Multiplayer
         private int mLocalFrameCount;
         private int mRemoteFrameCount;
         private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
+        private readonly ParticleSystem[,] mClearParticles = new ParticleSystem[20, 10];
 
-        private readonly Dictionary<int, GameGrid.TransferingBlocks> mLocalPendingBlocks =
-            new Dictionary<int, GameGrid.TransferingBlocks>();
+        private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
+            new Dictionary<int, GameGrid.ClearingBlocks>();
 
-        private readonly Dictionary<int, GameGrid.TransferingBlocks> mRemotePendingBlocks =
-            new Dictionary<int, GameGrid.TransferingBlocks>();
+        private readonly Dictionary<int, GameGrid.ClearingBlocks> mRemotePendingBlocks =
+            new Dictionary<int, GameGrid.ClearingBlocks>();
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
@@ -65,6 +69,18 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
             LocalGameGrid.OnLineCleared += blocks =>
             {
+                for (int i = 0; i < blocks.Data.GetLength(0); ++i)
+                {
+                    int row = blocks.Rows[i];
+                    for (int col = 0; col < 10; ++col)
+                    {
+                        var main = mClearParticles[row, col].main;
+                        var color = blocks.Data[i, col].Type.Color();
+                        color.a = 0.3f;
+                        main.startColor = color;
+                        mClearParticles[row, col].Play();
+                    }
+                }
                 if (blocks.Data.GetLength(0) <= 1)
                 {
                     return;
@@ -81,6 +97,19 @@ namespace Assets.Scripts.Multiplayer
                 Assert.IsTrue(mRemoteFrameCount + BlockTransferDelay > mLocalFrameCount);
                 mLocalPendingBlocks.Add(mRemoteFrameCount + BlockTransferDelay, blocks);
             };
+            float width = LocalGameArea.transform.localScale.x;
+            float height = LocalGameArea.transform.localScale.y;
+            for (int row = 0; row < 20; ++row)
+            {
+                for (int col = 0; col < 10; ++col)
+                {
+                    float x = (col / 10.0f + 0.05f) * width - width / 2;
+                    float y = -(row / 20.0f + 0.025f) * height + height / 2;
+                    var obj = Instantiate(ClearParticlePrefab, ClearParticleParent.transform);
+                    obj.transform.localPosition = new Vector3(x, y);
+                    mClearParticles[row, col] = obj.GetComponent<ParticleSystem>();
+                }
+            }
         }
 
         /// <returns>Returns true if local player lost in this frame</returns>

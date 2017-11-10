@@ -19,7 +19,7 @@ namespace Assets.Scripts.App
         public int LockDelay;
         public int ClearDelay;
 
-        public event Action<TransferingBlocks> OnLineCleared;
+        public event Action<ClearingBlocks> OnLineCleared;
         public event Action<Tetromino> OnNewTetrominoGenerated;
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<bool> OnHoldEnableStateChanged;
@@ -116,7 +116,7 @@ namespace Assets.Scripts.App
             return mState != GameState.Running;
         }
 
-        public void AddBlocks(TransferingBlocks blocks)
+        public void AddBlocks(ClearingBlocks blocks)
         {
             var properties = blocks.Data;
             var valid = blocks.Valid;
@@ -287,15 +287,6 @@ namespace Assets.Scripts.App
         private void LineClearFrame()
         {
             --mClearingFrames;
-            foreach (int row in mClearingLines)
-            {
-                for (int col = 0; col < mGrid.GetLength(1); ++col)
-                {
-                    var color = mGrid[row, col].Color;
-                    color.a = ((float) mClearingFrames) / ClearDelay;
-                    mGrid[row, col].Color = color;
-                }
-            }
             if (mClearingFrames != 0)
             {
                 return;
@@ -303,10 +294,6 @@ namespace Assets.Scripts.App
             var rowsToMove = new int[mGrid.GetLength(0)];
             foreach (int row in mClearingLines)
             {
-                for (int col = 0; col < mGrid.GetLength(1); ++col)
-                {
-                    DestroyBlock(row, col);
-                }
                 for (int i = 0; i < row; ++i)
                 {
                     ++rowsToMove[i];
@@ -1039,7 +1026,19 @@ namespace Assets.Scripts.App
                             valid[i, col] = !newlyLockedCells[row, col];
                         }
                     }
-                    OnLineCleared(new TransferingBlocks {Data = properties, Valid = valid});
+                    OnLineCleared(new ClearingBlocks
+                    {
+                        Data = properties,
+                        Valid = valid,
+                        Rows = mClearingLines.ToArray()
+                    });
+                }
+                foreach (int row in mClearingLines)
+                {
+                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    {
+                        DestroyBlock(row, col);
+                    }
                 }
                 return true;
             }
@@ -1160,10 +1159,11 @@ namespace Assets.Scripts.App
             }
         }
 
-        public struct TransferingBlocks
+        public struct ClearingBlocks
         {
             public Block.Data[,] Data;
             public bool[,] Valid;
+            public int[] Rows;
         }
 
         private enum GameState
