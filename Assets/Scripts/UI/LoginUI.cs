@@ -13,20 +13,24 @@ namespace Assets.Scripts.UI
 
         public void OnLoginClick()
         {
-            MsfContext.Client.Auth.LogIn(Username.textComponent.text, Password.textComponent.text,
-                (info, error) =>
+            MsfContext.Client.Auth.LogIn(Username.text, Password.text, (info, error) =>
+            {
+                if (info != null)
                 {
-                    if (info != null)
-                    {
-                        SceneManager.LoadScene("MainMenu");
-                    }
-                });
+                    SceneManager.LoadScene("MainMenu");
+                }
+            });
         }
 
         public void OnRegisterClick()
         {
-            MsfContext.Client.Auth.Register(Username.textComponent.text,
-                Password.textComponent.text, (successful, error) => { });
+            MsfContext.Client.Auth.Register(Username.text, Password.text, (successful, error) =>
+            {
+                if (!successful)
+                {
+                    Debug.Log(error);
+                }
+            });
         }
     }
 }

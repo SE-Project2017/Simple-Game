@@ -175,6 +175,10 @@ namespace Assets.Scripts.App
             {
                 PlaceGhost();
             }
+            var clearing = mClearingLines.Where(row => row >= lines).Select(row => row - lines)
+                .ToList();
+            mClearingLines.Clear();
+            mClearingLines.AddRange(clearing);
             if (endGame)
             {
                 EndGame();

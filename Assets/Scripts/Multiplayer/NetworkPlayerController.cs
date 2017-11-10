@@ -49,13 +49,17 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDestroy()
         {
-            if (isServer)
+            if (mServerController != null)
             {
-                OnDestroyServer();
+                if (mPlaying)
+                {
+                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
+                    mPlaying = false;
+                }
             }
-            if (isClient)
+            if (mGameController != null)
             {
-                OnDestroyClient();
+                mGameController.Players.Remove(this);
             }
         }
 
@@ -77,16 +81,6 @@ namespace Assets.Scripts.Multiplayer
         {
             mPlaying = true;
             RpcOnRegisterComplete(info);
-        }
-
-        [Server]
-        private void OnDestroyServer()
-        {
-            if (mPlaying)
-            {
-                mServerController.OnPlayerGameEnd(Type, mFrameCount);
-                mPlaying = false;
-            }
         }
 
         [Client]
@@ -137,12 +131,6 @@ namespace Assets.Scripts.Multiplayer
                 }
             }
             mPlayerEvents.Clear();
-        }
-
-        [Client]
-        private void OnDestroyClient()
-        {
-            mGameController.Players.Remove(this);
         }
 
         [Command]
