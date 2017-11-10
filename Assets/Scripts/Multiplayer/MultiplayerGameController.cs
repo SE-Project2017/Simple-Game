@@ -65,7 +65,7 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
             LocalGameGrid.OnLineCleared += blocks =>
             {
-                if (blocks.Colors.GetLength(0) <= 1)
+                if (blocks.Data.GetLength(0) <= 1)
                 {
                     return;
                 }
@@ -74,7 +74,7 @@ namespace Assets.Scripts.Multiplayer
             };
             RemoteGameGrid.OnLineCleared += blocks =>
             {
-                if (blocks.Colors.GetLength(0) <= 1)
+                if (blocks.Data.GetLength(0) <= 1)
                 {
                     return;
                 }
@@ -185,15 +185,15 @@ namespace Assets.Scripts.Multiplayer
             Destroy(mNext2);
             Destroy(mNext3);
             mNext = Instantiate(DisplayTetrominos[(int) mNextTetrominos[0]]);
-            SetupDisplayColor(mNext, LocalGameGrid.TetrominoColors[(int) mNextTetrominos[0]]);
+            SetupDisplayColor(mNext);
             mNext.transform.localScale = new Vector3(NextScale, NextScale);
             mNext.transform.position = NextPos;
             mNext2 = Instantiate(DisplayTetrominos[(int) mNextTetrominos[1]]);
-            SetupDisplayColor(mNext2, LocalGameGrid.TetrominoColors[(int) mNextTetrominos[1]]);
+            SetupDisplayColor(mNext2);
             mNext2.transform.localScale = new Vector3(Next2Scale, Next2Scale);
             mNext2.transform.position = Next2Pos;
             mNext3 = Instantiate(DisplayTetrominos[(int) mNextTetrominos[2]]);
-            SetupDisplayColor(mNext3, LocalGameGrid.TetrominoColors[(int) mNextTetrominos[2]]);
+            SetupDisplayColor(mNext3);
             mNext3.transform.localScale = new Vector3(Next2Scale, Next2Scale);
             mNext3.transform.position = Next3Pos;
         }
@@ -206,19 +206,31 @@ namespace Assets.Scripts.Multiplayer
                 return;
             }
             mHold = Instantiate(DisplayTetrominos[(int) mHoldTetromino]);
-            SetupDisplayColor(mHold,
-                mHoldEnabled
-                    ? LocalGameGrid.TetrominoColors[(int) mHoldTetromino]
-                    : HoldDisabledColor);
+            if (mHoldEnabled)
+            {
+                SetupDisplayColor(mHold);
+            }
+            else
+            {
+                SetupDisplayColor(mHold, HoldDisabledColor);
+            }
             mHold.transform.localScale = new Vector3(Next2Scale, Next2Scale);
             mHold.transform.position = HoldPos;
         }
 
+        private static void SetupDisplayColor(GameObject obj)
+        {
+            foreach (var block in obj.GetComponentsInChildren<Block>())
+            {
+                block.Color = block.Type.Color();
+            }
+        }
+
         private static void SetupDisplayColor(GameObject obj, Color color)
         {
-            foreach (var spriteRenderer in obj.GetComponentsInChildren<SpriteRenderer>())
+            foreach (var block in obj.GetComponentsInChildren<Block>())
             {
-                spriteRenderer.color = color;
+                block.Color = color;
             }
         }
 

@@ -7,7 +7,7 @@ namespace Assets.Scripts.App
     {
         private Camera mCamera;
 
-        public void Start()
+        public void Awake()
         {
             mCamera = GetComponent<Camera>();
         }

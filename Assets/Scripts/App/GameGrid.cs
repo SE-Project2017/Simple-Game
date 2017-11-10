@@ -12,7 +12,6 @@ namespace Assets.Scripts.App
     {
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
-        public Color[] TetrominoColors;
         public int Gravity;
         public int EntryDelay;
         public int ClearEntryDelay;
@@ -27,7 +26,7 @@ namespace Assets.Scripts.App
         public event Action OnNextTetrominoConsumued;
         public event Action OnGameEnd;
 
-        private readonly GameObject[,] mGrid = new GameObject[20, 10];
+        private readonly Block[,] mGrid = new Block[20, 10];
         private readonly List<int> mClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
         private GameState mState = GameState.Idle;
@@ -77,8 +76,7 @@ namespace Assets.Scripts.App
             {
                 for (int j = 0; j < mGrid.GetLength(1); ++j)
                 {
-                    Destroy(mGrid[i, j]);
-                    mGrid[i, j] = null;
+                    DestroyBlock(i, j);
                 }
             }
             mState = GameState.Running;
@@ -120,10 +118,10 @@ namespace Assets.Scripts.App
 
         public void AddBlocks(TransferingBlocks blocks)
         {
-            var colors = blocks.Colors;
+            var properties = blocks.Data;
             var valid = blocks.Valid;
             bool endGame = false;
-            int lines = colors.GetLength(0);
+            int lines = properties.GetLength(0);
             for (int row = 0; row < lines; ++row)
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
@@ -131,8 +129,7 @@ namespace Assets.Scripts.App
                     if (mGrid[row, col] != null)
                     {
                         endGame = true;
-                        Destroy(mGrid[row, col]);
-                        mGrid[row, col] = null;
+                        DestroyBlock(row, col);
                     }
                 }
             }
@@ -156,10 +153,11 @@ namespace Assets.Scripts.App
                 {
                     if (valid[i, col])
                     {
-                        mGrid[row, col] = Instantiate(BlockPrefab);
+                        mGrid[row, col] = Instantiate(BlockPrefab).GetComponent<Block>();
                         mGrid[row, col].transform.parent = transform;
                         mGrid[row, col].transform.localPosition = RowColToPosition(row, col);
-                        mGrid[row, col].GetComponent<SpriteRenderer>().color = colors[i, col];
+                        mGrid[row, col].Properties = properties[i, col];
+                        mGrid[row, col].Color = properties[i, col].Type.Color();
                     }
                 }
             }
@@ -224,21 +222,20 @@ namespace Assets.Scripts.App
             mCol = mSpawnCols[(int) mActiveTetromino];
             mRotation = 0;
             mActiveObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
-            foreach (Transform child in mActiveObject.transform)
+            foreach (var block in mActiveObject.GetComponentsInChildren<Block>())
             {
-                child.GetComponent<SpriteRenderer>().color =
-                    TetrominoColors[(int) mActiveTetromino];
+                block.Color = block.Type.Color();
             }
             mActiveObject.transform.parent = transform;
             PlaceTetromino();
             mRow = mSpawnRows[(int) mActiveTetromino];
             mCol = mSpawnCols[(int) mActiveTetromino];
             mGhostObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
-            foreach (Transform child in mGhostObject.transform)
+            foreach (var block in mGhostObject.GetComponentsInChildren<Block>())
             {
-                var color = TetrominoColors[(int) mActiveTetromino];
-                color = new Color(color.r, color.g, color.b, 0.5f);
-                child.GetComponent<SpriteRenderer>().color = color;
+                var color = block.Type.Color();
+                color.a = 0.5f;
+                block.Color = color;
             }
             mGhostObject.transform.parent = transform;
             mGhostObject.transform.rotation = Quaternion.AngleAxis(mRotation, Vector3.forward);
@@ -293,10 +290,9 @@ namespace Assets.Scripts.App
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
-                    var spriteRenderer = mGrid[row, col].GetComponent<SpriteRenderer>();
-                    var color = spriteRenderer.color;
+                    var color = mGrid[row, col].Color;
                     color.a = ((float) mClearingFrames) / ClearDelay;
-                    spriteRenderer.color = color;
+                    mGrid[row, col].Color = color;
                 }
             }
             if (mClearingFrames != 0)
@@ -308,8 +304,7 @@ namespace Assets.Scripts.App
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
-                    Destroy(mGrid[row, col]);
-                    mGrid[row, col] = null;
+                    DestroyBlock(row, col);
                 }
                 for (int i = 0; i < row; ++i)
                 {
@@ -337,8 +332,7 @@ namespace Assets.Scripts.App
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
-                    Destroy(mGrid[row, col]);
-                    mGrid[row, col] = null;
+                    DestroyBlock(row, col);
                 }
             }
             StartNewTetromino();
@@ -366,7 +360,7 @@ namespace Assets.Scripts.App
                     EndGame();
                     return;
                 }
-                mGrid[row, col] = child.gameObject;
+                mGrid[row, col] = child.GetComponent<Block>();
                 newlyLockedCells[row, col] = true;
             }
             DestroyActiveTetromino();
@@ -1033,18 +1027,18 @@ namespace Assets.Scripts.App
                 mClearingFrames = ClearDelay;
                 if (OnLineCleared != null)
                 {
-                    var colors = new Color[mClearingLines.Count, mGrid.GetLength(1)];
+                    var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
                     var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
                     for (int i = 0; i < mClearingLines.Count; ++i)
                     {
                         int row = mClearingLines[i];
                         for (int col = 0; col < mGrid.GetLength(1); ++col)
                         {
-                            colors[i, col] = mGrid[row, col].GetComponent<SpriteRenderer>().color;
+                            properties[i, col] = mGrid[row, col].Properties;
                             valid[i, col] = !newlyLockedCells[row, col];
                         }
                     }
-                    OnLineCleared(new TransferingBlocks {Colors = colors, Valid = valid});
+                    OnLineCleared(new TransferingBlocks {Data = properties, Valid = valid});
                 }
                 return true;
             }
@@ -1103,6 +1097,15 @@ namespace Assets.Scripts.App
             }
         }
 
+        private void DestroyBlock(int row, int col)
+        {
+            if (mGrid[row, col] != null)
+            {
+                Destroy(mGrid[row, col].gameObject);
+                mGrid[row, col] = null;
+            }
+        }
+
         private static void PlaceTetromino(GameObject obj, int row, int col)
         {
             obj.transform.localPosition = RowColToPosition(row, col);
@@ -1158,7 +1161,7 @@ namespace Assets.Scripts.App
 
         public struct TransferingBlocks
         {
-            public Color[,] Colors;
+            public Block.Data[,] Data;
             public bool[,] Valid;
         }
 
