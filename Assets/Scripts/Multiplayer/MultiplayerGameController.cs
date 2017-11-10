@@ -65,11 +65,19 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
             LocalGameGrid.OnLineCleared += blocks =>
             {
+                if (blocks.Colors.GetLength(0) <= 1)
+                {
+                    return;
+                }
                 Assert.IsTrue(mLocalFrameCount + BlockTransferDelay > mRemoteFrameCount);
                 mRemotePendingBlocks.Add(mLocalFrameCount + BlockTransferDelay, blocks);
             };
             RemoteGameGrid.OnLineCleared += blocks =>
             {
+                if (blocks.Colors.GetLength(0) <= 1)
+                {
+                    return;
+                }
                 Assert.IsTrue(mRemoteFrameCount + BlockTransferDelay > mLocalFrameCount);
                 mLocalPendingBlocks.Add(mRemoteFrameCount + BlockTransferDelay, blocks);
             };
