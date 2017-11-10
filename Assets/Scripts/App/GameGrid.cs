@@ -173,10 +173,11 @@ namespace Assets.Scripts.App
             {
                 PlaceGhost();
             }
-            var clearing = mClearingLines.Where(row => row >= lines).Select(row => row - lines)
-                .ToList();
-            mClearingLines.Clear();
-            mClearingLines.AddRange(clearing);
+            mClearingLines.RemoveAll(row => row < lines);
+            for (int i = 0; i < mClearingLines.Count; ++i)
+            {
+                mClearingLines[i] = mClearingLines[i] - lines;
+            }
             if (endGame)
             {
                 EndGame();
