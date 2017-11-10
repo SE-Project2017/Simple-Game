@@ -8,9 +8,9 @@ Work in progress.
 
 # Requirements
 
-Unity 2017.2.0f3 or later
-Master Server Framework
-CN Controls
+- Unity 2017.2.0f3 or later
+- Master Server Framework
+- CN Controls
 
 # Building
 
