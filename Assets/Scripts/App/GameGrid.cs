@@ -1164,6 +1164,56 @@ namespace Assets.Scripts.App
             public Block.Data[,] Data;
             public bool[,] Valid;
             public int[] Rows;
+
+            public ClearingBlocks[] SliceAndReverse()
+            {
+                int rows = Data.GetLength(0);
+                int cols = Data.GetLength(1);
+                var result = new ClearingBlocks[rows];
+                for (int i = 0; i < rows; ++i)
+                {
+                    result[i].Data = new Block.Data[1, cols];
+                    result[i].Valid = new bool[1, cols];
+                    for (int col = 0; col < cols; ++col)
+                    {
+                        result[i].Data[0, col] = Data[rows - 1 - i, col];
+                        result[i].Valid[0, col] = Valid[rows - 1 - i, col];
+                    }
+                    result[i].Rows = new[] {Rows[result.Length - 1 - i]};
+                }
+                return result;
+            }
+
+            public void Concat(ClearingBlocks other)
+            {
+                int rows = Data.GetLength(0) + other.Data.GetLength(0);
+                int cols = Data.GetLength(1);
+                var newData = new Block.Data[rows, cols];
+                var newValid = new bool[rows, cols];
+                var newRows = new int[rows];
+                int oldRows = Data.GetLength(0);
+                for (int row = 0; row < rows; ++row)
+                {
+                    for (int col = 0; col < cols; ++col)
+                    {
+                        if (row < oldRows)
+                        {
+                            newData[row, col] = Data[row, col];
+                            newValid[row, col] = Valid[row, col];
+                            newRows[row] = Rows[row];
+                        }
+                        else
+                        {
+                            newData[row, col] = other.Data[row - oldRows, col];
+                            newValid[row, col] = other.Valid[row - oldRows, col];
+                            newRows[row] = other.Rows[row - oldRows];
+                        }
+                    }
+                }
+                Data = newData;
+                Valid = newValid;
+                Rows = newRows;
+            }
         }
 
         private enum GameState

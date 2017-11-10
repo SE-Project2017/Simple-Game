@@ -86,7 +86,8 @@ namespace Assets.Scripts.Multiplayer
                     return;
                 }
                 Assert.IsTrue(mLocalFrameCount + BlockTransferDelay > mRemoteFrameCount);
-                mRemotePendingBlocks.Add(mLocalFrameCount + BlockTransferDelay, blocks);
+                AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + BlockTransferDelay,
+                    blocks);
             };
             RemoteGameGrid.OnLineCleared += blocks =>
             {
@@ -95,7 +96,8 @@ namespace Assets.Scripts.Multiplayer
                     return;
                 }
                 Assert.IsTrue(mRemoteFrameCount + BlockTransferDelay > mLocalFrameCount);
-                mLocalPendingBlocks.Add(mRemoteFrameCount + BlockTransferDelay, blocks);
+                AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + BlockTransferDelay,
+                    blocks);
             };
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
@@ -313,6 +315,24 @@ namespace Assets.Scripts.Multiplayer
                     return GameGrid.GameButtonEvent.ButtonType.Hold;
                 default:
                     throw new ArgumentOutOfRangeException("button", button, null);
+            }
+        }
+
+        private static void AddPendingBlocks(IDictionary<int, GameGrid.ClearingBlocks> pending,
+            int frame, GameGrid.ClearingBlocks blocks)
+        {
+            var sliced = blocks.SliceAndReverse();
+            for (int i = 0; i < sliced.Length; ++i)
+            {
+                int nextFrame = frame + i;
+                if (!pending.ContainsKey(nextFrame))
+                {
+                    pending.Add(nextFrame, sliced[i]);
+                }
+                else
+                {
+                    pending[nextFrame].Concat(sliced[i]);
+                }
             }
         }
 
