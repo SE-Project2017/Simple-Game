@@ -41,8 +41,8 @@ namespace Assets.Scripts.App
                 return;
             }
             GameInfo = message.Deserialize(new GameFoundPacket());
-            SceneManager.LoadScene("MultiplayerGame");
             mState = State.PlayingMultiplayer;
+            StartCoroutine(Utilities.FadeOutLoadScene("MultiplayerGame"));
         }
 
         private enum State

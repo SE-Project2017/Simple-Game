@@ -173,7 +173,7 @@ namespace Assets.Scripts.Multiplayer
         public void GotoScoreScreen()
         {
             ClientController.Instance.OnGameEnd();
-            SceneManager.LoadScene("MainMenu");
+            StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
         }
 
         private void OnGameEnding()

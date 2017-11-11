@@ -1,7 +1,7 @@
 ﻿using Assets.Scripts.Msf;
+using Assets.Scripts.Utils;
 
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
@@ -17,7 +17,7 @@ namespace Assets.Scripts.UI
             {
                 if (info != null)
                 {
-                    SceneManager.LoadScene("MainMenu");
+                    StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
                 }
             });
         }

@@ -30,8 +30,8 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
         {
             base.Initialize(server);
             mSpawnersModule = server.GetModule<SpawnersModule>();
-            server.SetHandler((short)OperationCode.StartSearchGame, OnStartSearchGame);
-            server.SetHandler((short)OperationCode.GameServerSpawned, OnGameServerSpawned);
+            server.SetHandler((short) OperationCode.StartSearchGame, OnStartSearchGame);
+            server.SetHandler((short) OperationCode.GameServerSpawned, OnGameServerSpawned);
             StartCoroutine(MatchmakingWorker());
         }
 
@@ -95,8 +95,7 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                     RemovePlayer(player2);
                     player1.Type = ServerController.PlayerType.PlayerA;
                     player2.Type = ServerController.PlayerType.PlayerB;
-                    var task =
-                        mSpawnersModule.Spawn(null);
+                    var task = mSpawnersModule.Spawn(null);
                     if (task == null)
                     {
                         AddPlayer(player1);
