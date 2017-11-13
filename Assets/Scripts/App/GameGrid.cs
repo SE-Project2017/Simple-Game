@@ -186,7 +186,10 @@ namespace Assets.Scripts.App
 
         public void OnDestroy()
         {
-            mTetrominoGenerator.Dispose();
+            if (mTetrominoGenerator != null)
+            {
+                mTetrominoGenerator.Dispose();
+            }
         }
 
         private void TetrominoIdleFrame()
