@@ -38,7 +38,7 @@ Animator:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1366916908724082}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 23523a64e966fb748855b9588b8d362a, type: 2}
   m_CullingMode: 0
@@ -59,6 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06a5bcff8fb8ab64c9d81d7a4fd4d5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Enabled: 1
   TransitionAnimator: {fileID: 95139683006704862}
   TransitionImage: {fileID: 114965358454082640}
 --- !u!114 &114965358454082640

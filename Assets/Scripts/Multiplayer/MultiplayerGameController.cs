@@ -7,7 +7,6 @@ using Assets.Scripts.Utils;
 
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.Multiplayer
 {
@@ -26,6 +25,7 @@ namespace Assets.Scripts.Multiplayer
         public GameObject ClearParticlePrefab;
         public GameObject ClearParticleParent;
         public GameObject LocalGameArea;
+        public Animator ConnectingTextAnimator;
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
         public float HoldScale = 0.25f;
@@ -150,6 +150,8 @@ namespace Assets.Scripts.Multiplayer
             RemoteGameGrid.SeedGenerator(info.GeneratorSeed);
             LocalGameGrid.StartGame();
             RemoteGameGrid.StartGame();
+            ScreenTransition.Instance.Started = true;
+            ConnectingTextAnimator.SetBool("Connected", true);
         }
 
         public void OnLocalPlayerWin()

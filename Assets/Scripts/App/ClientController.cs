@@ -5,7 +5,6 @@ using Assets.Scripts.Utils;
 using Barebones.Networking;
 
 using UnityEngine.Assertions;
-using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts.App
 {
