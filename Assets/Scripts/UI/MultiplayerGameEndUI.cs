@@ -11,12 +11,24 @@ namespace Assets.Scripts.UI
         public GameObject DrawPanel;
         public MultiplayerGameController Controller;
 
-        public void ShowVictory() { }
+        public void ShowVictory()
+        {
+            VictoryPanel.SetActive(true);
+        }
 
-        public void ShowDefeat() { }
+        public void ShowDefeat()
+        {
+            DefeatPanel.SetActive(true);
+        }
 
-        public void ShowDraw() { }
+        public void ShowDraw()
+        {
+            DrawPanel.SetActive(true);
+        }
 
-        public void OnScoreScreenClick() { }
+        public void OnScoreScreenClick()
+        {
+            Controller.GotoScoreScreen();
+        }
     }
 }
