@@ -10,6 +10,7 @@ namespace Assets.Scripts.App
     {
         public Animator TransitionAnimator;
         public Image TransitionImage;
+        public bool Started = true;
 
         public static ScreenTransition Instance { get; private set; }
 
@@ -17,7 +18,16 @@ namespace Assets.Scripts.App
         {
             Assert.IsTrue(Instance == null);
             Instance = this;
+        }
+
+        public IEnumerator Start()
+        {
             TransitionImage.enabled = true;
+            while (!Started)
+            {
+                yield return null;
+            }
+            TransitionAnimator.enabled = true;
         }
 
         public void OnDestroy()
