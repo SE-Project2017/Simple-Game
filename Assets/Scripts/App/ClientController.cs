@@ -16,6 +16,7 @@ namespace Assets.Scripts.App
 
         public void Start()
         {
+            Block.StaticInit();
             MsfContext.Connection.SetHandler((short) OperationCode.GameFound, OnGameFound);
         }
 
