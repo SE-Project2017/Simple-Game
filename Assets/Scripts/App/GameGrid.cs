@@ -18,6 +18,7 @@ namespace Assets.Scripts.App
         public int DasDelay;
         public int LockDelay;
         public int ClearDelay;
+        public GameItem NextGameItem = GameItem.None;
 
         public event Action<ClearingBlocks> OnLineCleared;
         public event Action<Tetromino> OnNewTetrominoGenerated;
@@ -25,9 +26,12 @@ namespace Assets.Scripts.App
         public event Action<bool> OnHoldEnableStateChanged;
         public event Action OnNextTetrominoConsumued;
         public event Action OnGameEnd;
+        public event Action OnGameItemCreated;
+        public event Action OnTetrominoLocked;
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly List<int> mClearingLines = new List<int>();
+        private readonly List<int> mItemClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
         private GameState mState = GameState.Idle;
         private TetrominoState mTetrominoState;
@@ -36,10 +40,12 @@ namespace Assets.Scripts.App
         private int mLockingFrames;
         private int mDasDelayFrames;
         private int mClearingFrames;
+        private int mActivatingItemFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
-        private Tetromino mActiveTetromino;
-        private Tetromino mHoldTetromino;
+        private Tetromino mActiveTetromino = Tetromino.Undefined;
+        private Tetromino mHoldTetromino = Tetromino.Undefined;
+        private GameItem mActivatingItem = GameItem.None;
         private int mRow;
         private int mCol;
         private int mRotation;
@@ -56,6 +62,7 @@ namespace Assets.Scripts.App
         private readonly int[] mSpawnCols = {6, 4, 4, 4, 4, 4, 4};
 
         private const int FullGravity = 65536;
+        private const int ClearItemActivationDuration = 60;
 
         public void SeedGenerator(RandomTetrominoGenerator.Seed seed)
         {
@@ -109,6 +116,9 @@ namespace Assets.Scripts.App
                     break;
                 case TetrominoState.Clearing:
                     LineClearFrame();
+                    break;
+                case TetrominoState.AcitvatingItem:
+                    ActivatingItemFrame();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -228,7 +238,11 @@ namespace Assets.Scripts.App
             mActiveObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             foreach (var block in mActiveObject.GetComponentsInChildren<Block>())
             {
-                block.Color = block.Type.Color();
+                if (NextGameItem == GameItem.None)
+                {
+                    block.Color = block.Type.Color();
+                }
+                block.Item = NextGameItem;
             }
             mActiveObject.transform.parent = transform;
             PlaceTetromino();
@@ -237,9 +251,10 @@ namespace Assets.Scripts.App
             mGhostObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             foreach (var block in mGhostObject.GetComponentsInChildren<Block>())
             {
-                var color = block.Type.Color();
+                var color = NextGameItem == GameItem.None ? block.Type.Color() : block.Color;
                 color.a = 0.5f;
                 block.Color = color;
+                block.Item = NextGameItem;
             }
             mGhostObject.transform.parent = transform;
             mGhostObject.transform.rotation = Quaternion.AngleAxis(mRotation, Vector3.forward);
@@ -251,6 +266,15 @@ namespace Assets.Scripts.App
             }
             mAccumulatedGravity = Gravity;
             TetrominoDroppingFrame();
+            if (NextGameItem != GameItem.None)
+            {
+                RemoveItems();
+                NextGameItem = GameItem.None;
+                if (OnGameItemCreated != null)
+                {
+                    OnGameItemCreated.Invoke();
+                }
+            }
         }
 
         private void TetrominoDroppingFrame()
@@ -326,8 +350,56 @@ namespace Assets.Scripts.App
                     DestroyBlock(row, col);
                 }
             }
-            StartNewTetromino();
-            mIdleFrames = ClearEntryDelay;
+            if (mActivatingItem == GameItem.None)
+            {
+                StartNewTetromino();
+                mIdleFrames = ClearEntryDelay;
+            }
+            else
+            {
+                mTetrominoState = TetrominoState.AcitvatingItem;
+            }
+        }
+
+        private void ActivatingItemFrame()
+        {
+            --mActivatingItemFrames;
+            if (mActivatingItemFrames == 0)
+            {
+                mActivatingItem = GameItem.None;
+                StartNewTetromino();
+                mIdleFrames = 1;
+            }
+            switch (mActivatingItem)
+            {
+                case GameItem.ClearTopHalf:
+                    if (mActivatingItemFrames + 1 == ClearItemActivationDuration)
+                    {
+                        mItemClearingLines.Clear();
+                        int highestRow = HighestNonEmptyRow();
+                        if (highestRow >= 0)
+                        {
+                            int count = (20 - highestRow + 1) / 2;
+                            mItemClearingLines.AddRange(Enumerable.Range(highestRow, count));
+                        }
+                    }
+                    if (30 <= mActivatingItemFrames && mActivatingItemFrames < 40)
+                    {
+                        int col = 9 - (mActivatingItemFrames - 30);
+                        foreach (int row in mItemClearingLines)
+                        {
+                            DestroyBlock(row, col);
+                        }
+                    }
+                    break;
+                case GameItem.ClearBottomHalf:
+                    // TODO
+                    break;
+                case GameItem.None:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private void StartLocking()
@@ -363,6 +435,10 @@ namespace Assets.Scripts.App
             if (OnHoldEnableStateChanged != null)
             {
                 OnHoldEnableStateChanged.Invoke(mHoldEnabled);
+            }
+            if (OnTetrominoLocked != null)
+            {
+                OnTetrominoLocked.Invoke();
             }
         }
 
@@ -1016,6 +1092,33 @@ namespace Assets.Scripts.App
             {
                 mTetrominoState = TetrominoState.Clearing;
                 mClearingFrames = ClearDelay;
+                foreach (int row in mClearingLines)
+                {
+                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    {
+                        if (mGrid[row, col] == null)
+                        {
+                            continue;
+                        }
+                        switch (mGrid[row, col].Item)
+                        {
+                            case GameItem.ClearTopHalf:
+                                ActivateClearTopHalf();
+                                break;
+                            case GameItem.ClearBottomHalf:
+                                ActivateClearBottomHalf();
+                                break;
+                            case GameItem.None:
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                        if (mGrid[row, col].Item != GameItem.None)
+                        {
+                            RemoveItems();
+                        }
+                    }
+                }
                 if (OnLineCleared != null)
                 {
                     var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
@@ -1029,7 +1132,7 @@ namespace Assets.Scripts.App
                             valid[i, col] = !newlyLockedCells[row, col];
                         }
                     }
-                    OnLineCleared(new ClearingBlocks
+                    OnLineCleared.Invoke(new ClearingBlocks
                     {
                         Data = properties,
                         Valid = valid,
@@ -1046,6 +1149,47 @@ namespace Assets.Scripts.App
                 return true;
             }
             return false;
+        }
+
+        private void ActivateClearTopHalf()
+        {
+            mActivatingItem = GameItem.ClearTopHalf;
+            mActivatingItemFrames = ClearItemActivationDuration;
+        }
+
+        private void ActivateClearBottomHalf()
+        {
+            mActivatingItem = GameItem.ClearBottomHalf;
+            mActivatingItemFrames = ClearItemActivationDuration;
+        }
+
+        private int HighestNonEmptyRow()
+        {
+            var rowsNotEmpty = Enumerable.Range(0, mGrid.GetLength(0)).Where(row =>
+                Enumerable.Range(0, mGrid.GetLength(1)).Any(col => mGrid[row, col] != null));
+            try
+            {
+                return rowsNotEmpty.First();
+            }
+            catch (InvalidOperationException)
+            {
+                return -1;
+            }
+        }
+
+        private void RemoveItems()
+        {
+            for (int row = 0; row < mGrid.GetLength(0); ++row)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (mGrid[row, col] != null && mGrid[row, col].Item != GameItem.None)
+                    {
+                        mGrid[row, col].Item = GameItem.None;
+                        mGrid[row, col].Color = mGrid[row, col].Type.Color();
+                    }
+                }
+            }
         }
 
         private void GenerateNewTetrominos()
@@ -1232,6 +1376,7 @@ namespace Assets.Scripts.App
             Dropping,
             Locking,
             Clearing,
+            AcitvatingItem,
         }
 
         private enum DasState

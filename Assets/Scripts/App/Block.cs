@@ -3,6 +3,7 @@
 using Assets.Scripts.Utils;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Scripts.App
 {
@@ -27,6 +28,7 @@ namespace Assets.Scripts.App
 
         public GameItem Item
         {
+            get { return mItem; }
             set
             {
                 mItem = value;
@@ -40,23 +42,29 @@ namespace Assets.Scripts.App
         private SpriteRenderer mRenderer;
 
         private static bool sInitialized;
-        private static Sprite sDefaultSprite;
 
-        private static Sprite[] sItemSprites =
+        private static readonly Sprite[] sItemSprites =
             new Sprite[Enum.GetNames(typeof(GameItem)).Length - 1];
+
+        private static Sprite sDefaultSprite;
 
         public void Awake()
         {
-            if (!sInitialized)
-            {
-                StaticInit();
-            }
+            Assert.IsTrue(sInitialized);
             mRenderer = GetComponent<SpriteRenderer>();
         }
 
         public void Start()
         {
             SetupRenderer();
+        }
+
+        public void Update()
+        {
+            if (Item != GameItem.None)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
         }
 
         public static void StaticInit()
@@ -66,6 +74,11 @@ namespace Assets.Scripts.App
                 return;
             }
             sInitialized = true;
+            sDefaultSprite = Resources.Load<Sprite>("Textures/Block");
+            sItemSprites[(int) GameItem.ClearTopHalf] =
+                Resources.Load<Sprite>("Textures/BlockClearTopHalf");
+            sItemSprites[(int) GameItem.ClearBottomHalf] =
+                Resources.Load<Sprite>("Texture/BlockClearBottomHalf");
             // TODO Initialize sItemSprites
         }
 

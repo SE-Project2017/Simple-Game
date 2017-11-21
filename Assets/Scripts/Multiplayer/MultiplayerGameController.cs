@@ -7,12 +7,14 @@ using Assets.Scripts.Utils;
 
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.Multiplayer
 {
     public class MultiplayerGameController : MonoBehaviour
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
+
         public GameGrid LocalGameGrid;
         public GameGrid RemoteGameGrid;
         public MultiplayerGameEndUI GameEndUI;
@@ -26,12 +28,25 @@ namespace Assets.Scripts.Multiplayer
         public GameObject ClearParticleParent;
         public GameObject LocalGameArea;
         public Animator ConnectingTextAnimator;
+        public Image ItemProgress;
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
         public float HoldScale = 0.25f;
         public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
 
         private const int BlockTransferDelay = 40;
+        private const int MaxItemCharge = 20;
+        private const int ItemChargeRate = 2;
+
+        private int LocalItemCharge
+        {
+            get { return mLocalItemCharge; }
+            set
+            {
+                mLocalItemCharge = value;
+                ItemProgress.fillAmount = (float) LocalItemCharge / MaxItemCharge;
+            }
+        }
 
         private Tetromino mHoldTetromino;
         private GameObject mNext;
@@ -42,6 +57,8 @@ namespace Assets.Scripts.Multiplayer
         private bool mDisplayHold;
         private int mLocalFrameCount;
         private int mRemoteFrameCount;
+        private int mLocalItemCharge;
+        private int mRemoteItemCharge;
         private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
         private readonly ParticleSystem[,] mClearParticles = new ParticleSystem[20, 10];
 
@@ -99,6 +116,25 @@ namespace Assets.Scripts.Multiplayer
                 AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + BlockTransferDelay,
                     blocks);
             };
+            LocalGameGrid.OnTetrominoLocked += () =>
+            {
+                LocalItemCharge += ItemChargeRate;
+                if (LocalItemCharge >= MaxItemCharge)
+                {
+                    LocalGameGrid.NextGameItem = GameItem.ClearTopHalf;
+                }
+            };
+            RemoteGameGrid.OnTetrominoLocked += () =>
+            {
+                mRemoteItemCharge += ItemChargeRate;
+                if (mRemoteItemCharge >= MaxItemCharge)
+                {
+                    RemoteGameGrid.NextGameItem = GameItem.ClearTopHalf;
+                }
+            };
+            LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
+            RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
+            LocalItemCharge = 0;
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
             for (int row = 0; row < 20; ++row)
