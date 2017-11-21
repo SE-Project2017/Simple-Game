@@ -124,7 +124,7 @@ namespace Assets.Scripts.App
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            if (mTetrominoState != TetrominoState.AcitvatingItem)
+            if (mTetrominoState != TetrominoState.AcitvatingItem && mPendingAddBlocks.Count > 0)
             {
                 var blocks = mPendingAddBlocks.Dequeue();
                 AddBlocks(blocks);
