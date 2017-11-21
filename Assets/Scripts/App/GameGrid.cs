@@ -33,6 +33,7 @@ namespace Assets.Scripts.App
         private readonly List<int> mClearingLines = new List<int>();
         private readonly List<int> mItemClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
+        private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
         private GameState mState = GameState.Idle;
         private TetrominoState mTetrominoState;
         private DasState mDasState;
@@ -123,11 +124,21 @@ namespace Assets.Scripts.App
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            if (mTetrominoState != TetrominoState.AcitvatingItem)
+            {
+                var blocks = mPendingAddBlocks.Dequeue();
+                AddBlocks(blocks);
+            }
             return mState != GameState.Running;
         }
 
         public void AddBlocks(ClearingBlocks blocks)
         {
+            if (mTetrominoState == TetrominoState.AcitvatingItem)
+            {
+                mPendingAddBlocks.Enqueue(blocks);
+                return;
+            }
             var properties = blocks.Data;
             var valid = blocks.Valid;
             bool endGame = false;
