@@ -1,4 +1,6 @@
-﻿using Assets.Scripts.Msf;
+﻿using System.Collections;
+
+using Assets.Scripts.Msf;
 using Assets.Scripts.Utils;
 
 using UnityEngine;
@@ -10,25 +12,63 @@ namespace Assets.Scripts.UI
     {
         public InputField Username;
         public InputField Password;
+        public Text StatusText;
 
         public void OnLoginClick()
         {
-            MsfContext.Client.Auth.LogIn(Username.text, Password.text, (info, error) =>
+            StartCoroutine(Login());
+        }
+
+        public void OnRegisterClick()
+        {
+            StartCoroutine(Register());
+        }
+
+        private IEnumerator Login()
+        {
+            StatusText.text = "Connecting...";
+            StatusText.color = Color.white;
+            while (!MsfContext.Connection.IsConnected)
+            {
+                yield return null;
+            }
+            StatusText.text = "Logging in...";
+            StatusText.color = Color.white;
+            MsfContext.Client.Auth.Login(Username.text, Password.text, (info, error) =>
             {
                 if (info != null)
                 {
                     StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
                 }
+                else
+                {
+                    StatusText.text = error;
+                    StatusText.color = Color.red;
+                }
             });
         }
 
-        public void OnRegisterClick()
+        private IEnumerator Register()
         {
+            StatusText.text = "Connecting...";
+            StatusText.color = Color.white;
+            while (!MsfContext.Connection.IsConnected)
+            {
+                yield return null;
+            }
+            StatusText.text = "Registering...";
+            StatusText.color = Color.white;
             MsfContext.Client.Auth.Register(Username.text, Password.text, (successful, error) =>
             {
-                if (!successful)
+                if (successful)
                 {
-                    Debug.Log(error);
+                    StatusText.text = "Registered successfully";
+                    StatusText.color = Color.white;
+                }
+                else
+                {
+                    StatusText.text = error;
+                    StatusText.color = Color.red;
                 }
             });
         }
