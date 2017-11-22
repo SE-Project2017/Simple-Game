@@ -136,10 +136,10 @@ namespace Assets.Scripts.Multiplayer
             };
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
             RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
-            LocalGameGrid.OnShotGunActivated += () =>
-                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.ShotGun);
-            RemoteGameGrid.OnShotGunActivated += () =>
-                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.ShotGun);
+            LocalGameGrid.OnShotgunActivated += () =>
+                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.Shotgun);
+            RemoteGameGrid.OnShotgunActivated += () =>
+                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.Shotgun);
             LocalItemCharge = 0;
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
@@ -174,8 +174,8 @@ namespace Assets.Scripts.Multiplayer
             {
                 switch (mLocalPendingItems[frameCount])
                 {
-                    case GameItem.ShotGun:
-                        LocalGameGrid.TargetedShotGun();
+                    case GameItem.Shotgun:
+                        LocalGameGrid.TargetedShotgun();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -198,8 +198,8 @@ namespace Assets.Scripts.Multiplayer
             {
                 switch (mRemotePendingItems[frameCount])
                 {
-                    case GameItem.ShotGun:
-                        RemoteGameGrid.TargetedShotGun();
+                    case GameItem.Shotgun:
+                        RemoteGameGrid.TargetedShotgun();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

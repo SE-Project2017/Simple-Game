@@ -30,7 +30,7 @@ namespace Assets.Scripts.App
         public event Action OnGameEnd;
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
-        public event Action OnShotGunActivated;
+        public event Action OnShotgunActivated;
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
@@ -72,7 +72,7 @@ namespace Assets.Scripts.App
 
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
-        private const int ShotGunActivationDuration = 150;
+        private const int ShotgunActivationDuration = 150;
 
         public void Awake()
         {
@@ -237,20 +237,20 @@ namespace Assets.Scripts.App
 
         public void GenerateNextItem()
         {
-            mNextGameItem = GameItem.ShotGun;
+            mNextGameItem = GameItem.ClearBottomHalf;
         }
 
-        public void TargetedShotGun()
+        public void TargetedShotgun()
         {
             if (mTetrominoState == TetrominoState.Clearing)
             {
-                mPendingTargetedItems.Enqueue(GameItem.ShotGun);
+                mPendingTargetedItems.Enqueue(GameItem.Shotgun);
                 return;
             }
             DestroyActiveTetromino();
-            mActivatingItem = GameItem.ShotGun;
+            mActivatingItem = GameItem.Shotgun;
             mTetrominoState = TetrominoState.AcitvatingItem;
-            mActivatingItemFrames = ShotGunActivationDuration;
+            mActivatingItemFrames = ShotgunActivationDuration;
         }
 
         private void TetrominoIdleFrame()
@@ -422,8 +422,8 @@ namespace Assets.Scripts.App
                 case GameItem.ClearEven:
                     ClearEvenFrame();
                     break;
-                case GameItem.ShotGun:
-                    ShotGunFrame();
+                case GameItem.Shotgun:
+                    ShotgunFrame();
                     break;
                 case GameItem.None:
                     break;
@@ -520,9 +520,9 @@ namespace Assets.Scripts.App
             }
         }
 
-        private void ShotGunFrame()
+        private void ShotgunFrame()
         {
-            if (mActivatingItemFrames + 20 == ShotGunActivationDuration)
+            if (mActivatingItemFrames + 20 == ShotgunActivationDuration)
             {
                 mExplosionEffect.SetTrigger("Play");
             }
@@ -1199,8 +1199,8 @@ namespace Assets.Scripts.App
             {
                 switch (mPendingTargetedItems.Dequeue())
                 {
-                    case GameItem.ShotGun:
-                        TargetedShotGun();
+                    case GameItem.Shotgun:
+                        TargetedShotgun();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -1268,10 +1268,10 @@ namespace Assets.Scripts.App
                         case GameItem.ClearEven:
                             ActivateClearEven();
                             break;
-                        case GameItem.ShotGun:
-                            if (OnShotGunActivated != null)
+                        case GameItem.Shotgun:
+                            if (OnShotgunActivated != null)
                             {
-                                OnShotGunActivated.Invoke();
+                                OnShotgunActivated.Invoke();
                             }
                             break;
                         case GameItem.None:
