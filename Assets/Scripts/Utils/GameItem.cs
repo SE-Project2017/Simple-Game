@@ -5,6 +5,7 @@
         ClearTopHalf,
         ClearBottomHalf,
         ClearEven,
+        ShotGun,
         None = -1,
     }
 }

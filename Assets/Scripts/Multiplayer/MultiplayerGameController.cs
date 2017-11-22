@@ -34,7 +34,7 @@ namespace Assets.Scripts.Multiplayer
         public float HoldScale = 0.25f;
         public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
 
-        private const int BlockTransferDelay = 40;
+        private const int InteractionDelay = 40;
         private const int MaxItemCharge = 20;
         private const int ItemChargeRate = 2;
 
@@ -65,8 +65,14 @@ namespace Assets.Scripts.Multiplayer
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
 
+        private readonly Dictionary<int, GameItem> mLocalPendingItems =
+            new Dictionary<int, GameItem>();
+
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mRemotePendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
+
+        private readonly Dictionary<int, GameItem> mRemotePendingItems =
+            new Dictionary<int, GameItem>();
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
@@ -84,26 +90,22 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnNextTetrominoConsumued += NextTetrominoConsumed;
             LocalGameGrid.OnHoldTetrominoChanged += HoldTetrominoChanged;
             LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
+            LocalGameGrid.OnPlayClearEffect += (row, col, block) =>
+            {
+                var main = mClearParticles[row, col].main;
+                var color = block.Type.Color();
+                color.a = 0.3f;
+                main.startColor = color;
+                mClearParticles[row, col].Play();
+            };
             LocalGameGrid.OnLineCleared += blocks =>
             {
-                for (int i = 0; i < blocks.Data.GetLength(0); ++i)
-                {
-                    int row = blocks.Rows[i];
-                    for (int col = 0; col < 10; ++col)
-                    {
-                        var main = mClearParticles[row, col].main;
-                        var color = blocks.Data[i, col].Type.Color();
-                        color.a = 0.3f;
-                        main.startColor = color;
-                        mClearParticles[row, col].Play();
-                    }
-                }
                 if (blocks.Data.GetLength(0) <= 1)
                 {
                     return;
                 }
-                Assert.IsTrue(mLocalFrameCount + BlockTransferDelay > mRemoteFrameCount);
-                AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + BlockTransferDelay,
+                Assert.IsTrue(mLocalFrameCount + InteractionDelay > mRemoteFrameCount);
+                AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
                     blocks);
             };
             RemoteGameGrid.OnLineCleared += blocks =>
@@ -112,8 +114,8 @@ namespace Assets.Scripts.Multiplayer
                 {
                     return;
                 }
-                Assert.IsTrue(mRemoteFrameCount + BlockTransferDelay > mLocalFrameCount);
-                AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + BlockTransferDelay,
+                Assert.IsTrue(mRemoteFrameCount + InteractionDelay > mLocalFrameCount);
+                AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
                     blocks);
             };
             LocalGameGrid.OnTetrominoLocked += () =>
@@ -121,7 +123,7 @@ namespace Assets.Scripts.Multiplayer
                 LocalItemCharge += ItemChargeRate;
                 if (LocalItemCharge >= MaxItemCharge)
                 {
-                    LocalGameGrid.NextGameItem = GameItem.ClearEven;
+                    LocalGameGrid.NextGameItem = GameItem.ShotGun;
                 }
             };
             RemoteGameGrid.OnTetrominoLocked += () =>
@@ -129,11 +131,15 @@ namespace Assets.Scripts.Multiplayer
                 mRemoteItemCharge += ItemChargeRate;
                 if (mRemoteItemCharge >= MaxItemCharge)
                 {
-                    RemoteGameGrid.NextGameItem = GameItem.ClearEven;
+                    RemoteGameGrid.NextGameItem = GameItem.ShotGun;
                 }
             };
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
             RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
+            LocalGameGrid.OnShotGunActivated += () =>
+                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.ShotGun);
+            RemoteGameGrid.OnShotGunActivated += () =>
+                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.ShotGun);
             LocalItemCharge = 0;
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
@@ -164,6 +170,18 @@ namespace Assets.Scripts.Multiplayer
                 LocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
                 mLocalPendingBlocks.Remove(frameCount);
             }
+            if (mLocalPendingItems.ContainsKey(frameCount))
+            {
+                switch (mLocalPendingItems[frameCount])
+                {
+                    case GameItem.ShotGun:
+                        LocalGameGrid.TargetedShotGun();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                mLocalPendingItems.Remove(frameCount);
+            }
             return UpdateFrame(playerEvents, LocalGameGrid);
         }
 
@@ -176,6 +194,18 @@ namespace Assets.Scripts.Multiplayer
                 RemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
                 mRemotePendingBlocks.Remove(frameCount);
             }
+            if (mRemotePendingItems.ContainsKey(frameCount))
+            {
+                switch (mRemotePendingItems[frameCount])
+                {
+                    case GameItem.ShotGun:
+                        RemoteGameGrid.TargetedShotGun();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                mRemotePendingItems.Remove(frameCount);
+            }
             UpdateFrame(playerEvents, RemoteGameGrid);
         }
 
@@ -184,6 +214,19 @@ namespace Assets.Scripts.Multiplayer
             mState = State.Playing;
             LocalGameGrid.SeedGenerator(info.GeneratorSeed);
             RemoteGameGrid.SeedGenerator(info.GeneratorSeed);
+            switch (LocalPlayerType)
+            {
+                case ServerController.PlayerType.PlayerA:
+                    LocalGameGrid.SeedRandom(info.PlayerASeed);
+                    RemoteGameGrid.SeedRandom(info.PlayerBSeed);
+                    break;
+                case ServerController.PlayerType.PlayerB:
+                    LocalGameGrid.SeedRandom(info.PlayerBSeed);
+                    RemoteGameGrid.SeedRandom(info.PlayerASeed);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             LocalGameGrid.StartGame();
             RemoteGameGrid.StartGame();
             ScreenTransition.Instance.Started = true;

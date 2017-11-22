@@ -137,6 +137,8 @@ MonoBehaviour:
     type: 2}
   ItemClearEffectPrefab: {fileID: 1468382008597240, guid: ef2ad9f9fa497c8468f3560226e97ee6,
     type: 2}
+  ExplosionEffectPrefab: {fileID: 1154946627088372, guid: 05853e28f1c8c81459aa49801eb1af72,
+    type: 2}
   Gravity: 1024
   EntryDelay: 25
   ClearEntryDelay: 25

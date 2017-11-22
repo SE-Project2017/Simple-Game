@@ -21,7 +21,13 @@ namespace Assets.Scripts.Multiplayer
         private State mState = State.Connecting;
         private NetworkPlayerController mPlayerA;
         private NetworkPlayerController mPlayerB;
-        private readonly GameInfo mGameInfo = new GameInfo {GeneratorSeed = NewGeneratorSeed()};
+
+        private readonly GameInfo mGameInfo = new GameInfo
+        {
+            GeneratorSeed = NewGeneratorSeed(),
+            PlayerASeed = NewGeneratorSeed(),
+            PlayerBSeed = NewGeneratorSeed(),
+        };
 
         public IEnumerator Start()
         {
@@ -142,7 +148,7 @@ namespace Assets.Scripts.Multiplayer
             Application.Quit();
         }
 
-        private static RandomTetrominoGenerator.Seed NewGeneratorSeed()
+        private static ulong[] NewGeneratorSeed()
         {
             var provider = new RNGCryptoServiceProvider();
             var bytes = new byte[2496];
@@ -152,7 +158,7 @@ namespace Assets.Scripts.Multiplayer
             {
                 seed[i] = BitConverter.ToUInt64(bytes, i * 8);
             }
-            return new RandomTetrominoGenerator.Seed {Data = seed};
+            return seed;
         }
 
         public struct PlayerInfo
@@ -163,7 +169,9 @@ namespace Assets.Scripts.Multiplayer
 
         public struct GameInfo
         {
-            public RandomTetrominoGenerator.Seed GeneratorSeed;
+            public ulong[] GeneratorSeed;
+            public ulong[] PlayerASeed;
+            public ulong[] PlayerBSeed;
         }
 
         public enum PlayerType

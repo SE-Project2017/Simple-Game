@@ -78,7 +78,7 @@ namespace Assets.Scripts.App
                 Resources.Load<Sprite>("Textures/BlockClearBottomHalf");
             sItemSprites[(int) GameItem.ClearEven] =
                 Resources.Load<Sprite>("Textures/BlockClearEven");
-            // TODO Initialize sItemSprites
+            sItemSprites[(int) GameItem.ShotGun] = Resources.Load<Sprite>("Textures/BlockShotGun");
         }
 
         private void SetupRenderer()

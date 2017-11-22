@@ -13,6 +13,7 @@ namespace Assets.Scripts.App
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
         public GameObject ItemClearEffectPrefab;
+        public GameObject ExplosionEffectPrefab;
         public int Gravity;
         public int EntryDelay;
         public int ClearEntryDelay;
@@ -25,15 +26,18 @@ namespace Assets.Scripts.App
         public event Action<Tetromino> OnNewTetrominoGenerated;
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<bool> OnHoldEnableStateChanged;
+        public event Action<int, int, Block.Data> OnPlayClearEffect;
         public event Action OnNextTetrominoConsumued;
         public event Action OnGameEnd;
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
+        public event Action OnShotGunActivated;
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
         private readonly List<int> mClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
+        private readonly Queue<GameItem> mPendingTargetedItems = new Queue<GameItem>();
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
         private GameState mState = GameState.Idle;
         private TetrominoState mTetrominoState;
@@ -45,6 +49,7 @@ namespace Assets.Scripts.App
         private int mActivatingItemFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
+        private Animator mExplosionEffect;
         private Tetromino mActiveTetromino = Tetromino.Undefined;
         private Tetromino mHoldTetromino = Tetromino.Undefined;
         private GameItem mActivatingItem = GameItem.None;
@@ -60,12 +65,14 @@ namespace Assets.Scripts.App
         private bool mHoldEnabled = true;
         private bool mInitialHold = true;
         private IEnumerator<Tetromino> mTetrominoGenerator;
+        private MersenneTwister mRandom;
 
         private readonly int[] mSpawnRows = {0, 1, 0, 0, 0, 0, 0};
         private readonly int[] mSpawnCols = {6, 4, 4, 4, 4, 4, 4};
 
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
+        private const int ShotGunActivationDuration = 150;
 
         public void Awake()
         {
@@ -75,15 +82,38 @@ namespace Assets.Scripts.App
                     .GetComponent<Animator>();
                 mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
             }
+            mExplosionEffect =
+                Instantiate(ExplosionEffectPrefab, transform).GetComponent<Animator>();
+            mExplosionEffect.transform.localPosition = new Vector3(0, 0, -2);
         }
 
-        public void SeedGenerator(RandomTetrominoGenerator.Seed seed)
+        public void OnDestroy()
+        {
+            if (mTetrominoGenerator != null)
+            {
+                mTetrominoGenerator.Dispose();
+            }
+        }
+
+        public void SeedGenerator(ulong[] seed)
         {
             if (mTetrominoGenerator != null)
             {
                 mTetrominoGenerator.Dispose();
             }
             mTetrominoGenerator = new RandomTetrominoGenerator(seed).Generate();
+        }
+
+        public void SeedRandom(ulong[] seed)
+        {
+            if (mRandom == null)
+            {
+                mRandom = new MersenneTwister(seed);
+            }
+            else
+            {
+                mRandom.Seed(seed);
+            }
         }
 
         public void StartGame()
@@ -205,12 +235,17 @@ namespace Assets.Scripts.App
             }
         }
 
-        public void OnDestroy()
+        public void TargetedShotGun()
         {
-            if (mTetrominoGenerator != null)
+            if (mTetrominoState == TetrominoState.Clearing)
             {
-                mTetrominoGenerator.Dispose();
+                mPendingTargetedItems.Enqueue(GameItem.ShotGun);
+                return;
             }
+            DestroyActiveTetromino();
+            mActivatingItem = GameItem.ShotGun;
+            mTetrominoState = TetrominoState.AcitvatingItem;
+            mActivatingItemFrames = ShotGunActivationDuration;
         }
 
         private void TetrominoIdleFrame()
@@ -382,6 +417,9 @@ namespace Assets.Scripts.App
                 case GameItem.ClearEven:
                     ClearEvenFrame();
                     break;
+                case GameItem.ShotGun:
+                    ShotGunFrame();
+                    break;
                 case GameItem.None:
                     break;
                 default:
@@ -473,6 +511,32 @@ namespace Assets.Scripts.App
                 {
                     int move = (mGrid.GetLength(0) - row) / 2;
                     MoveBlockRow(row, row + move);
+                }
+            }
+        }
+
+        private void ShotGunFrame()
+        {
+            if (mActivatingItemFrames + 20 == ShotGunActivationDuration)
+            {
+                mExplosionEffect.SetTrigger("Play");
+            }
+            else if (mActivatingItemFrames == 50)
+            {
+                for (int row = 0; row < mGrid.GetLength(0); ++row)
+                {
+                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    {
+                        if (mGrid[row, col] == null || mRandom.Range(0, 10) != 0)
+                        {
+                            continue;
+                        }
+                        if (OnPlayClearEffect != null)
+                        {
+                            OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
+                        }
+                        DestroyBlock(row, col);
+                    }
                 }
             }
         }
@@ -1126,6 +1190,17 @@ namespace Assets.Scripts.App
         {
             mTetrominoState = TetrominoState.Idle;
             mIdleFrames = EntryDelay;
+            if (mPendingTargetedItems.Count > 0)
+            {
+                switch (mPendingTargetedItems.Dequeue())
+                {
+                    case GameItem.ShotGun:
+                        TargetedShotGun();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
         }
 
         private void TryUnlockTetromino()
@@ -1188,6 +1263,12 @@ namespace Assets.Scripts.App
                         case GameItem.ClearEven:
                             ActivateClearEven();
                             break;
+                        case GameItem.ShotGun:
+                            if (OnShotGunActivated != null)
+                            {
+                                OnShotGunActivated.Invoke();
+                            }
+                            break;
                         case GameItem.None:
                             break;
                         default:
@@ -1210,13 +1291,16 @@ namespace Assets.Scripts.App
                     {
                         properties[i, col] = mGrid[row, col].Properties;
                         valid[i, col] = !newlyLockedCells[row, col];
+                        if (OnPlayClearEffect != null)
+                        {
+                            OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
+                        }
                     }
                 }
                 OnLineCleared.Invoke(new ClearingBlocks
                 {
                     Data = properties,
                     Valid = valid,
-                    Rows = mClearingLines.ToArray()
                 });
             }
             foreach (int row in mClearingLines)
@@ -1426,7 +1510,6 @@ namespace Assets.Scripts.App
         {
             public Block.Data[,] Data;
             public bool[,] Valid;
-            public int[] Rows;
 
             public ClearingBlocks[] SliceAndReverse()
             {
@@ -1442,7 +1525,6 @@ namespace Assets.Scripts.App
                         result[i].Data[0, col] = Data[rows - 1 - i, col];
                         result[i].Valid[0, col] = Valid[rows - 1 - i, col];
                     }
-                    result[i].Rows = new[] {Rows[result.Length - 1 - i]};
                 }
                 return result;
             }
@@ -1453,7 +1535,6 @@ namespace Assets.Scripts.App
                 int cols = Data.GetLength(1);
                 var newData = new Block.Data[rows, cols];
                 var newValid = new bool[rows, cols];
-                var newRows = new int[rows];
                 int oldRows = Data.GetLength(0);
                 for (int row = 0; row < rows; ++row)
                 {
@@ -1463,19 +1544,16 @@ namespace Assets.Scripts.App
                         {
                             newData[row, col] = Data[row, col];
                             newValid[row, col] = Valid[row, col];
-                            newRows[row] = Rows[row];
                         }
                         else
                         {
                             newData[row, col] = other.Data[row - oldRows, col];
                             newValid[row, col] = other.Valid[row - oldRows, col];
-                            newRows[row] = other.Rows[row - oldRows];
                         }
                     }
                 }
                 Data = newData;
                 Valid = newValid;
-                Rows = newRows;
             }
         }
 

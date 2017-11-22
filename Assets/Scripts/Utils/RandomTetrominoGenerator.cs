@@ -22,9 +22,9 @@ namespace Assets.Scripts.Utils
             mRandomNumberGenerator = new MersenneTwister(seed);
         }
 
-        public RandomTetrominoGenerator(Seed seed)
+        public RandomTetrominoGenerator(ulong[] seed)
         {
-            mRandomNumberGenerator = new MersenneTwister(seed.Data);
+            mRandomNumberGenerator = new MersenneTwister(seed);
         }
 
         public IEnumerator<Tetromino> Generate()
@@ -105,11 +105,6 @@ namespace Assets.Scripts.Utils
                 yield return tetromino;
             }
             // ReSharper disable once IteratorNeverReturns
-        }
-
-        public struct Seed
-        {
-            public ulong[] Data;
         }
     }
 }
