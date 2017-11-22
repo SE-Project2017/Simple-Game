@@ -12,6 +12,7 @@ namespace Assets.Scripts.App
     {
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
+        public GameObject ItemClearEffectPrefab;
         public int Gravity;
         public int EntryDelay;
         public int ClearEntryDelay;
@@ -30,6 +31,7 @@ namespace Assets.Scripts.App
         public event Action OnTetrominoLocked;
 
         private readonly Block[,] mGrid = new Block[20, 10];
+        private readonly Animator[] mItemClearEffects = new Animator[20];
         private readonly List<int> mClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
@@ -64,6 +66,16 @@ namespace Assets.Scripts.App
 
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
+
+        public void Awake()
+        {
+            for (int row = 0; row < mItemClearEffects.Length; ++row)
+            {
+                mItemClearEffects[row] = Instantiate(ItemClearEffectPrefab, transform)
+                    .GetComponent<Animator>();
+                mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
+            }
+        }
 
         public void SeedGenerator(RandomTetrominoGenerator.Seed seed)
         {
@@ -394,6 +406,10 @@ namespace Assets.Scripts.App
                     {
                         DestroyBlock(row, col);
                     }
+                    if (col == 0)
+                    {
+                        mItemClearEffects[row].SetTrigger("Play");
+                    }
                 }
             }
         }
@@ -414,6 +430,10 @@ namespace Assets.Scripts.App
                     if (0 <= col && col < mGrid.GetLength(1))
                     {
                         DestroyBlock(row, col);
+                    }
+                    if (col == 0)
+                    {
+                        mItemClearEffects[row].SetTrigger("Play");
                     }
                 }
             }
@@ -440,6 +460,10 @@ namespace Assets.Scripts.App
                     if (0 <= col && col < mGrid.GetLength(1))
                     {
                         DestroyBlock(row, col);
+                    }
+                    if (col == 0)
+                    {
+                        mItemClearEffects[row].SetTrigger("Play");
                     }
                 }
             }

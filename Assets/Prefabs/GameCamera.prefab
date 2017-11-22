@@ -135,20 +135,15 @@ MonoBehaviour:
   - {fileID: 1200248959963566, guid: 91bb2f6d5d278a04da9fd7478dacc8d7, type: 2}
   BlockPrefab: {fileID: 1867223170100994, guid: 2fd8b6dac95d036418127eff6acf5b0c,
     type: 2}
-  TetrominoColors:
-  - {r: 1, g: 0.2509804, b: 0, a: 1}
-  - {r: 1, g: 1, b: 0, a: 1}
-  - {r: 0, g: 0.98039216, b: 1, a: 1}
-  - {r: 0, g: 0, b: 1, a: 1}
-  - {r: 1, g: 0.68235296, b: 0, a: 1}
-  - {r: 1, g: 0.2784314, b: 0.99607843, a: 1}
-  - {r: 0, g: 0.8666667, b: 0, a: 1}
+  ItemClearEffectPrefab: {fileID: 1468382008597240, guid: ef2ad9f9fa497c8468f3560226e97ee6,
+    type: 2}
   Gravity: 1024
   EntryDelay: 25
   ClearEntryDelay: 25
   DasDelay: 14
   LockDelay: 30
   ClearDelay: 40
+  NextGameItem: -1
 --- !u!124 &124608301828910280
 Behaviour:
   m_ObjectHideFlags: 1
