@@ -123,7 +123,7 @@ namespace Assets.Scripts.Multiplayer
                 LocalItemCharge += ItemChargeRate;
                 if (LocalItemCharge >= MaxItemCharge)
                 {
-                    LocalGameGrid.NextGameItem = GameItem.ShotGun;
+                    LocalGameGrid.GenerateNextItem();
                 }
             };
             RemoteGameGrid.OnTetrominoLocked += () =>
@@ -131,7 +131,7 @@ namespace Assets.Scripts.Multiplayer
                 mRemoteItemCharge += ItemChargeRate;
                 if (mRemoteItemCharge >= MaxItemCharge)
                 {
-                    RemoteGameGrid.NextGameItem = GameItem.ShotGun;
+                    RemoteGameGrid.GenerateNextItem();
                 }
             };
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;

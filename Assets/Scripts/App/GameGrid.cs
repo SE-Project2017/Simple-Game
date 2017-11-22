@@ -20,7 +20,6 @@ namespace Assets.Scripts.App
         public int DasDelay;
         public int LockDelay;
         public int ClearDelay;
-        public GameItem NextGameItem = GameItem.None;
 
         public event Action<ClearingBlocks> OnLineCleared;
         public event Action<Tetromino> OnNewTetrominoGenerated;
@@ -53,6 +52,7 @@ namespace Assets.Scripts.App
         private Tetromino mActiveTetromino = Tetromino.Undefined;
         private Tetromino mHoldTetromino = Tetromino.Undefined;
         private GameItem mActivatingItem = GameItem.None;
+        private GameItem mNextGameItem = GameItem.None;
         private int mRow;
         private int mCol;
         private int mRotation;
@@ -235,6 +235,11 @@ namespace Assets.Scripts.App
             }
         }
 
+        public void GenerateNextItem()
+        {
+            mNextGameItem = GameItem.ShotGun;
+        }
+
         public void TargetedShotGun()
         {
             if (mTetrominoState == TetrominoState.Clearing)
@@ -284,11 +289,11 @@ namespace Assets.Scripts.App
             mActiveObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             foreach (var block in mActiveObject.GetComponentsInChildren<Block>())
             {
-                if (NextGameItem == GameItem.None)
+                if (mNextGameItem == GameItem.None)
                 {
                     block.Color = block.Type.Color();
                 }
-                block.Item = NextGameItem;
+                block.Item = mNextGameItem;
             }
             mActiveObject.transform.parent = transform;
             PlaceTetromino();
@@ -297,10 +302,10 @@ namespace Assets.Scripts.App
             mGhostObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             foreach (var block in mGhostObject.GetComponentsInChildren<Block>())
             {
-                var color = NextGameItem == GameItem.None ? block.Type.Color() : block.Color;
+                var color = mNextGameItem == GameItem.None ? block.Type.Color() : block.Color;
                 color.a = 0.5f;
                 block.Color = color;
-                block.Item = NextGameItem;
+                block.Item = mNextGameItem;
             }
             mGhostObject.transform.parent = transform;
             mGhostObject.transform.rotation = Quaternion.AngleAxis(mRotation, Vector3.forward);
@@ -312,10 +317,10 @@ namespace Assets.Scripts.App
             }
             mAccumulatedGravity = Gravity;
             TetrominoDroppingFrame();
-            if (NextGameItem != GameItem.None)
+            if (mNextGameItem != GameItem.None)
             {
                 RemoveItems();
-                NextGameItem = GameItem.None;
+                mNextGameItem = GameItem.None;
                 if (OnGameItemCreated != null)
                 {
                     OnGameItemCreated.Invoke();
