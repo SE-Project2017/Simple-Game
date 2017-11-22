@@ -31,7 +31,6 @@ namespace Assets.Scripts.App
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly List<int> mClearingLines = new List<int>();
-        private readonly List<int> mItemClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
         private GameState mState = GameState.Idle;
@@ -51,6 +50,7 @@ namespace Assets.Scripts.App
         private int mCol;
         private int mRotation;
         private int mAccumulatedGravity;
+        private int mItemClearingHighestRow;
         private bool mDownPressed;
         private bool mRotateLeftPressed;
         private bool mRotateRightPressed;
@@ -154,19 +154,7 @@ namespace Assets.Scripts.App
                     }
                 }
             }
-            for (int row = lines; row < mGrid.GetLength(0); ++row)
-            {
-                for (int col = 0; col < mGrid.GetLength(1); ++col)
-                {
-                    if (mGrid[row, col] != null)
-                    {
-                        mGrid[row - lines, col] = mGrid[row, col];
-                        mGrid[row, col].transform.localPosition =
-                            RowColToPosition(row - lines, col);
-                        mGrid[row, col] = null;
-                    }
-                }
-            }
+            MoveBlockRows(lines, mGrid.GetLength(0), lines, true);
             for (int i = 0; i < lines; ++i)
             {
                 int row = mGrid.GetLength(0) - lines + i;
@@ -341,17 +329,7 @@ namespace Assets.Scripts.App
             {
                 if (rowsToMove[row] > 0)
                 {
-                    for (int col = 0; col < mGrid.GetLength(1); ++col)
-                    {
-                        if (mGrid[row, col] == null)
-                        {
-                            continue;
-                        }
-                        mGrid[row, col].transform.localPosition =
-                            RowColToPosition(row + rowsToMove[row], col);
-                        mGrid[row + rowsToMove[row], col] = mGrid[row, col];
-                        mGrid[row, col] = null;
-                    }
+                    MoveBlockRow(row, row + rowsToMove[row]);
                 }
             }
             for (int row = 0; row < rowsToMove[0]; ++row)
@@ -379,37 +357,99 @@ namespace Assets.Scripts.App
             {
                 mActivatingItem = GameItem.None;
                 StartNewTetromino();
-                mIdleFrames = 1;
+                return;
             }
             switch (mActivatingItem)
             {
                 case GameItem.ClearTopHalf:
-                    if (mActivatingItemFrames + 1 == ClearItemActivationDuration)
-                    {
-                        mItemClearingLines.Clear();
-                        int highestRow = HighestNonEmptyRow();
-                        if (highestRow >= 0)
-                        {
-                            int count = (20 - highestRow + 1) / 2;
-                            mItemClearingLines.AddRange(Enumerable.Range(highestRow, count));
-                        }
-                    }
-                    if (30 <= mActivatingItemFrames && mActivatingItemFrames < 40)
-                    {
-                        int col = 9 - (mActivatingItemFrames - 30);
-                        foreach (int row in mItemClearingLines)
-                        {
-                            DestroyBlock(row, col);
-                        }
-                    }
+                    ClearTopHalfFrame();
                     break;
                 case GameItem.ClearBottomHalf:
-                    // TODO
+                    ClearBottomHalfFrame();
+                    break;
+                case GameItem.ClearEven:
+                    ClearEvenFrame();
                     break;
                 case GameItem.None:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void ClearTopHalfFrame()
+        {
+            if (mActivatingItemFrames + 1 == ClearItemActivationDuration)
+            {
+                mItemClearingHighestRow = HighestNonEmptyRow();
+            }
+            if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
+            {
+                int count = (20 - mItemClearingHighestRow + 1) / 2;
+                for (int i = 0; i < count; ++i)
+                {
+                    int row = mItemClearingHighestRow + i;
+                    int col = 9 - (mActivatingItemFrames - 20) + 10 - i / 2;
+                    if (0 <= col && col < mGrid.GetLength(1))
+                    {
+                        DestroyBlock(row, col);
+                    }
+                }
+            }
+        }
+
+        private void ClearBottomHalfFrame()
+        {
+            if (mActivatingItemFrames + 1 == ClearItemActivationDuration)
+            {
+                mItemClearingHighestRow = HighestNonEmptyRow();
+            }
+            int count = (20 - mItemClearingHighestRow + 1) / 2;
+            if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    int row = mGrid.GetLength(0) - 1 - i;
+                    int col = 9 - (mActivatingItemFrames - 20) + 10 - i / 2;
+                    if (0 <= col && col < mGrid.GetLength(1))
+                    {
+                        DestroyBlock(row, col);
+                    }
+                }
+            }
+            else if (mActivatingItemFrames == 1)
+            {
+                MoveBlockRows(0, mGrid.GetLength(0), count, false);
+            }
+        }
+
+        private void ClearEvenFrame()
+        {
+            if (mActivatingItemFrames + 1 == ClearItemActivationDuration)
+            {
+                mItemClearingHighestRow = HighestNonEmptyRow();
+            }
+            int rowBegin = (mItemClearingHighestRow + 1) / 2 * 2;
+            int count = (mGrid.GetLength(0) - rowBegin) / 2;
+            if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    int row = rowBegin + i * 2;
+                    int col = 9 - (mActivatingItemFrames - 20) + 10 - i;
+                    if (0 <= col && col < mGrid.GetLength(1))
+                    {
+                        DestroyBlock(row, col);
+                    }
+                }
+            }
+            else if (mActivatingItemFrames == 1)
+            {
+                for (int row = mGrid.GetLength(0) - 3; row >= 0; --row)
+                {
+                    int move = (mGrid.GetLength(0) - row) / 2;
+                    MoveBlockRow(row, row + move);
+                }
             }
         }
 
@@ -1099,67 +1139,70 @@ namespace Assets.Scripts.App
                     mClearingLines.Add(i);
                 }
             }
-            if (mClearingLines.Any())
+            if (!mClearingLines.Any())
             {
-                mTetrominoState = TetrominoState.Clearing;
-                mClearingFrames = ClearDelay;
-                foreach (int row in mClearingLines)
-                {
-                    for (int col = 0; col < mGrid.GetLength(1); ++col)
-                    {
-                        if (mGrid[row, col] == null)
-                        {
-                            continue;
-                        }
-                        switch (mGrid[row, col].Item)
-                        {
-                            case GameItem.ClearTopHalf:
-                                ActivateClearTopHalf();
-                                break;
-                            case GameItem.ClearBottomHalf:
-                                ActivateClearBottomHalf();
-                                break;
-                            case GameItem.None:
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-                        if (mGrid[row, col].Item != GameItem.None)
-                        {
-                            RemoveItems();
-                        }
-                    }
-                }
-                if (OnLineCleared != null)
-                {
-                    var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
-                    var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
-                    for (int i = 0; i < mClearingLines.Count; ++i)
-                    {
-                        int row = mClearingLines[i];
-                        for (int col = 0; col < mGrid.GetLength(1); ++col)
-                        {
-                            properties[i, col] = mGrid[row, col].Properties;
-                            valid[i, col] = !newlyLockedCells[row, col];
-                        }
-                    }
-                    OnLineCleared.Invoke(new ClearingBlocks
-                    {
-                        Data = properties,
-                        Valid = valid,
-                        Rows = mClearingLines.ToArray()
-                    });
-                }
-                foreach (int row in mClearingLines)
-                {
-                    for (int col = 0; col < mGrid.GetLength(1); ++col)
-                    {
-                        DestroyBlock(row, col);
-                    }
-                }
-                return true;
+                return false;
             }
-            return false;
+            mTetrominoState = TetrominoState.Clearing;
+            mClearingFrames = ClearDelay;
+            foreach (int row in mClearingLines)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (mGrid[row, col] == null)
+                    {
+                        continue;
+                    }
+                    switch (mGrid[row, col].Item)
+                    {
+                        case GameItem.ClearTopHalf:
+                            ActivateClearTopHalf();
+                            break;
+                        case GameItem.ClearBottomHalf:
+                            ActivateClearBottomHalf();
+                            break;
+                        case GameItem.ClearEven:
+                            ActivateClearEven();
+                            break;
+                        case GameItem.None:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    if (mGrid[row, col].Item != GameItem.None)
+                    {
+                        RemoveItems();
+                    }
+                }
+            }
+            if (OnLineCleared != null)
+            {
+                var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
+                var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
+                for (int i = 0; i < mClearingLines.Count; ++i)
+                {
+                    int row = mClearingLines[i];
+                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    {
+                        properties[i, col] = mGrid[row, col].Properties;
+                        valid[i, col] = !newlyLockedCells[row, col];
+                    }
+                }
+                OnLineCleared.Invoke(new ClearingBlocks
+                {
+                    Data = properties,
+                    Valid = valid,
+                    Rows = mClearingLines.ToArray()
+                });
+            }
+            foreach (int row in mClearingLines)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    DestroyBlock(row, col);
+                }
+            }
+            return true;
         }
 
         private void ActivateClearTopHalf()
@@ -1171,6 +1214,12 @@ namespace Assets.Scripts.App
         private void ActivateClearBottomHalf()
         {
             mActivatingItem = GameItem.ClearBottomHalf;
+            mActivatingItemFrames = ClearItemActivationDuration;
+        }
+
+        private void ActivateClearEven()
+        {
+            mActivatingItem = GameItem.ClearEven;
             mActivatingItemFrames = ClearItemActivationDuration;
         }
 
@@ -1261,6 +1310,38 @@ namespace Assets.Scripts.App
             {
                 Destroy(mGrid[row, col].gameObject);
                 mGrid[row, col] = null;
+            }
+        }
+
+        private void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up)
+        {
+            if (up)
+            {
+                for (int row = rowBegin; row < rowEnd; ++row)
+                {
+                    MoveBlockRow(row, row - distance);
+                }
+            }
+            else
+            {
+                for (int row = rowEnd - 1; row >= rowBegin; --row)
+                {
+                    MoveBlockRow(row, row + distance);
+                }
+            }
+        }
+
+        private void MoveBlockRow(int from, int to)
+        {
+            for (int col = 0; col < mGrid.GetLength(1); ++col)
+            {
+                if (mGrid[from, col] == null)
+                {
+                    continue;
+                }
+                mGrid[from, col].transform.localPosition = RowColToPosition(to, col);
+                mGrid[to, col] = mGrid[from, col];
+                mGrid[from, col] = null;
             }
         }
 

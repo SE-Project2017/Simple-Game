@@ -1,9 +1,49 @@
-﻿using UnityEditor;
+﻿using System;
+
+using Assets.Scripts.Utils;
+
+using UnityEditor;
 
 namespace Assets.Editor
 {
     public class Build
     {
+        private static string AndroidKeystorePath
+        {
+            get
+            {
+                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYSTORE");
+                return value ?? PlayerSettings.Android.keystoreName;
+            }
+        }
+
+        private static string AndroidKeystorePassword
+        {
+            get
+            {
+                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYSTORE_PASSWORD");
+                return value ?? PlayerSettings.Android.keystorePass;
+            }
+        }
+
+        private static string AndroidKeyalias
+        {
+            get
+            {
+                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYALIAS");
+                return value ?? PlayerSettings.Android.keyaliasName;
+            }
+        }
+
+        private static string AndroidKeyaliasPassword
+        {
+            get
+            {
+                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYALIAS_PASSWORD");
+                return value ?? PlayerSettings.Android.keyaliasPass;
+            }
+        }
+
         [MenuItem("Build/Build Debug", false, 100)]
         public static void BuildDebug()
         {
@@ -52,6 +92,11 @@ namespace Assets.Editor
         public static void BuildAndroid()
         {
             ApplySettings();
+            PlayerSettings.Android.bundleVersionCode = Utilities.VersionCode;
+            PlayerSettings.Android.keystoreName = AndroidKeystorePath;
+            PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
+            PlayerSettings.Android.keyaliasName = AndroidKeyalias;
+            PlayerSettings.Android.keyaliasPass = AndroidKeyaliasPassword;
             FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
             BuildClient(
                 AndroidBuildPath(false) + "client.apk",
@@ -63,6 +108,7 @@ namespace Assets.Editor
         {
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
+            PlayerSettings.bundleVersion = Utilities.VersionName;
         }
 
         private static void InternalBuildDebugWindows()

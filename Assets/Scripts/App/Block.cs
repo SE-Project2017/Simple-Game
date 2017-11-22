@@ -61,10 +61,7 @@ namespace Assets.Scripts.App
 
         public void Update()
         {
-            if (Item != GameItem.None)
-            {
-                transform.rotation = Quaternion.Euler(0, 0, 0);
-            }
+            transform.rotation = Quaternion.Euler(0, 0, 0);
         }
 
         public static void StaticInit()
@@ -78,7 +75,9 @@ namespace Assets.Scripts.App
             sItemSprites[(int) GameItem.ClearTopHalf] =
                 Resources.Load<Sprite>("Textures/BlockClearTopHalf");
             sItemSprites[(int) GameItem.ClearBottomHalf] =
-                Resources.Load<Sprite>("Texture/BlockClearBottomHalf");
+                Resources.Load<Sprite>("Textures/BlockClearBottomHalf");
+            sItemSprites[(int) GameItem.ClearEven] =
+                Resources.Load<Sprite>("Textures/BlockClearEven");
             // TODO Initialize sItemSprites
         }
 

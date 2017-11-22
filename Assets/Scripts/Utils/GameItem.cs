@@ -4,6 +4,7 @@
     {
         ClearTopHalf,
         ClearBottomHalf,
-        None,
+        ClearEven,
+        None = -1,
     }
 }

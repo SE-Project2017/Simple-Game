@@ -11,7 +11,7 @@ namespace Assets.Scripts.Utils
         L,
         S,
         Z,
-        Undefined,
+        Undefined = -1,
     }
 
     public static class TetrominoColor

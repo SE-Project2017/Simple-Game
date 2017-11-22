@@ -121,7 +121,7 @@ namespace Assets.Scripts.Multiplayer
                 LocalItemCharge += ItemChargeRate;
                 if (LocalItemCharge >= MaxItemCharge)
                 {
-                    LocalGameGrid.NextGameItem = GameItem.ClearTopHalf;
+                    LocalGameGrid.NextGameItem = GameItem.ClearEven;
                 }
             };
             RemoteGameGrid.OnTetrominoLocked += () =>
@@ -129,7 +129,7 @@ namespace Assets.Scripts.Multiplayer
                 mRemoteItemCharge += ItemChargeRate;
                 if (mRemoteItemCharge >= MaxItemCharge)
                 {
-                    RemoteGameGrid.NextGameItem = GameItem.ClearTopHalf;
+                    RemoteGameGrid.NextGameItem = GameItem.ClearEven;
                 }
             };
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
