@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 using Assets.Scripts.App;
 using Assets.Scripts.Msf;
 
+using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Networking;
 
@@ -16,24 +18,30 @@ namespace Assets.Scripts.Multiplayer
 
         private const int MaxFrameDiff = 30;
 
-        private bool mPlaying;
+        private bool mIsServer;
+        private bool mIsClient;
+        private bool mIsLocalPlayer;
         private int mFrameCount;
         private int mMaxFrames = 311040000;
+        private State mState = State.Connecting;
         private MultiplayerGameController mGameController;
         private ServerController mServerController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
 
         public void Start()
         {
-            if (isServer)
+            mIsServer = isServer;
+            mIsClient = isClient;
+            mIsLocalPlayer = isLocalPlayer;
+            if (mIsServer)
             {
                 StartServer();
             }
-            if (isClient)
+            if (mIsClient)
             {
                 StartClient();
             }
-            if (isLocalPlayer)
+            if (mIsLocalPlayer)
             {
                 StartLocal();
             }
@@ -41,7 +49,7 @@ namespace Assets.Scripts.Multiplayer
 
         public void FixedUpdate()
         {
-            if (isLocalPlayer)
+            if (mIsLocalPlayer)
             {
                 FixedUpdateLocal();
             }
@@ -49,17 +57,21 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDestroy()
         {
-            if (mServerController != null)
+            if (mIsServer)
             {
-                if (mPlaying)
+                if (mState == State.Playing)
                 {
                     mServerController.OnPlayerGameEnd(Type, mFrameCount);
-                    mPlaying = false;
+                    mState = State.Ended;
                 }
             }
-            if (mGameController != null)
+            if (mIsClient)
             {
                 mGameController.Players.Remove(this);
+            }
+            if (mState == State.Playing && mIsLocalPlayer)
+            {
+                mGameController.OnDisconnected();
             }
         }
 
@@ -79,7 +91,8 @@ namespace Assets.Scripts.Multiplayer
         [Server]
         public void OnRegisterComplete(ServerController.GameInfo info)
         {
-            mPlaying = true;
+            Assert.IsTrue(mState == State.Connecting);
+            mState = State.Playing;
             RpcOnRegisterComplete(info);
         }
 
@@ -88,6 +101,18 @@ namespace Assets.Scripts.Multiplayer
         {
             mGameController = FindObjectOfType<MultiplayerGameController>();
             mGameController.Players.Add(this);
+            StartCoroutine(CheckConnection());
+        }
+
+        [Client]
+        private IEnumerator CheckConnection()
+        {
+            yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
+            if (mState == State.Connecting)
+            {
+                NetworkManager.Instance.StopClient();
+                mGameController.OnOtherPlayerDisconnected();
+            }
         }
 
         [Client]
@@ -109,12 +134,13 @@ namespace Assets.Scripts.Multiplayer
                     Data = (int) button,
                 });
             CmdRegisterPlayer(new ServerController.PlayerInfo {Type = Type, Username = Username});
+            mGameController.OnConnected();
         }
 
         [Client]
         private void FixedUpdateLocal()
         {
-            if (mPlaying)
+            if (mState == State.Playing)
             {
                 if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
                     MaxFrameDiff)
@@ -129,10 +155,10 @@ namespace Assets.Scripts.Multiplayer
                         mFrameCount > mMaxFrames)
                     {
                         CmdPlayerEnded(mFrameCount);
-                        mPlaying = false;
+                        mState = State.Ended;
                     }
                     mPlayerEvents.Clear();
-                } while (mPlaying && mFrameCount ==
+                } while (mState == State.Playing && mFrameCount ==
                     mGameController.Players.Min(player => player.mFrameCount));
             }
             mPlayerEvents.Clear();
@@ -159,14 +185,15 @@ namespace Assets.Scripts.Multiplayer
         [Command]
         private void CmdPlayerEnded(int frameCount)
         {
-            mPlaying = false;
+            Assert.IsTrue(mState == State.Connecting || mState == State.Playing);
+            mState = State.Ended;
             mServerController.OnPlayerGameEnd(Type, frameCount);
         }
 
         [ClientRpc]
         public void RpcOnPlayerWin()
         {
-            if (isLocalPlayer)
+            if (mIsLocalPlayer)
             {
                 mGameController.OnLocalPlayerWin();
             }
@@ -179,11 +206,12 @@ namespace Assets.Scripts.Multiplayer
         [ClientRpc]
         private void RpcOnRegisterComplete(ServerController.GameInfo info)
         {
-            if (isLocalPlayer)
+            if (mIsLocalPlayer)
             {
                 mGameController.OnGameStart(info);
             }
-            mPlaying = true;
+            Assert.IsTrue(mState == State.Connecting);
+            mState = State.Playing;
         }
 
         [ClientRpc]
@@ -201,7 +229,7 @@ namespace Assets.Scripts.Multiplayer
         [ClientRpc]
         private void RpcOnFrameUpdate(int frameCount, PlayerEvent[] events)
         {
-            if (isLocalPlayer)
+            if (mIsLocalPlayer)
             {
                 return;
             }
@@ -232,6 +260,13 @@ namespace Assets.Scripts.Multiplayer
                 ButtonDown,
                 ButtonUp,
             }
+        }
+
+        private enum State
+        {
+            Connecting,
+            Playing,
+            Ended,
         }
     }
 }

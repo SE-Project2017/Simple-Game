@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Assets.Scripts.App;
@@ -27,7 +28,7 @@ namespace Assets.Scripts.Multiplayer
         public GameObject ClearParticlePrefab;
         public GameObject ClearParticleParent;
         public GameObject LocalGameArea;
-        public Animator ConnectingTextAnimator;
+        public Animator ConnectingAnimator;
         public Image ItemProgress;
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
@@ -80,11 +81,13 @@ namespace Assets.Scripts.Multiplayer
         public void Start()
         {
             mNetworkManager = NetworkManager.Instance;
+            ConnectingAnimator.gameObject.SetActive(true);
             var controller = ClientController.Instance;
             LocalPlayerType = controller.GameInfo.PlayerType;
             mNetworkManager.networkAddress = controller.GameInfo.GameServerDetails.Address;
             mNetworkManager.networkPort = controller.GameInfo.GameServerDetails.Port;
             mNetworkManager.StartClient();
+            StartCoroutine(CheckConnection());
             LocalGameGrid.OnGameEnd += OnGameEnding;
             LocalGameGrid.OnNewTetrominoGenerated += NewTetrominoGenerated;
             LocalGameGrid.OnNextTetrominoConsumued += NextTetrominoConsumed;
@@ -211,6 +214,7 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnGameStart(ServerController.GameInfo info)
         {
+            Assert.IsTrue(mState == State.Waiting);
             mState = State.Playing;
             LocalGameGrid.SeedGenerator(info.GeneratorSeed);
             RemoteGameGrid.SeedGenerator(info.GeneratorSeed);
@@ -229,8 +233,7 @@ namespace Assets.Scripts.Multiplayer
             }
             LocalGameGrid.StartGame();
             RemoteGameGrid.StartGame();
-            ScreenTransition.Instance.Started = true;
-            ConnectingTextAnimator.SetBool("Connected", true);
+            ConnectingAnimator.SetBool("Connected", true);
         }
 
         public void OnLocalPlayerWin()
@@ -257,8 +260,31 @@ namespace Assets.Scripts.Multiplayer
             StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
         }
 
+        public void OnConnected()
+        {
+            Assert.IsTrue(mState == State.Connecting);
+            mState = State.Waiting;
+        }
+
+        public void OnDisconnected()
+        {
+            new AlertDialog.Builder()
+                .SetMessage("You have been disconnected from the server.")
+                .SetNeutralButton("OK", GotoScoreScreen)
+                .Show();
+        }
+
+        public void OnOtherPlayerDisconnected()
+        {
+            new AlertDialog.Builder()
+                 .SetMessage("A player has been disconnected.")
+                 .SetNeutralButton("OK", GotoScoreScreen)
+                 .Show();
+        }
+
         private void OnGameEnding()
         {
+            Assert.IsTrue(mState == State.Playing);
             mState = State.Ending;
         }
 
@@ -328,6 +354,16 @@ namespace Assets.Scripts.Multiplayer
             }
             mHold.transform.localScale = new Vector3(Next2Scale, Next2Scale);
             mHold.transform.position = HoldPos;
+        }
+
+        private IEnumerator CheckConnection()
+        {
+            yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
+            if (mState == State.Connecting)
+            {
+                mNetworkManager.StopClient();
+                OnDisconnected();
+            }
         }
 
         private static void SetupDisplayColor(GameObject obj)
@@ -420,6 +456,7 @@ namespace Assets.Scripts.Multiplayer
         private enum State
         {
             Connecting,
+            Waiting,
             Playing,
             Ending,
         }

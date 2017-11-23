@@ -12,7 +12,7 @@ namespace Assets.Scripts.Multiplayer
 {
     public class ServerController : Singleton<ServerController>
     {
-        private const float MaxConnectTime = 10;
+        public const float MaxConnectTime = 10;
 
         private bool mPlayerAEnded;
         private bool mPlayerBEnded;
