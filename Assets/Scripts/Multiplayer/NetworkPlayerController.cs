@@ -18,7 +18,7 @@ namespace Assets.Scripts.Multiplayer
 
         private bool mPlaying;
         private int mFrameCount;
-        private int mMaxFrame = 311040000;
+        private int mMaxFrames = 311040000;
         private MultiplayerGameController mGameController;
         private ServerController mServerController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
@@ -66,7 +66,7 @@ namespace Assets.Scripts.Multiplayer
         [Server]
         public void SetMaxFrame(int maxFrame)
         {
-            mMaxFrame = maxFrame;
+            mMaxFrames = maxFrame;
             RpcSetMaxFrame(maxFrame);
         }
 
@@ -121,14 +121,19 @@ namespace Assets.Scripts.Multiplayer
                 {
                     return;
                 }
-                ++mFrameCount;
-                CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents) ||
-                    mFrameCount > mMaxFrame)
+                do
                 {
-                    CmdPlayerEnded(mFrameCount);
-                    mPlaying = false;
-                }
+                    ++mFrameCount;
+                    CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
+                    if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents) ||
+                        mFrameCount > mMaxFrames)
+                    {
+                        CmdPlayerEnded(mFrameCount);
+                        mPlaying = false;
+                    }
+                    mPlayerEvents.Clear();
+                } while (mPlaying && mFrameCount ==
+                    mGameController.Players.Min(player => player.mFrameCount));
             }
             mPlayerEvents.Clear();
         }
@@ -208,7 +213,7 @@ namespace Assets.Scripts.Multiplayer
         [ClientRpc]
         private void RpcSetMaxFrame(int maxFrame)
         {
-            mMaxFrame = maxFrame;
+            mMaxFrames = maxFrame;
         }
 
         [TargetRpc]
