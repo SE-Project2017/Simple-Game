@@ -237,7 +237,7 @@ namespace Assets.Scripts.App
 
         public void GenerateNextItem()
         {
-            mNextGameItem = GameItem.ClearBottomHalf;
+            mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
         }
 
         public void TargetedShotgun()
