@@ -41,16 +41,8 @@ namespace Assets.Scripts.App
         private GameItem mItem = GameItem.None;
         private SpriteRenderer mRenderer;
 
-        private static bool sInitialized;
-
-        private static readonly Sprite[] sItemSprites =
-            new Sprite[Enum.GetNames(typeof(GameItem)).Length - 1];
-
-        private static Sprite sDefaultSprite;
-
         public void Awake()
         {
-            Assert.IsTrue(sInitialized);
             mRenderer = GetComponent<SpriteRenderer>();
         }
 
@@ -64,26 +56,11 @@ namespace Assets.Scripts.App
             transform.rotation = Quaternion.Euler(0, 0, 0);
         }
 
-        public static void StaticInit()
-        {
-            if (sInitialized)
-            {
-                return;
-            }
-            sInitialized = true;
-            sDefaultSprite = Resources.Load<Sprite>("Textures/Block");
-            sItemSprites[(int) GameItem.ClearTopHalf] =
-                Resources.Load<Sprite>("Textures/BlockClearTopHalf");
-            sItemSprites[(int) GameItem.ClearBottomHalf] =
-                Resources.Load<Sprite>("Textures/BlockClearBottomHalf");
-            sItemSprites[(int) GameItem.ClearEven] =
-                Resources.Load<Sprite>("Textures/BlockClearEven");
-            sItemSprites[(int) GameItem.Shotgun] = Resources.Load<Sprite>("Textures/BlockShotgun");
-        }
-
         private void SetupRenderer()
         {
-            mRenderer.sprite = mItem == GameItem.None ? sDefaultSprite : sItemSprites[(int) mItem];
+            mRenderer.sprite = mItem == GameItem.None
+                ? GlobalContext.Instance.BlockDefaultSprite
+                : GlobalContext.Instance.BlockItemSprites[(int) mItem];
         }
 
         public struct Data

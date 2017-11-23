@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 
+using Assets.Scripts.App;
 using Assets.Scripts.Msf;
 using Assets.Scripts.Utils;
 
@@ -34,10 +35,13 @@ namespace Assets.Scripts.UI
             }
             StatusText.text = "Logging in...";
             StatusText.color = Color.white;
-            MsfContext.Client.Auth.Login(Username.text, Password.text, (info, error) =>
+            var username = Username.text;
+            var password = Password.text;
+            MsfContext.Client.Auth.LogIn(username, password, (info, error) =>
             {
                 if (info != null)
                 {
+                    ClientController.Instance.OnLoggedIn(username, password);
                     StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
                 }
                 else

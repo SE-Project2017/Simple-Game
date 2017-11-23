@@ -9,30 +9,30 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1523410866897638}
+  m_RootGameObject: {fileID: 1469175198841192}
   m_IsPrefabParent: 1
---- !u!1 &1523410866897638
+--- !u!1 &1469175198841192
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4635867311948604}
-  - component: {fileID: 114831714419084296}
+  - component: {fileID: 4034635709954040}
+  - component: {fileID: 114864393576622152}
   m_Layer: 0
-  m_Name: ConnectionToMaster
+  m_Name: GlobalContext
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4635867311948604
+--- !u!4 &4034635709954040
 Transform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1523410866897638}
+  m_GameObject: {fileID: 1469175198841192}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -40,21 +40,24 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114831714419084296
+--- !u!114 &114864393576622152
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1523410866897638}
+  m_GameObject: {fileID: 1469175198841192}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fde73f935d7753043a9e59bb5ab7a9c6, type: 3}
+  m_Script: {fileID: 11500000, guid: aaa2c82ac48092b47a4684847a5bf9c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ReadMasterServerAddressFromCmd: 1
-  ServerAddress: localhost
-  ServerPort: 5000
-  ConnectOnStart: 1
-  MinTimeToConnect: 0.5
-  MaxTimeToConnect: 10
-  TimeToConnect: 0.5
+  BlockItemSprites:
+  - {fileID: 21300000, guid: 8759d29041da6214787c435ef03cf5d8, type: 3}
+  - {fileID: 21300000, guid: e2840f70c2d1d6f40a58aaf6f9684e73, type: 3}
+  - {fileID: 21300000, guid: a445b46a149dc53419e4926fb0cf0464, type: 3}
+  - {fileID: 21300000, guid: c45adf2c2aed60848ab420f0b2b576c1, type: 3}
+  BlockDefaultSprite: {fileID: 21300000, guid: efb7a20c2ec1c1641be76000376dd028, type: 3}
+  AlertDialogPrefab: {fileID: 1881060199168746, guid: e57b34cb3e7c58a4e9d961761db9c1d8,
+    type: 2}
+  AlertDialogButtonPrefab: {fileID: 1297919979695842, guid: 20e1be38027ab534eaaa41bb283fa8fc,
+    type: 2}

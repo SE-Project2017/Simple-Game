@@ -9,7 +9,10 @@ namespace Assets.Scripts.Msf.Modules.Auth
 {
     public class AuthClient : MsfAuthClient
     {
-        public AuthClient(IClientSocket connection) : base(connection) { }
+        public AuthClient(IClientSocket connection) : base(connection)
+        {
+            connection.Disconnected += () => IsLoggedIn = false;
+        }
 
         public void Register(string username, string password, SuccessCallback callback)
         {
@@ -23,7 +26,7 @@ namespace Assets.Scripts.Msf.Modules.Auth
                 callback);
         }
 
-        public void Login(string username, string password, LoginCallback callback)
+        public new void LogIn(string username, string password, LoginCallback callback)
         {
             LogIn(
                 new Dictionary<string, string>
