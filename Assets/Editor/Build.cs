@@ -104,6 +104,19 @@ namespace Assets.Editor
                 BuildOptions.None);
         }
 
+        [MenuItem("Build/Enable Local Server", false, 400)]
+        public static void EnableLocalServer()
+        {
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
+                "LOCAL_SERVER");
+        }
+
+        [MenuItem("Build/Disable Local Server", false, 410)]
+        public static void DisableLocalServer()
+        {
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "");
+        }
+
         private static void ApplySettings()
         {
             PlayerSettings.runInBackground = true;

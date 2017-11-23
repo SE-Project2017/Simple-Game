@@ -8,27 +8,30 @@ namespace Assets.Scripts.Msf
 {
     public class ConnectionToMaster : Singleton<ConnectionToMaster>
     {
-        public bool ReadMasterServerAddressFromCmd = true;
-        public string ServerAddress = "localhost";
-        public int ServerPort = 5000;
-        public bool ConnectOnStart = false;
-        public float MinTimeToConnect = 0.5f;
-        public float MaxTimeToConnect = 4f;
-        public float TimeToConnect = 0.5f;
+        private string mServerAddress =
+#if LOCAL_SERVER
+            "localhost";
+#else
+            "115.159.108.229";
+#endif
+
+        private int mServerPort = 5000;
+        private float mTimeToConnect = MinTimeToConnect;
+
+        private const float MinTimeToConnect = 0.5f;
+        private const float MaxTimeToConnect = 10.0f;
 
         public void Start()
         {
-            if (ReadMasterServerAddressFromCmd)
+            if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterIp))
             {
-                if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterIp))
-                    ServerAddress = MsfContext.Args.MasterIp;
-                if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterPort))
-                    ServerPort = MsfContext.Args.MasterPort;
+                mServerAddress = MsfContext.Args.MasterIp;
             }
-            if (ConnectOnStart)
+            if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterPort))
             {
-                Connect();
+                mServerPort = MsfContext.Args.MasterPort;
             }
+            Connect();
         }
 
         public void Connect()
@@ -54,33 +57,33 @@ namespace Assets.Scripts.Msf
 
                 if (connection.IsConnecting)
                 {
-                    Debug.Log("Retrying to connect to server at: " + ServerAddress + ":" +
-                        ServerPort);
+                    Debug.Log("Retrying to connect to server at: " + mServerAddress + ":" +
+                        mServerPort);
                 }
                 else
                 {
-                    Debug.Log("Connecting to server at: " + ServerAddress + ":" + ServerPort);
+                    Debug.Log("Connecting to server at: " + mServerAddress + ":" + mServerPort);
                 }
 
-                connection.Connect(ServerAddress, ServerPort);
+                connection.Connect(mServerAddress, mServerPort);
 
-                yield return new WaitForSecondsRealtime(TimeToConnect);
+                yield return new WaitForSecondsRealtime(mTimeToConnect);
                 if (!connection.IsConnected)
                 {
-                    TimeToConnect = Mathf.Min(TimeToConnect * 2, MaxTimeToConnect);
+                    mTimeToConnect = Mathf.Min(mTimeToConnect * 2, MaxTimeToConnect);
                 }
             }
         }
 
         private void Disconnected()
         {
-            TimeToConnect = MinTimeToConnect;
+            mTimeToConnect = MinTimeToConnect;
         }
 
         private void Connected()
         {
-            TimeToConnect = MinTimeToConnect;
-            Debug.Log("Connected to: " + ServerAddress + ":" + ServerPort);
+            mTimeToConnect = MinTimeToConnect;
+            Debug.Log("Connected to: " + mServerAddress + ":" + mServerPort);
         }
 
         public void OnApplicationQuit()

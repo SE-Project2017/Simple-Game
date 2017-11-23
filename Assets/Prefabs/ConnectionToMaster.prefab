@@ -51,10 +51,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde73f935d7753043a9e59bb5ab7a9c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ReadMasterServerAddressFromCmd: 1
-  ServerAddress: localhost
-  ServerPort: 5000
-  ConnectOnStart: 1
-  MinTimeToConnect: 0.5
-  MaxTimeToConnect: 10
-  TimeToConnect: 0.5
