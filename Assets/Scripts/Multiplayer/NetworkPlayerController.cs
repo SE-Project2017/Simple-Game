@@ -180,6 +180,7 @@ namespace Assets.Scripts.Multiplayer
             Assert.IsTrue(frameCount == mFrameCount + 1);
             mFrameCount = frameCount;
             RpcOnFrameUpdate(frameCount, events);
+            mServerController.OnPlayerEvents(Type, events);
         }
 
         [Command]

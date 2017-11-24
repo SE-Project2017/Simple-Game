@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Security.Cryptography;
-
-using Assets.Scripts.Msf;
+﻿using Assets.Scripts.Msf;
 using Assets.Scripts.Utils;
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -21,6 +22,12 @@ namespace Assets.Scripts.Multiplayer
         private State mState = State.Connecting;
         private NetworkPlayerController mPlayerA;
         private NetworkPlayerController mPlayerB;
+
+        private readonly List<NetworkPlayerController.PlayerEvent[]> mPlayerAEvents =
+            new List<NetworkPlayerController.PlayerEvent[]> {null};
+
+        private readonly List<NetworkPlayerController.PlayerEvent[]> mPlayerBEvents =
+            new List<NetworkPlayerController.PlayerEvent[]> {null};
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
@@ -116,6 +123,21 @@ namespace Assets.Scripts.Multiplayer
                     }
                     StartCoroutine(EndGame(GameResult.Draw));
                 }
+            }
+        }
+
+        public void OnPlayerEvents(PlayerType type, NetworkPlayerController.PlayerEvent[] events)
+        {
+            switch (type)
+            {
+                case PlayerType.PlayerA:
+                    mPlayerAEvents.Add(events);
+                    break;
+                case PlayerType.PlayerB:
+                    mPlayerBEvents.Add(events);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("type", type, null);
             }
         }
 
