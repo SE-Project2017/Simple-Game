@@ -17,20 +17,22 @@ namespace Assets.Scripts.Multiplayer
 
         public PlayerToken PlayerAToken { get; private set; }
         public PlayerToken PlayerBToken { get; private set; }
+        public NetworkPlayer PlayerA { get; private set; }
+        public NetworkPlayer PlayerB { get; private set; }
+
+        public readonly List<NetworkPlayer.PlayerEvent[]> PlayerAEvents =
+            new List<NetworkPlayer.PlayerEvent[]>();
+
+        public readonly List<NetworkPlayer.PlayerEvent[]> PlayerBEvents =
+            new List<NetworkPlayer.PlayerEvent[]>();
 
         private bool mPlayerAEnded;
         private bool mPlayerBEnded;
         private int mPlayerAEndFrame;
         private int mPlayerBEndFrame;
+        private string mPlayerAName;
+        private string mPlayerBName;
         private State mState = State.Connecting;
-        private NetworkPlayerController mPlayerA;
-        private NetworkPlayerController mPlayerB;
-
-        private readonly List<NetworkPlayerController.PlayerEvent[]> mPlayerAEvents =
-            new List<NetworkPlayerController.PlayerEvent[]> {null};
-
-        private readonly List<NetworkPlayerController.PlayerEvent[]> mPlayerBEvents =
-            new List<NetworkPlayerController.PlayerEvent[]> {null};
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
@@ -43,6 +45,8 @@ namespace Assets.Scripts.Multiplayer
         {
             PlayerAToken = PlayerToken.FromBase64(MsfContext.Args.PlayerAToken);
             PlayerBToken = PlayerToken.FromBase64(MsfContext.Args.PlayerBToken);
+            mPlayerAName = MsfContext.Args.PlayerAName;
+            mPlayerBName = MsfContext.Args.PlayerBName;
             string address = MsfContext.Args.MachineAddress;
             int port = MsfContext.Args.AssignedPort;
             int spawnID = MsfContext.Args.SpawnId;
@@ -58,28 +62,28 @@ namespace Assets.Scripts.Multiplayer
             StartCoroutine(WaitForConnection());
         }
 
-        public void RegisterPlayer(NetworkPlayerController player, PlayerInfo info)
+        public void RegisterPlayer(NetworkPlayer player, PlayerType type)
         {
-            if (mState != State.Connecting)
-            {
-                return;
-            }
-            switch (info.Type)
+            switch (type)
             {
                 case PlayerType.PlayerA:
-                    mPlayerA = player;
+                    PlayerA = player;
+                    player.Type = PlayerType.PlayerA;
+                    player.Username = mPlayerAName;
                     break;
                 case PlayerType.PlayerB:
-                    mPlayerB = player;
+                    PlayerB = player;
+                    player.Type = PlayerType.PlayerB;
+                    player.Username = mPlayerBName;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("type", type, null);
             }
-            if (mPlayerA != null && mPlayerB != null)
+            if (PlayerA != null && PlayerB != null)
             {
                 mState = State.Running;
-                mPlayerA.OnRegisterComplete(mGameInfo);
-                mPlayerB.OnRegisterComplete(mGameInfo);
+                PlayerA.OnRegisterComplete(mGameInfo);
+                PlayerB.OnRegisterComplete(mGameInfo);
             }
         }
 
@@ -93,7 +97,7 @@ namespace Assets.Scripts.Multiplayer
                     mPlayerAEndFrame = frameCount;
                     if (!mPlayerBEnded)
                     {
-                        mPlayerB.SetMaxFrame(frameCount);
+                        PlayerB.SetMaxFrame(frameCount);
                     }
                     break;
                 case PlayerType.PlayerB:
@@ -102,7 +106,7 @@ namespace Assets.Scripts.Multiplayer
                     mPlayerBEndFrame = frameCount;
                     if (!mPlayerAEnded)
                     {
-                        mPlayerA.SetMaxFrame(frameCount);
+                        PlayerA.SetMaxFrame(frameCount);
                     }
                     break;
                 default:
@@ -112,17 +116,17 @@ namespace Assets.Scripts.Multiplayer
             {
                 if (mPlayerAEndFrame < mPlayerBEndFrame)
                 {
-                    mPlayerB.RpcOnPlayerWin();
+                    PlayerB.RpcOnPlayerWin();
                     StartCoroutine(EndGame(GameResult.PlayerBWon));
                 }
                 else if (mPlayerBEndFrame < mPlayerAEndFrame)
                 {
-                    mPlayerA.RpcOnPlayerWin();
+                    PlayerA.RpcOnPlayerWin();
                     StartCoroutine(EndGame(GameResult.PlayerAWon));
                 }
                 else
                 {
-                    foreach (var player in new[] {mPlayerA, mPlayerB})
+                    foreach (var player in new[] {PlayerA, PlayerB})
                     {
                         player.TargetOnGameDraw(player.connectionToClient);
                     }
@@ -131,15 +135,15 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
-        public void OnPlayerEvents(PlayerType type, NetworkPlayerController.PlayerEvent[] events)
+        public void OnPlayerEvents(PlayerType type, NetworkPlayer.PlayerEvent[] events)
         {
             switch (type)
             {
                 case PlayerType.PlayerA:
-                    mPlayerAEvents.Add(events);
+                    PlayerAEvents.Add(events);
                     break;
                 case PlayerType.PlayerB:
-                    mPlayerBEvents.Add(events);
+                    PlayerBEvents.Add(events);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);

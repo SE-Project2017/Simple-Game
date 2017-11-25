@@ -11,40 +11,29 @@ using UnityEngine.Networking;
 
 namespace Assets.Scripts.Multiplayer
 {
-    public class NetworkPlayerController : NetworkBehaviour
+    public class NetworkPlayer : NetworkBehaviour
     {
-        public ServerController.PlayerType Type { get; private set; }
-        public string Username { get; private set; }
+        public ServerController.PlayerType Type;
+        public string Username;
 
         private const int MaxFrameDiff = 30;
 
         private bool mIsServer;
         private bool mIsClient;
         private bool mIsLocalPlayer;
+
         private int mFrameCount;
         private int mMaxFrames = 311040000;
+
         private State mState = State.Connecting;
         private MultiplayerGameController mGameController;
         private ServerController mServerController;
         private readonly List<PlayerEvent> mPlayerEvents = new List<PlayerEvent>();
 
-        public void Start()
+        public void Awake()
         {
-            mIsServer = isServer;
-            mIsClient = isClient;
-            mIsLocalPlayer = isLocalPlayer;
-            if (mIsServer)
-            {
-                StartServer();
-            }
-            if (mIsClient)
-            {
-                StartClient();
-            }
-            if (mIsLocalPlayer)
-            {
-                StartLocal();
-            }
+            mServerController = ServerController.Instance;
+            mGameController = FindObjectOfType<MultiplayerGameController>();
         }
 
         public void FixedUpdate()
@@ -57,22 +46,29 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDestroy()
         {
-            if (mIsServer)
-            {
-                if (mState == State.Playing)
-                {
-                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
-                    mState = State.Ended;
-                }
-            }
+//            if (mIsServer)
+//            {
+//                if (mState == State.Playing)
+//                {
+//                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
+//                    mState = State.Ended;
+//                }
+//            }
             if (mIsClient)
             {
                 mGameController.Players.Remove(this);
             }
-            if (mState == State.Playing && mIsLocalPlayer)
-            {
-                mGameController.OnDisconnected();
-            }
+//            if (mState == State.Playing && mIsLocalPlayer)
+//            {
+//                mGameController.OnDisconnected();
+//            }
+        }
+
+        [Server]
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            mIsServer = true;
         }
 
         [Server]
@@ -83,41 +79,27 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [Server]
-        private void StartServer()
-        {
-            mServerController = ServerController.Instance;
-        }
-
-        [Server]
         public void OnRegisterComplete(ServerController.GameInfo info)
         {
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
-            RpcOnRegisterComplete(info);
+            RpcOnRegisterComplete(info, Type, Username);
         }
 
         [Client]
-        private void StartClient()
+        public override void OnStartClient()
         {
-            mGameController = FindObjectOfType<MultiplayerGameController>();
+            base.OnStartClient();
+            mIsClient = true;
             mGameController.Players.Add(this);
             StartCoroutine(CheckConnection());
         }
 
         [Client]
-        private IEnumerator CheckConnection()
+        public override void OnStartLocalPlayer()
         {
-            yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
-            if (mState == State.Connecting)
-            {
-                NetworkManager.Instance.StopClient();
-                mGameController.OnOtherPlayerDisconnected();
-            }
-        }
-
-        [Client]
-        private void StartLocal()
-        {
+            base.OnStartLocalPlayer();
+            mIsLocalPlayer = true;
             Type = mGameController.LocalPlayerType;
             Username = MsfContext.Client.Auth.AccountInfo.Username;
             var inputController = gameObject.AddComponent<InputController>();
@@ -133,8 +115,18 @@ namespace Assets.Scripts.Multiplayer
                     Type = PlayerEvent.EventType.ButtonUp,
                     Data = (int) button,
                 });
-            CmdRegisterPlayer(new ServerController.PlayerInfo {Type = Type, Username = Username});
             mGameController.OnConnected();
+        }
+
+        [Client]
+        private IEnumerator CheckConnection()
+        {
+            yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
+            if (mState == State.Connecting)
+            {
+                NetworkManager.Instance.StopClient();
+                mGameController.OnOtherPlayerDisconnected();
+            }
         }
 
         [Client]
@@ -151,7 +143,7 @@ namespace Assets.Scripts.Multiplayer
                 {
                     ++mFrameCount;
                     CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                    if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents) ||
+                    if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents.ToArray()) ||
                         mFrameCount > mMaxFrames)
                     {
                         CmdPlayerEnded(mFrameCount);
@@ -162,16 +154,6 @@ namespace Assets.Scripts.Multiplayer
                     mGameController.Players.Min(player => player.mFrameCount));
             }
             mPlayerEvents.Clear();
-        }
-
-        [Command]
-        private void CmdRegisterPlayer(ServerController.PlayerInfo info)
-        {
-            Type = info.Type;
-            Username = info.Username;
-            RpcSetPlayerType(Type);
-            RpcSetUsername(Username);
-            mServerController.RegisterPlayer(this, info);
         }
 
         [Command]
@@ -205,26 +187,17 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [ClientRpc]
-        private void RpcOnRegisterComplete(ServerController.GameInfo info)
+        private void RpcOnRegisterComplete(ServerController.GameInfo info,
+            ServerController.PlayerType type, string username)
         {
+            Type = type;
+            Username = username;
             if (mIsLocalPlayer)
             {
                 mGameController.OnGameStart(info);
             }
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
-        }
-
-        [ClientRpc]
-        private void RpcSetPlayerType(ServerController.PlayerType type)
-        {
-            Type = type;
-        }
-
-        [ClientRpc]
-        private void RpcSetUsername(string username)
-        {
-            Username = username;
         }
 
         [ClientRpc]
@@ -261,6 +234,14 @@ namespace Assets.Scripts.Multiplayer
                 ButtonDown,
                 ButtonUp,
             }
+        }
+
+        public struct PlayerState
+        {
+            public int FrameCount;
+            public int MaxFrames;
+            public string Username;
+            public ServerController.PlayerType PlayerType;
         }
 
         private enum State

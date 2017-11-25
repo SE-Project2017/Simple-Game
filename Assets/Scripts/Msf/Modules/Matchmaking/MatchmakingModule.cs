@@ -101,11 +101,11 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                     var playerAToken = PlayerToken.New();
                     var playerBToken = PlayerToken.New();
                     var task = mSpawnersModule.Spawn(null, null,
-                        string.Format("{0} {1} {2} {3}",
-                            MsfContext.Args.Names.PlayerAToken,
-                            playerAToken.ToBase64(),
-                            MsfContext.Args.Names.PlayerBToken,
-                            playerBToken.ToBase64()));
+                        string.Format("{0} {1} {2} {3} {4} {5} {6} {7}",
+                            MsfContext.Args.Names.PlayerAToken, playerAToken.ToBase64(),
+                            MsfContext.Args.Names.PlayerBToken, playerBToken.ToBase64(),
+                            MsfContext.Args.Names.PlayerAName, playerA.Name,
+                            MsfContext.Args.Names.PlayerBName, playerB.Name));
                     if (task == null)
                     {
                         AddPlayer(playerA);

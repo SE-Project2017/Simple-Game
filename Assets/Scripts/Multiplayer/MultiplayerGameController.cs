@@ -33,7 +33,13 @@ namespace Assets.Scripts.Multiplayer
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
         public float HoldScale = 0.25f;
-        public readonly List<NetworkPlayerController> Players = new List<NetworkPlayerController>();
+        public readonly List<NetworkPlayer> Players = new List<NetworkPlayer>();
+
+        public readonly List<NetworkPlayer.PlayerEvent[]> LocalPlayerEvents =
+            new List<NetworkPlayer.PlayerEvent[]>();
+
+        public readonly List<NetworkPlayer.PlayerEvent[]> RemotePlayerEvents =
+            new List<NetworkPlayer.PlayerEvent[]>();
 
         private const int InteractionDelay = 40;
         private const int MaxItemCharge = 20;
@@ -160,14 +166,14 @@ namespace Assets.Scripts.Multiplayer
         }
 
         /// <returns>Returns true if local player lost in this frame</returns>
-        public bool OnLocalUpdateFrame(int frameCount,
-            IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents)
+        public bool OnLocalUpdateFrame(int frameCount, NetworkPlayer.PlayerEvent[] playerEvents)
         {
             if (mState != State.Playing)
             {
                 return false;
             }
             mLocalFrameCount = frameCount;
+            LocalPlayerEvents.Add(playerEvents);
             if (mLocalPendingBlocks.ContainsKey(frameCount))
             {
                 LocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
@@ -188,10 +194,10 @@ namespace Assets.Scripts.Multiplayer
             return UpdateFrame(playerEvents, LocalGameGrid);
         }
 
-        public void OnRemoteUpdateFrame(int frameCount,
-            IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents)
+        public void OnRemoteUpdateFrame(int frameCount, NetworkPlayer.PlayerEvent[] playerEvents)
         {
             mRemoteFrameCount = frameCount;
+            RemotePlayerEvents.Add(playerEvents);
             if (mRemotePendingBlocks.ContainsKey(frameCount))
             {
                 RemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
@@ -383,21 +389,21 @@ namespace Assets.Scripts.Multiplayer
         }
 
         private static bool UpdateFrame(
-            IEnumerable<NetworkPlayerController.PlayerEvent> playerEvents, GameGrid grid)
+            IEnumerable<NetworkPlayer.PlayerEvent> playerEvents, GameGrid grid)
         {
             var events = new List<GameGrid.GameButtonEvent>();
             foreach (var playerEvent in playerEvents)
             {
                 switch (playerEvent.Type)
                 {
-                    case NetworkPlayerController.PlayerEvent.EventType.ButtonDown:
+                    case NetworkPlayer.PlayerEvent.EventType.ButtonDown:
                         events.Add(new GameGrid.GameButtonEvent
                         {
                             Type = GameGrid.GameButtonEvent.EventType.ButtonDown,
                             Button = ButtonToType((InputController.Button) playerEvent.Data)
                         });
                         break;
-                    case NetworkPlayerController.PlayerEvent.EventType.ButtonUp:
+                    case NetworkPlayer.PlayerEvent.EventType.ButtonUp:
                         events.Add(new GameGrid.GameButtonEvent
                         {
                             Type = GameGrid.GameButtonEvent.EventType.ButtonUp,
