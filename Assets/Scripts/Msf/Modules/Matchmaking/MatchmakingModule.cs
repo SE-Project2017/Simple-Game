@@ -69,15 +69,20 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                 return;
             }
             var match = mMatches[packet.SpawnID];
-            foreach (var player in new[] {match.Player1, match.Player2})
-            {
-                player.Peer.SendMessage(MessageHelper.Create((short) OperationCode.GameFound,
-                    new GameFoundPacket
-                    {
-                        GameServerDetails = packet,
-                        PlayerType = player.Type
-                    }));
-            }
+            match.PlayerA.Peer.SendMessage(MessageHelper.Create((short) OperationCode.GameFound,
+                new GameFoundPacket
+                {
+                    GameServerDetails = packet,
+                    PlayerType = ServerController.PlayerType.PlayerA,
+                    Token = match.PlayerAToken,
+                }));
+            match.PlayerB.Peer.SendMessage(MessageHelper.Create((short) OperationCode.GameFound,
+                new GameFoundPacket
+                {
+                    GameServerDetails = packet,
+                    PlayerType = ServerController.PlayerType.PlayerB,
+                    Token = match.PlayerBToken,
+                }));
         }
 
         private IEnumerator MatchmakingWorker()
@@ -88,23 +93,34 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
                 while (mSearchingPlayers.Count >= 2)
                 {
                     string username = mSearchingPlayers.Keys.First();
-                    var player1 = mSearchingPlayers[username];
-                    RemovePlayer(player1);
+                    var playerA = mSearchingPlayers[username];
+                    RemovePlayer(playerA);
                     username = mSearchingPlayers.Keys.First();
-                    var player2 = mSearchingPlayers[username];
-                    RemovePlayer(player2);
-                    player1.Type = ServerController.PlayerType.PlayerA;
-                    player2.Type = ServerController.PlayerType.PlayerB;
-                    var task = mSpawnersModule.Spawn(null);
+                    var playerB = mSearchingPlayers[username];
+                    RemovePlayer(playerB);
+                    var playerAToken = PlayerToken.New();
+                    var playerBToken = PlayerToken.New();
+                    var task = mSpawnersModule.Spawn(null, null,
+                        string.Format("{0} {1} {2} {3}",
+                            MsfContext.Args.Names.PlayerAToken,
+                            playerAToken.ToBase64(),
+                            MsfContext.Args.Names.PlayerBToken,
+                            playerBToken.ToBase64()));
                     if (task == null)
                     {
-                        AddPlayer(player1);
-                        AddPlayer(player2);
+                        AddPlayer(playerA);
+                        AddPlayer(playerB);
                     }
                     else
                     {
                         mMatches.Add(task.SpawnId,
-                            new Match {Player1 = player1, Player2 = player2});
+                            new Match
+                            {
+                                PlayerA = playerA,
+                                PlayerB = playerB,
+                                PlayerAToken = playerAToken,
+                                PlayerBToken = playerBToken,
+                            });
                     }
                 }
             }
@@ -125,13 +141,14 @@ namespace Assets.Scripts.Msf.Modules.Matchmaking
         {
             public string Name;
             public IPeer Peer;
-            public ServerController.PlayerType Type;
         }
 
         private struct Match
         {
-            public MatchmakingPlayer Player1;
-            public MatchmakingPlayer Player2;
+            public MatchmakingPlayer PlayerA;
+            public MatchmakingPlayer PlayerB;
+            public PlayerToken PlayerAToken;
+            public PlayerToken PlayerBToken;
         }
     }
 }

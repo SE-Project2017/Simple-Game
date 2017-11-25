@@ -277,9 +277,9 @@ namespace Assets.Scripts.Multiplayer
         public void OnOtherPlayerDisconnected()
         {
             new AlertDialog.Builder()
-                 .SetMessage("A player has been disconnected.")
-                 .SetNeutralButton("OK", GotoScoreScreen)
-                 .Show();
+                .SetMessage("A player has been disconnected.")
+                .SetNeutralButton("OK", GotoScoreScreen)
+                .Show();
         }
 
         private void OnGameEnding()

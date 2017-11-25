@@ -15,6 +15,9 @@ namespace Assets.Scripts.Multiplayer
     {
         public const float MaxConnectTime = 10;
 
+        public PlayerToken PlayerAToken { get; private set; }
+        public PlayerToken PlayerBToken { get; private set; }
+
         private bool mPlayerAEnded;
         private bool mPlayerBEnded;
         private int mPlayerAEndFrame;
@@ -38,6 +41,8 @@ namespace Assets.Scripts.Multiplayer
 
         public IEnumerator Start()
         {
+            PlayerAToken = PlayerToken.FromBase64(MsfContext.Args.PlayerAToken);
+            PlayerBToken = PlayerToken.FromBase64(MsfContext.Args.PlayerBToken);
             string address = MsfContext.Args.MachineAddress;
             int port = MsfContext.Args.AssignedPort;
             int spawnID = MsfContext.Args.SpawnId;
