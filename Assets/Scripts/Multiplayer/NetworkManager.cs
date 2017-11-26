@@ -1,8 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.App;
 
-using Assets.Scripts.App;
-
-using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 

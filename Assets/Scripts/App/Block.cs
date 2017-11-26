@@ -1,9 +1,6 @@
-﻿using System;
-
-using Assets.Scripts.Utils;
+﻿using Assets.Scripts.Utils;
 
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Assets.Scripts.App
 {
