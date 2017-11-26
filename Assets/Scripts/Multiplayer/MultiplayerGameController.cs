@@ -16,6 +16,11 @@ namespace Assets.Scripts.Multiplayer
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
 
+        public State GameState
+        {
+            get { return mState; }
+        }
+
         public GameGrid LocalGameGrid;
         public GameGrid RemoteGameGrid;
         public MultiplayerGameEndUI GameEndUI;
@@ -40,6 +45,12 @@ namespace Assets.Scripts.Multiplayer
 
         public readonly List<NetworkPlayer.PlayerEvent[]> RemotePlayerEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
+
+        public NetworkPlayer LocalPlayer;
+        public NetworkPlayer RemotePlayer;
+
+        public NetworkPlayer.PlayerState LocalReconnectionData;
+        public NetworkPlayer.PlayerState RemoteReconnectionData;
 
         private const int InteractionDelay = 40;
         private const int MaxItemCharge = 20;
@@ -274,10 +285,18 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDisconnected()
         {
-            new AlertDialog.Builder()
-                .SetMessage("You have been disconnected from the server.")
-                .SetNeutralButton("OK", GotoScoreScreen)
-                .Show();
+            Assert.IsTrue(mState != State.Reconnecting);
+            if (mState != State.Playing)
+            {
+                new AlertDialog.Builder()
+                    .SetMessage("You have been disconnected from the server.")
+                    .SetNeutralButton("OK", GotoScoreScreen)
+                    .Show();
+            }
+            else
+            {
+                mState = State.Reconnecting;
+            }
         }
 
         public void OnOtherPlayerDisconnected()
@@ -286,6 +305,12 @@ namespace Assets.Scripts.Multiplayer
                 .SetMessage("A player has been disconnected.")
                 .SetNeutralButton("OK", GotoScoreScreen)
                 .Show();
+        }
+
+        public void OnReconnectComplete()
+        {
+            Assert.IsTrue(mState == State.Reconnecting);
+            mState = State.Playing;
         }
 
         private void OnGameEnding()
@@ -459,12 +484,13 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
-        private enum State
+        public enum State
         {
             Connecting,
             Waiting,
             Playing,
             Ending,
+            Reconnecting,
         }
     }
 }
