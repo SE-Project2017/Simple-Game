@@ -26,11 +26,6 @@ namespace Assets.Scripts.Multiplayer
         public readonly List<NetworkPlayer.PlayerEvent[]> PlayerBEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
 
-        public bool PlayerAReconnecting { get; private set; }
-        public bool PlayerBReconnecting { get; private set; }
-        public NetworkPlayer.PlayerState PlayerAReconnectionData;
-        public NetworkPlayer.PlayerState PlayerBReconnectionData;
-
         private bool mPlayerAEnded;
         private bool mPlayerBEnded;
         private int mPlayerAEndFrame;
@@ -38,63 +33,6 @@ namespace Assets.Scripts.Multiplayer
         private string mPlayerAName;
         private string mPlayerBName;
         private State mState = State.Connecting;
-
-        private bool PlayerALocalReconnectComplete
-        {
-            set
-            {
-                Assert.IsTrue(mPlayerALocalReconnectComplete != value);
-                mPlayerALocalReconnectComplete = value;
-                if (mPlayerALocalReconnectComplete && mPlayerARemoteReconnectComplete)
-                {
-                    PlayerReconnectComplete(PlayerType.PlayerA);
-                }
-            }
-        }
-
-        private bool PlayerARemoteReconnectComplete
-        {
-            set
-            {
-                Assert.IsTrue(mPlayerARemoteReconnectComplete != value);
-                mPlayerARemoteReconnectComplete = value;
-                if (mPlayerALocalReconnectComplete && mPlayerARemoteReconnectComplete)
-                {
-                    PlayerReconnectComplete(PlayerType.PlayerA);
-                }
-            }
-        }
-
-        private bool PlayerBLocalReconnectComplete
-        {
-            set
-            {
-                Assert.IsTrue(mPlayerBLocalReconnectComplete != value);
-                mPlayerBLocalReconnectComplete = value;
-                if (mPlayerBLocalReconnectComplete && mPlayerBRemoteReconnectComplete)
-                {
-                    PlayerReconnectComplete(PlayerType.PlayerB);
-                }
-            }
-        }
-
-        private bool PlayerBRemoteReconnectComplete
-        {
-            set
-            {
-                Assert.IsTrue(mPlayerBRemoteReconnectComplete != value);
-                mPlayerBRemoteReconnectComplete = value;
-                if (mPlayerBLocalReconnectComplete && mPlayerBRemoteReconnectComplete)
-                {
-                    PlayerReconnectComplete(PlayerType.PlayerB);
-                }
-            }
-        }
-
-        private bool mPlayerALocalReconnectComplete = true;
-        private bool mPlayerARemoteReconnectComplete = true;
-        private bool mPlayerBLocalReconnectComplete = true;
-        private bool mPlayerBRemoteReconnectComplete = true;
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
@@ -146,46 +84,6 @@ namespace Assets.Scripts.Multiplayer
                 mState = State.Running;
                 PlayerA.OnRegisterComplete(mGameInfo);
                 PlayerB.OnRegisterComplete(mGameInfo);
-            }
-        }
-
-        public void OnPlayerDisconnect(PlayerType type)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    PlayerA = null;
-                    PlayerAReconnecting = true;
-                    PlayerALocalReconnectComplete = false;
-                    PlayerARemoteReconnectComplete = false;
-                    break;
-                case PlayerType.PlayerB:
-                    PlayerB = null;
-                    PlayerBReconnecting = true;
-                    PlayerBLocalReconnectComplete = false;
-                    PlayerBRemoteReconnectComplete = false;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
-            }
-        }
-
-        public void OnPlayerReconnect(NetworkPlayer player, PlayerType type)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    PlayerA = player;
-                    player.OnServerReconnectPlayerA();
-                    StartCoroutine(ReconnectRemotePlayer(PlayerType.PlayerB));
-                    break;
-                case PlayerType.PlayerB:
-                    PlayerB = player;
-                    player.OnServerReconnectPlayerB();
-                    StartCoroutine(ReconnectRemotePlayer(PlayerType.PlayerA));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
             }
         }
 
@@ -252,21 +150,6 @@ namespace Assets.Scripts.Multiplayer
             }
         }
 
-        public void OnLocalReconnectComplete(PlayerType type)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    PlayerALocalReconnectComplete = true;
-                    break;
-                case PlayerType.PlayerB:
-                    PlayerBLocalReconnectComplete = true;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
-            }
-        }
-
         private IEnumerator EndGame(GameResult result)
         {
             yield return StartCoroutine(ReportGameResult(result));
@@ -294,60 +177,6 @@ namespace Assets.Scripts.Multiplayer
             yield return new WaitForSecondsRealtime(MaxConnectTime);
             NetworkManager.Instance.StopServer();
             Application.Quit();
-        }
-
-        private IEnumerator ReconnectRemotePlayer(PlayerType type)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    while (PlayerA == null)
-                    {
-                        yield return null;
-                    }
-                    PlayerA.OnRemoteReconnect();
-                    PlayerBRemoteReconnectComplete = true;
-                    break;
-                case PlayerType.PlayerB:
-                    while (PlayerB == null)
-                    {
-                        yield return null;
-                    }
-                    PlayerB.OnRemoteReconnect();
-                    PlayerARemoteReconnectComplete = true;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
-            }
-        }
-
-        private void PlayerReconnectComplete(PlayerType type)
-        {
-            switch (type)
-            {
-                case PlayerType.PlayerA:
-                    Assert.IsTrue(PlayerAReconnecting);
-                    PlayerAReconnecting = false;
-                    if (PlayerBReconnecting)
-                    {
-                        return;
-                    }
-                    PlayerA.OnReconnectComplete();
-                    PlayerB.OnReconnectComplete();
-                    break;
-                case PlayerType.PlayerB:
-                    Assert.IsTrue(PlayerBReconnecting);
-                    PlayerBReconnecting = false;
-                    if (PlayerAReconnecting)
-                    {
-                        return;
-                    }
-                    PlayerA.OnReconnectComplete();
-                    PlayerB.OnReconnectComplete();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
-            }
         }
 
         private static ulong[] NewGeneratorSeed()

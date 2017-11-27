@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -63,40 +62,6 @@ namespace Assets.Scripts.Multiplayer
 //            {
 //                mGameController.OnDisconnected();
 //            }
-            if (mState == State.Playing)
-            {
-                if (mIsClient &&
-                    mGameController.GameState != MultiplayerGameController.State.Ending)
-                {
-                    if (mIsLocalPlayer)
-                    {
-                        mGameController.LocalReconnectionData = SavePlayerState();
-                    }
-                    else
-                    {
-                        mGameController.RemoteReconnectionData = SavePlayerState();
-                    }
-                    if (mGameController.GameState != MultiplayerGameController.State.Reconnecting)
-                    {
-                        mGameController.OnDisconnected();
-                    }
-                }
-                if (mIsServer)
-                {
-                    switch (Type)
-                    {
-                        case ServerController.PlayerType.PlayerA:
-                            mServerController.PlayerAReconnectionData = SavePlayerState();
-                            break;
-                        case ServerController.PlayerType.PlayerB:
-                            mServerController.PlayerBReconnectionData = SavePlayerState();
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    mServerController.OnPlayerDisconnect(Type);
-                }
-            }
         }
 
         [Server]
@@ -121,70 +86,13 @@ namespace Assets.Scripts.Multiplayer
             RpcOnRegisterComplete(info, Type, Username);
         }
 
-        [Server]
-        public void OnServerReconnectPlayerA()
-        {
-            RestorePlayerState(mServerController.PlayerAReconnectionData);
-            mState = State.Reconnecting;
-        }
-
-        [Server]
-        public void OnServerReconnectPlayerB()
-        {
-            RestorePlayerState(mServerController.PlayerBReconnectionData);
-            mState = State.Reconnecting;
-        }
-
-        [Server]
-        public void OnRemoteReconnect()
-        {
-            for (int i = Math.Max(0, mFrameCount - MaxFrameDiff * 2); i < mFrameCount; ++i)
-            {
-                switch (Type)
-                {
-                    case ServerController.PlayerType.PlayerA:
-                        TargetReconnectRemoteUpdateFrame(
-                            mServerController.PlayerB.connectionToClient, i + 1,
-                            mServerController.PlayerAEvents[i]);
-                        break;
-                    case ServerController.PlayerType.PlayerB:
-                        TargetReconnectRemoteUpdateFrame(
-                            mServerController.PlayerA.connectionToClient, i + 1,
-                            mServerController.PlayerBEvents[i]);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            mState = State.Reconnecting;
-        }
-
-        [Server]
-        public void OnReconnectComplete()
-        {
-            Assert.IsTrue(mState == State.Reconnecting);
-            mState = State.Playing;
-            RpcOnReconnectComplete();
-        }
-
         [Client]
         public override void OnStartClient()
         {
             base.OnStartClient();
             mIsClient = true;
             mGameController.Players.Add(this);
-            if (mGameController.GameState != MultiplayerGameController.State.Reconnecting)
-            {
-                StartCoroutine(CheckConnection());
-            }
-            else
-            {
-                mState = State.Reconnecting;
-                if (!mIsLocalPlayer)
-                {
-                    RestorePlayerState(mGameController.RemoteReconnectionData);
-                }
-            }
+            StartCoroutine(CheckConnection());
         }
 
         [Client]
@@ -192,6 +100,8 @@ namespace Assets.Scripts.Multiplayer
         {
             base.OnStartLocalPlayer();
             mIsLocalPlayer = true;
+            Type = mGameController.LocalPlayerType;
+            Username = MsfContext.Client.Auth.AccountInfo.Username;
             var inputController = gameObject.AddComponent<InputController>();
             inputController.ButtonDown += button =>
                 mPlayerEvents.Add(new PlayerEvent
@@ -205,17 +115,7 @@ namespace Assets.Scripts.Multiplayer
                     Type = PlayerEvent.EventType.ButtonUp,
                     Data = (int) button,
                 });
-            if (mGameController.GameState != MultiplayerGameController.State.Reconnecting)
-            {
-                Type = mGameController.LocalPlayerType;
-                Username = MsfContext.Client.Auth.AccountInfo.Username;
-                mGameController.OnConnected();
-            }
-            else
-            {
-                RestorePlayerState(mGameController.LocalReconnectionData);
-                CmdOnLocalReconnect(mFrameCount);
-            }
+            mGameController.OnConnected();
         }
 
         [Client]
@@ -234,11 +134,6 @@ namespace Assets.Scripts.Multiplayer
         {
             if (mState == State.Playing)
             {
-                if (!mGameController.RemotePlayer)
-                {
-                    mState = State.Reconnecting;
-                    return;
-                }
                 if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
                     MaxFrameDiff)
                 {
@@ -278,19 +173,6 @@ namespace Assets.Scripts.Multiplayer
             mServerController.OnPlayerGameEnd(Type, frameCount);
         }
 
-        [Command]
-        private void CmdOnLocalReconnect(int frameCount)
-        {
-            Assert.IsTrue(mFrameCount <= frameCount);
-            TargetReconnectLocalFrom(connectionToClient, mFrameCount);
-        }
-
-        [Command]
-        private void CmdOnLocalReconnectComplate()
-        {
-            mServerController.OnLocalReconnectComplete(Type);
-        }
-
         [ClientRpc]
         public void RpcOnPlayerWin()
         {
@@ -305,22 +187,6 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [ClientRpc]
-        private void RpcOnReconnectComplete()
-        {
-            Assert.IsTrue(mState == State.Reconnecting);
-            mState = State.Playing;
-            if (mIsLocalPlayer)
-            {
-                mGameController.OnReconnectComplete();
-                mGameController.LocalPlayer = this;
-            }
-            else
-            {
-                mGameController.RemotePlayer = this;
-            }
-        }
-
-        [ClientRpc]
         private void RpcOnRegisterComplete(ServerController.GameInfo info,
             ServerController.PlayerType type, string username)
         {
@@ -329,11 +195,6 @@ namespace Assets.Scripts.Multiplayer
             if (mIsLocalPlayer)
             {
                 mGameController.OnGameStart(info);
-                mGameController.LocalPlayer = this;
-            }
-            else
-            {
-                mGameController.RemotePlayer = this;
             }
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
@@ -358,58 +219,9 @@ namespace Assets.Scripts.Multiplayer
         }
 
         [TargetRpc]
-        public void TargetOnGameDraw(NetworkConnection conn)
+        public void TargetOnGameDraw(NetworkConnection connection)
         {
             mGameController.OnGameDraw();
-        }
-
-        [TargetRpc]
-        // ReSharper disable once UnusedParameter.Local
-        private void TargetReconnectLocalFrom(NetworkConnection conn, int frameCount)
-        {
-            Assert.IsTrue(frameCount <= mFrameCount);
-            Assert.IsTrue(mIsLocalPlayer);
-            for (int i = frameCount; i < mFrameCount; ++i)
-            {
-                CmdUpdateFrame(i + 1, mGameController.LocalPlayerEvents[i]);
-            }
-            CmdOnLocalReconnectComplate();
-        }
-
-        [TargetRpc]
-        // ReSharper disable once UnusedParameter.Local
-        private void TargetReconnectRemoteUpdateFrame(NetworkConnection conn, int frameCount,
-            PlayerEvent[] events)
-        {
-            Assert.IsFalse(mIsLocalPlayer);
-            if (frameCount == mFrameCount + 1)
-            {
-                mFrameCount = frameCount;
-                mGameController.OnRemoteUpdateFrame(mFrameCount, events);
-            }
-            else
-            {
-                Assert.IsTrue(frameCount <= mFrameCount);
-            }
-        }
-
-        private PlayerState SavePlayerState()
-        {
-            return new PlayerState
-            {
-                FrameCount = mFrameCount,
-                MaxFrames = mMaxFrames,
-                PlayerType = Type,
-                Username = Username,
-            };
-        }
-
-        private void RestorePlayerState(PlayerState state)
-        {
-            mFrameCount = state.FrameCount;
-            mMaxFrames = state.MaxFrames;
-            Type = state.PlayerType;
-            Username = state.Username;
         }
 
         public struct PlayerEvent
@@ -437,7 +249,6 @@ namespace Assets.Scripts.Multiplayer
             Connecting,
             Playing,
             Ended,
-            Reconnecting,
         }
     }
 }
