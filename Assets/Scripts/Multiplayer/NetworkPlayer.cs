@@ -46,22 +46,22 @@ namespace Assets.Scripts.Multiplayer
 
         public void OnDestroy()
         {
-//            if (mIsServer)
-//            {
-//                if (mState == State.Playing)
-//                {
-//                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
-//                    mState = State.Ended;
-//                }
-//            }
+            if (mIsServer)
+            {
+                if (mState == State.Playing)
+                {
+                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
+                    mState = State.Ended;
+                }
+            }
             if (mIsClient)
             {
                 mGameController.Players.Remove(this);
             }
-//            if (mState == State.Playing && mIsLocalPlayer)
-//            {
-//                mGameController.OnDisconnected();
-//            }
+            if (mState == State.Playing && mIsLocalPlayer)
+            {
+                mGameController.OnDisconnected();
+            }
         }
 
         [Server]
@@ -150,8 +150,9 @@ namespace Assets.Scripts.Multiplayer
                         mState = State.Ended;
                     }
                     mPlayerEvents.Clear();
-                } while (mState == State.Playing && mFrameCount ==
-                    mGameController.Players.Min(player => player.mFrameCount));
+                } while (mState == State.Playing &&
+                    mGameController.Players.Count > 1 &&
+                    mFrameCount == mGameController.Players.Min(player => player.mFrameCount));
             }
             mPlayerEvents.Clear();
         }
@@ -234,14 +235,6 @@ namespace Assets.Scripts.Multiplayer
                 ButtonDown,
                 ButtonUp,
             }
-        }
-
-        public struct PlayerState
-        {
-            public int FrameCount;
-            public int MaxFrames;
-            public string Username;
-            public ServerController.PlayerType PlayerType;
         }
 
         private enum State

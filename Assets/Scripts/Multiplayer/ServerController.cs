@@ -13,12 +13,10 @@ namespace Assets.Scripts.Multiplayer
 {
     public class ServerController : Singleton<ServerController>
     {
-        public const float MaxConnectTime = 10;
+        public const float MaxConnectTime = 12;
 
         public PlayerToken PlayerAToken { get; private set; }
         public PlayerToken PlayerBToken { get; private set; }
-        public NetworkPlayer PlayerA { get; private set; }
-        public NetworkPlayer PlayerB { get; private set; }
 
         public readonly List<NetworkPlayer.PlayerEvent[]> PlayerAEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
@@ -33,6 +31,8 @@ namespace Assets.Scripts.Multiplayer
         private string mPlayerAName;
         private string mPlayerBName;
         private State mState = State.Connecting;
+        private NetworkPlayer mPlayerA;
+        private NetworkPlayer mPlayerB;
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
@@ -67,23 +67,25 @@ namespace Assets.Scripts.Multiplayer
             switch (type)
             {
                 case PlayerType.PlayerA:
-                    PlayerA = player;
+                    Assert.IsTrue(mPlayerA == null);
+                    mPlayerA = player;
                     player.Type = PlayerType.PlayerA;
                     player.Username = mPlayerAName;
                     break;
                 case PlayerType.PlayerB:
-                    PlayerB = player;
+                    Assert.IsTrue(mPlayerB == null);
+                    mPlayerB = player;
                     player.Type = PlayerType.PlayerB;
                     player.Username = mPlayerBName;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
-            if (PlayerA != null && PlayerB != null)
+            if (mPlayerA != null && mPlayerB != null)
             {
                 mState = State.Running;
-                PlayerA.OnRegisterComplete(mGameInfo);
-                PlayerB.OnRegisterComplete(mGameInfo);
+                mPlayerA.OnRegisterComplete(mGameInfo);
+                mPlayerB.OnRegisterComplete(mGameInfo);
             }
         }
 
@@ -97,7 +99,7 @@ namespace Assets.Scripts.Multiplayer
                     mPlayerAEndFrame = frameCount;
                     if (!mPlayerBEnded)
                     {
-                        PlayerB.SetMaxFrame(frameCount);
+                        mPlayerB.SetMaxFrame(frameCount);
                     }
                     break;
                 case PlayerType.PlayerB:
@@ -106,7 +108,7 @@ namespace Assets.Scripts.Multiplayer
                     mPlayerBEndFrame = frameCount;
                     if (!mPlayerAEnded)
                     {
-                        PlayerA.SetMaxFrame(frameCount);
+                        mPlayerA.SetMaxFrame(frameCount);
                     }
                     break;
                 default:
@@ -116,17 +118,17 @@ namespace Assets.Scripts.Multiplayer
             {
                 if (mPlayerAEndFrame < mPlayerBEndFrame)
                 {
-                    PlayerB.RpcOnPlayerWin();
+                    mPlayerB.RpcOnPlayerWin();
                     StartCoroutine(EndGame(GameResult.PlayerBWon));
                 }
                 else if (mPlayerBEndFrame < mPlayerAEndFrame)
                 {
-                    PlayerA.RpcOnPlayerWin();
+                    mPlayerA.RpcOnPlayerWin();
                     StartCoroutine(EndGame(GameResult.PlayerAWon));
                 }
                 else
                 {
-                    foreach (var player in new[] {PlayerA, PlayerB})
+                    foreach (var player in new[] {mPlayerA, mPlayerB})
                     {
                         player.TargetOnGameDraw(player.connectionToClient);
                     }

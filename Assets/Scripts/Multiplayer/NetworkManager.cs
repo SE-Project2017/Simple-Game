@@ -27,41 +27,23 @@ namespace Assets.Scripts.Multiplayer
             mClientController = ClientController.Instance;
         }
 
-        public override void OnServerDisconnect(NetworkConnection conn) { }
-
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId,
             NetworkReader extraMessageReader)
         {
             var token = PlayerToken.FromBase64(extraMessageReader.ReadString());
             if (token == mServerController.PlayerAToken)
             {
-                if (mServerController.PlayerA == null)
-                {
-                    var playerObj = Instantiate(playerPrefab);
-                    NetworkServer.AddPlayerForConnection(conn, playerObj, playerControllerId);
-                    var player = playerObj.GetComponent<NetworkPlayer>();
-                    mServerController.RegisterPlayer(player, ServerController.PlayerType.PlayerA);
-                }
-                else
-                {
-                    NetworkServer.AddPlayerForConnection(conn, mServerController.PlayerA.gameObject,
-                        playerControllerId);
-                }
+                var playerObj = Instantiate(playerPrefab);
+                NetworkServer.AddPlayerForConnection(conn, playerObj, playerControllerId);
+                var player = playerObj.GetComponent<NetworkPlayer>();
+                mServerController.RegisterPlayer(player, ServerController.PlayerType.PlayerA);
             }
             else if (token == mServerController.PlayerBToken)
             {
-                if (mServerController.PlayerB == null)
-                {
-                    var playerObj = Instantiate(playerPrefab);
-                    NetworkServer.AddPlayerForConnection(conn, playerObj, playerControllerId);
-                    var player = playerObj.GetComponent<NetworkPlayer>();
-                    mServerController.RegisterPlayer(player, ServerController.PlayerType.PlayerB);
-                }
-                else
-                {
-                    NetworkServer.AddPlayerForConnection(conn, mServerController.PlayerB.gameObject,
-                        playerControllerId);
-                }
+                var playerObj = Instantiate(playerPrefab);
+                NetworkServer.AddPlayerForConnection(conn, playerObj, playerControllerId);
+                var player = playerObj.GetComponent<NetworkPlayer>();
+                mServerController.RegisterPlayer(player, ServerController.PlayerType.PlayerB);
             }
         }
 
