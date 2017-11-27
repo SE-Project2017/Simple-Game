@@ -296,10 +296,6 @@ namespace Assets.Scripts.Multiplayer
             else
             {
                 mState = State.Reconnecting;
-                if (!mNetworkManager.isNetworkActive)
-                {
-                    StartCoroutine(Reconnect());
-                }
             }
         }
 
@@ -399,12 +395,6 @@ namespace Assets.Scripts.Multiplayer
                 mNetworkManager.StopClient();
                 OnDisconnected();
             }
-        }
-
-        private IEnumerator Reconnect()
-        {
-            yield return new WaitForSecondsRealtime(4);
-            mNetworkManager.StartClient();
         }
 
         private static void SetupDisplayColor(GameObject obj)

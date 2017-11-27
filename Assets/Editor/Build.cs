@@ -109,15 +109,12 @@ namespace Assets.Editor
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
                 "LOCAL_SERVER");
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android,
-                "LOCAL_SERVER");
         }
 
         [MenuItem("Build/Disable Local Server", false, 410)]
         public static void DisableLocalServer()
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "");
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "");
         }
 
         private static void ApplySettings()
