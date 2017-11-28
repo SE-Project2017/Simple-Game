@@ -57,6 +57,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: a445b46a149dc53419e4926fb0cf0464, type: 3}
   - {fileID: 21300000, guid: c45adf2c2aed60848ab420f0b2b576c1, type: 3}
   - {fileID: 21300000, guid: 2f01722d5d9ca8f4cab5850afa98af27, type: 3}
+  - {fileID: 21300000, guid: 9d16b83931e586f44b05cf3be4f0aca2, type: 3}
   BlockDefaultSprite: {fileID: 21300000, guid: efb7a20c2ec1c1641be76000376dd028, type: 3}
   AlertDialogPrefab: {fileID: 1881060199168746, guid: e57b34cb3e7c58a4e9d961761db9c1d8,
     type: 2}

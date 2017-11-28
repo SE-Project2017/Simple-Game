@@ -7,6 +7,7 @@
         ClearEven,
         Shotgun,
         MirrorBlock,
+        ColorBlock,
         None = -1,
     }
 }

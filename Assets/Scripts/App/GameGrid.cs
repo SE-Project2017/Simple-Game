@@ -25,14 +25,13 @@ namespace Assets.Scripts.App
         public event Action<ClearingBlocks> OnLineCleared;
         public event Action<Tetromino> OnNewTetrominoGenerated;
         public event Action<Tetromino> OnHoldTetrominoChanged;
+        public event Action<GameItem> OnTargetItemActivated;
         public event Action<bool> OnHoldEnableStateChanged;
         public event Action<int, int, Block.Data> OnPlayClearEffect;
         public event Action OnNextTetrominoConsumued;
         public event Action OnGameEnd;
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
-        public event Action OnShotgunActivated;
-        public event Action OnMirrorBlockActivated;
         public event Action OnPlayFlipAnimation;
 
         private readonly Block[,] mGrid = new Block[20, 10];
@@ -49,6 +48,7 @@ namespace Assets.Scripts.App
         private int mDasDelayFrames;
         private int mClearingFrames;
         private int mActivatingItemFrames;
+        private int mColorBlockFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
         private Tetromino mActiveTetromino = Tetromino.Undefined;
@@ -61,6 +61,7 @@ namespace Assets.Scripts.App
         private int mAccumulatedGravity;
         private int mItemClearingHighestRow;
         private int mMirrorBlockTurns;
+        private int mColorBlockTurns;
         private bool mDownPressed;
         private bool mRotateLeftPressed;
         private bool mRotateRightPressed;
@@ -173,6 +174,10 @@ namespace Assets.Scripts.App
                 var blocks = mPendingAddBlocks.Dequeue();
                 AddBlocks(blocks);
             }
+            if (mColorBlockTurns > 0)
+            {
+                ColorBlockFrame();
+            }
             return mState != GameState.Running;
         }
 
@@ -239,8 +244,8 @@ namespace Assets.Scripts.App
 
         public void GenerateNextItem()
         {
-            //            mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
-            mNextGameItem = GameItem.MirrorBlock;
+            //mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
+            mNextGameItem = GameItem.ColorBlock;
         }
 
         public void TargetedShotgun()
@@ -268,6 +273,12 @@ namespace Assets.Scripts.App
             mMirrorBlockTurns = 3;
             DestroyActiveTetromino();
             StartNewTetromino();
+        }
+
+        public void TargetedColorBlock()
+        {
+            mColorBlockTurns = 3;
+            mColorBlockFrames = 0;
         }
 
         private void ExecuteMirrorBlock()
@@ -307,6 +318,19 @@ namespace Assets.Scripts.App
                     TryRotateRight();
                 }
                 mMirrorExecuted = false;
+                if (mColorBlockTurns > 0)
+                {
+                    --mColorBlockTurns;
+                    if (mColorBlockTurns == 0)
+                    {
+                        ForEachBlockNonNull((block, row, col) =>
+                        {
+                            var color = block.Color;
+                            color.a = 1;
+                            block.Color = color;
+                        });
+                    }
+                }
             }
         }
 
@@ -564,21 +588,18 @@ namespace Assets.Scripts.App
             }
             else if (mActivatingItemFrames == 50)
             {
-                for (int row = 0; row < mGrid.GetLength(0); ++row)
+                ForEachBlockNonNull((block, row, col) =>
                 {
-                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    if (mRandom.Range(0, 10) != 0)
                     {
-                        if (mGrid[row, col] == null || mRandom.Range(0, 10) != 0)
-                        {
-                            continue;
-                        }
-                        if (OnPlayClearEffect != null)
-                        {
-                            OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
-                        }
-                        DestroyBlock(row, col);
+                        return;
                     }
-                }
+                    if (OnPlayClearEffect != null)
+                    {
+                        OnPlayClearEffect.Invoke(row, col, block.Properties);
+                    }
+                    DestroyBlock(row, col);
+                });
             }
         }
 
@@ -607,6 +628,26 @@ namespace Assets.Scripts.App
                     }
                 }
                 transform.rotation = Quaternion.identity;
+            }
+        }
+
+        private void ColorBlockFrame()
+        {
+            --mColorBlockFrames;
+            for (int row = 0; row < mGrid.GetLength(0); ++row)
+            {
+                for (int i = 0; i < (mGrid.GetLength(1) + 1) / 2; ++i)
+                {
+                    foreach (int col in new[] { i, mGrid.GetLength(1) - 1 - i})
+                    {
+                        if (mGrid[row, col] != null)
+                        {
+                            var color = mGrid[row, col].Color;
+                            color.a = ((mColorBlockFrames / 3 + row - i) % 10 + 10) % 10 / 10.0f;
+                            mGrid[row, col].Color = color;
+                        }
+                    }
+                }
             }
         }
 
@@ -1342,15 +1383,11 @@ namespace Assets.Scripts.App
                             ActivateClearEven();
                             break;
                         case GameItem.Shotgun:
-                            if (OnShotgunActivated != null)
-                            {
-                                OnShotgunActivated.Invoke();
-                            }
-                            break;
                         case GameItem.MirrorBlock:
-                            if (OnMirrorBlockActivated != null)
+                        case GameItem.ColorBlock:
+                            if (OnTargetItemActivated != null)
                             {
-                                OnMirrorBlockActivated.Invoke();
+                                OnTargetItemActivated.Invoke(mGrid[row, col].Item);
                             }
                             break;
                         case GameItem.None:
@@ -1431,17 +1468,14 @@ namespace Assets.Scripts.App
 
         private void RemoveItems()
         {
-            for (int row = 0; row < mGrid.GetLength(0); ++row)
+            ForEachBlockNonNull((block, row, col) =>
             {
-                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                if (block.Item != GameItem.None)
                 {
-                    if (mGrid[row, col] != null && mGrid[row, col].Item != GameItem.None)
-                    {
-                        mGrid[row, col].Item = GameItem.None;
-                        mGrid[row, col].Color = mGrid[row, col].Type.Color();
-                    }
+                    block.Item = GameItem.None;
+                    block.Color = block.Type.Color();
                 }
-            }
+            });
         }
 
         private void GenerateNewTetrominos()
@@ -1534,6 +1568,20 @@ namespace Assets.Scripts.App
                 mGrid[from, col].transform.localPosition = RowColToPosition(to, col);
                 mGrid[to, col] = mGrid[from, col];
                 mGrid[from, col] = null;
+            }
+        }
+
+        private void ForEachBlockNonNull(Action<Block, int, int> action)
+        {
+            for (int row = 0; row < mGrid.GetLength(0); ++row)
+            {
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
+                {
+                    if (mGrid[row, col] != null)
+                    {
+                        action(mGrid[row, col], row, col);
+                    }
+                } 
             }
         }
 

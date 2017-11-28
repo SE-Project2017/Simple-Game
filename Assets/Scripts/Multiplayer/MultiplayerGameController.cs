@@ -166,14 +166,10 @@ namespace Assets.Scripts.Multiplayer
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
             RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
 
-            LocalGameGrid.OnShotgunActivated += () =>
-                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.Shotgun);
-            RemoteGameGrid.OnShotgunActivated += () =>
-                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.Shotgun);
-            LocalGameGrid.OnMirrorBlockActivated += () =>
-                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.MirrorBlock);
-            RemoteGameGrid.OnMirrorBlockActivated += () =>
-                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.MirrorBlock);
+            LocalGameGrid.OnTargetItemActivated += item =>
+                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, item);
+            RemoteGameGrid.OnTargetItemActivated += item =>
+                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, item);
 
             LocalGameGrid.OnPlayFlipAnimation += () => LocalFlipAnimator.SetTrigger("Play");
             RemoteGameGrid.OnPlayFlipAnimation += () => RemoteFlipAnimator.SetTrigger("Play");
@@ -416,6 +412,9 @@ namespace Assets.Scripts.Multiplayer
                         break;
                     case GameItem.MirrorBlock:
                         target.TargetedMirrorBlock();
+                        break;
+                    case GameItem.ColorBlock:
+                        target.TargetedColorBlock();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
