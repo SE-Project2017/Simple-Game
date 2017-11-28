@@ -8,6 +8,7 @@
         Shotgun,
         MirrorBlock,
         ColorBlock,
+        XRay,
         None = -1,
     }
 }

@@ -416,6 +416,9 @@ namespace Assets.Scripts.Multiplayer
                     case GameItem.ColorBlock:
                         target.TargetedColorBlock();
                         break;
+                    case GameItem.XRay:
+                        target.TargetedXRay();
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

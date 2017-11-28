@@ -49,6 +49,7 @@ namespace Assets.Scripts.App
         private int mClearingFrames;
         private int mActivatingItemFrames;
         private int mColorBlockFrames;
+        private int mXRayFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
         private Tetromino mActiveTetromino = Tetromino.Undefined;
@@ -79,6 +80,7 @@ namespace Assets.Scripts.App
         private const int ClearItemActivationDuration = 60;
         private const int ShotgunActivationDuration = 150;
         private const int MirrorBlockActivationDuration = 40;
+        private const int XRayDuration = 300;
 
         public void Awake()
         {
@@ -178,6 +180,10 @@ namespace Assets.Scripts.App
             {
                 ColorBlockFrame();
             }
+            if (mXRayFrames > 0)
+            {
+                XRayFrame();
+            }
             return mState != GameState.Running;
         }
 
@@ -245,7 +251,7 @@ namespace Assets.Scripts.App
         public void GenerateNextItem()
         {
             //mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
-            mNextGameItem = GameItem.ColorBlock;
+            mNextGameItem = GameItem.XRay;
         }
 
         public void TargetedShotgun()
@@ -279,6 +285,11 @@ namespace Assets.Scripts.App
         {
             mColorBlockTurns = 3;
             mColorBlockFrames = 0;
+        }
+
+        public void TargetedXRay()
+        {
+            mXRayFrames = XRayDuration;
         }
 
         private void ExecuteMirrorBlock()
@@ -647,6 +658,37 @@ namespace Assets.Scripts.App
                             mGrid[row, col].Color = color;
                         }
                     }
+                }
+            }
+        }
+
+        private void XRayFrame()
+        {
+            --mXRayFrames;
+            if (mXRayFrames == 0)
+            {
+                ForEachBlockNonNull((block, row, col) =>
+                {
+                    var color = block.Color;
+                    color.a = 1;
+                    block.Color = color;
+                });
+                return;
+            }
+            ForEachBlockNonNull((block, row, col) =>
+            {
+                var color = block.Color;
+                color.a = 0;
+                block.Color = color;
+            });
+            for (int row = 0; row < mGrid.GetLength(0); ++row)
+            {
+                int col = ((-mXRayFrames + 35) % 60 + 60) % 60;
+                if (col < mGrid.GetLength(1) && mGrid[row, col] != null)
+                {
+                    var color = mGrid[row, col].Color;
+                    color.a = 1;
+                    mGrid[row, col].Color = color;
                 }
             }
         }
@@ -1385,6 +1427,7 @@ namespace Assets.Scripts.App
                         case GameItem.Shotgun:
                         case GameItem.MirrorBlock:
                         case GameItem.ColorBlock:
+                        case GameItem.XRay:
                             if (OnTargetItemActivated != null)
                             {
                                 OnTargetItemActivated.Invoke(mGrid[row, col].Item);
