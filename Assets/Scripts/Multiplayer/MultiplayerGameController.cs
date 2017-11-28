@@ -30,6 +30,7 @@ namespace Assets.Scripts.Multiplayer
         public GameObject LocalGameArea;
         public Animator ConnectingAnimator;
         public Image ItemProgress;
+        public Text LevelText;
         public float NextScale = 0.5f;
         public float Next2Scale = 0.25f;
         public float HoldScale = 0.25f;
@@ -56,6 +57,7 @@ namespace Assets.Scripts.Multiplayer
         }
 
         private Tetromino mHoldTetromino;
+        private GlobalContext mContext;
         private GameObject mNext;
         private GameObject mNext2;
         private GameObject mNext3;
@@ -66,6 +68,8 @@ namespace Assets.Scripts.Multiplayer
         private int mRemoteFrameCount;
         private int mLocalItemCharge;
         private int mRemoteItemCharge;
+        private int mLocalLevel;
+        private int mRemoteLevel;
         private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
         private readonly ParticleSystem[,] mClearParticles = new ParticleSystem[20, 10];
 
@@ -83,6 +87,11 @@ namespace Assets.Scripts.Multiplayer
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
+
+        public void Awake()
+        {
+            mContext = GlobalContext.Instance;
+        }
 
         public void Start()
         {
@@ -116,6 +125,7 @@ namespace Assets.Scripts.Multiplayer
                 Assert.IsTrue(mLocalFrameCount + InteractionDelay > mRemoteFrameCount);
                 AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
                     blocks);
+                LocalLevelAdvance(blocks.Data.GetLength(0));
             };
             RemoteGameGrid.OnLineCleared += blocks =>
             {
@@ -126,6 +136,7 @@ namespace Assets.Scripts.Multiplayer
                 Assert.IsTrue(mRemoteFrameCount + InteractionDelay > mLocalFrameCount);
                 AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
                     blocks);
+                RemoteLevelAdvance(blocks.Data.GetLength(0));
             };
             LocalGameGrid.OnTetrominoLocked += () =>
             {
@@ -134,6 +145,7 @@ namespace Assets.Scripts.Multiplayer
                 {
                     LocalGameGrid.GenerateNextItem();
                 }
+                LocalLevelAdvance(0);
             };
             RemoteGameGrid.OnTetrominoLocked += () =>
             {
@@ -142,6 +154,7 @@ namespace Assets.Scripts.Multiplayer
                 {
                     RemoteGameGrid.GenerateNextItem();
                 }
+                RemoteLevelAdvance(0);
             };
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
             RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
@@ -149,6 +162,8 @@ namespace Assets.Scripts.Multiplayer
                 mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.Shotgun);
             RemoteGameGrid.OnShotgunActivated += () =>
                 mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.Shotgun);
+            LocalGameGrid.Gravity = mContext.LevelGravity[mLocalLevel];
+            RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
             LocalItemCharge = 0;
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
@@ -370,6 +385,27 @@ namespace Assets.Scripts.Multiplayer
                 mNetworkManager.StopClient();
                 OnDisconnected();
             }
+        }
+
+        private void LocalLevelAdvance(int linesCleared)
+        {
+            if (mLocalLevel % 100 == 99 && linesCleared == 0)
+            {
+                return;
+            }
+            mLocalLevel += mContext.LevelAdvance[linesCleared];
+            LocalGameGrid.Gravity = mContext.LevelGravity[mLocalLevel];
+            LevelText.text = mLocalLevel.ToString();
+        }
+
+        private void RemoteLevelAdvance(int linesCleared)
+        {
+            if (mRemoteLevel % 100 == 99 && linesCleared == 0)
+            {
+                return;
+            }
+            mRemoteLevel += mContext.LevelAdvance[linesCleared];
+            RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
         }
 
         private static void SetupDisplayColor(GameObject obj)
