@@ -118,24 +118,22 @@ namespace Assets.Scripts.Multiplayer
             };
             LocalGameGrid.OnLineCleared += blocks =>
             {
-                if (blocks.Data.GetLength(0) <= 1)
+                if (blocks.Data.GetLength(0) >= 2)
                 {
-                    return;
+                    Assert.IsTrue(mLocalFrameCount + InteractionDelay > mRemoteFrameCount);
+                    AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
+                        blocks);
                 }
-                Assert.IsTrue(mLocalFrameCount + InteractionDelay > mRemoteFrameCount);
-                AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
-                    blocks);
                 LocalLevelAdvance(blocks.Data.GetLength(0));
             };
             RemoteGameGrid.OnLineCleared += blocks =>
             {
-                if (blocks.Data.GetLength(0) <= 1)
+                if (blocks.Data.GetLength(0) >= 2)
                 {
-                    return;
+                    Assert.IsTrue(mRemoteFrameCount + InteractionDelay > mLocalFrameCount);
+                    AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
+                        blocks);
                 }
-                Assert.IsTrue(mRemoteFrameCount + InteractionDelay > mLocalFrameCount);
-                AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
-                    blocks);
                 RemoteLevelAdvance(blocks.Data.GetLength(0));
             };
             LocalGameGrid.OnTetrominoLocked += () =>
