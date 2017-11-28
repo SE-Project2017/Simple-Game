@@ -242,7 +242,8 @@ namespace Assets.Scripts.App
 
         public void TargetedShotgun()
         {
-            if (mTetrominoState == TetrominoState.Clearing)
+            if (mTetrominoState == TetrominoState.Clearing ||
+                mTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.Shotgun);
                 return;
