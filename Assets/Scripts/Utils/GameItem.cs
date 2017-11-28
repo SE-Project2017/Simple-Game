@@ -6,6 +6,7 @@
         ClearBottomHalf,
         ClearEven,
         Shotgun,
+        MirrorBlock,
         None = -1,
     }
 }

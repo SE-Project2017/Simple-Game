@@ -29,6 +29,8 @@ namespace Assets.Scripts.Multiplayer
         public GameObject ClearParticleParent;
         public GameObject LocalGameArea;
         public Animator ConnectingAnimator;
+        public Animator LocalFlipAnimator;
+        public Animator RemoteFlipAnimator;
         public Image ItemProgress;
         public Text LevelText;
         public float NextScale = 0.5f;
@@ -96,13 +98,17 @@ namespace Assets.Scripts.Multiplayer
         public void Start()
         {
             mNetworkManager = NetworkManager.Instance;
-            ConnectingAnimator.gameObject.SetActive(true);
             var controller = ClientController.Instance;
             LocalPlayerType = controller.GameInfo.PlayerType;
+
+            ConnectingAnimator.gameObject.SetActive(true);
+
             mNetworkManager.networkAddress = controller.GameInfo.GameServerDetails.Address;
             mNetworkManager.networkPort = controller.GameInfo.GameServerDetails.Port;
             mNetworkManager.StartClient();
+
             StartCoroutine(CheckConnection());
+
             LocalGameGrid.OnGameEnd += OnGameEnding;
             LocalGameGrid.OnNewTetrominoGenerated += NewTetrominoGenerated;
             LocalGameGrid.OnNextTetrominoConsumued += NextTetrominoConsumed;
@@ -116,6 +122,7 @@ namespace Assets.Scripts.Multiplayer
                 main.startColor = color;
                 mClearParticles[row, col].Play();
             };
+
             LocalGameGrid.OnLineCleared += blocks =>
             {
                 if (blocks.Data.GetLength(0) >= 2)
@@ -136,6 +143,7 @@ namespace Assets.Scripts.Multiplayer
                 }
                 RemoteLevelAdvance(blocks.Data.GetLength(0));
             };
+
             LocalGameGrid.OnTetrominoLocked += () =>
             {
                 LocalItemCharge += ItemChargeRate;
@@ -154,15 +162,27 @@ namespace Assets.Scripts.Multiplayer
                 }
                 RemoteLevelAdvance(0);
             };
+
             LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
             RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
+
             LocalGameGrid.OnShotgunActivated += () =>
                 mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.Shotgun);
             RemoteGameGrid.OnShotgunActivated += () =>
                 mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.Shotgun);
+            LocalGameGrid.OnMirrorBlockActivated += () =>
+                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, GameItem.MirrorBlock);
+            RemoteGameGrid.OnMirrorBlockActivated += () =>
+                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, GameItem.MirrorBlock);
+
+            LocalGameGrid.OnPlayFlipAnimation += () => LocalFlipAnimator.SetTrigger("Play");
+            RemoteGameGrid.OnPlayFlipAnimation += () => RemoteFlipAnimator.SetTrigger("Play");
+
             LocalGameGrid.Gravity = mContext.LevelGravity[mLocalLevel];
             RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
+
             LocalItemCharge = 0;
+
             float width = LocalGameArea.transform.localScale.x;
             float height = LocalGameArea.transform.localScale.y;
             for (int row = 0; row < 20; ++row)
@@ -192,18 +212,7 @@ namespace Assets.Scripts.Multiplayer
                 LocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
                 mLocalPendingBlocks.Remove(frameCount);
             }
-            if (mLocalPendingItems.ContainsKey(frameCount))
-            {
-                switch (mLocalPendingItems[frameCount])
-                {
-                    case GameItem.Shotgun:
-                        LocalGameGrid.TargetedShotgun();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                mLocalPendingItems.Remove(frameCount);
-            }
+            ActivateItem(mLocalPendingItems, frameCount, LocalGameGrid);
             return UpdateFrame(playerEvents, LocalGameGrid);
         }
 
@@ -216,18 +225,7 @@ namespace Assets.Scripts.Multiplayer
                 RemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
                 mRemotePendingBlocks.Remove(frameCount);
             }
-            if (mRemotePendingItems.ContainsKey(frameCount))
-            {
-                switch (mRemotePendingItems[frameCount])
-                {
-                    case GameItem.Shotgun:
-                        RemoteGameGrid.TargetedShotgun();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                mRemotePendingItems.Remove(frameCount);
-            }
+            ActivateItem(mRemotePendingItems, frameCount, RemoteGameGrid);
             UpdateFrame(playerEvents, RemoteGameGrid);
         }
 
@@ -404,6 +402,26 @@ namespace Assets.Scripts.Multiplayer
             }
             mRemoteLevel += mContext.LevelAdvance[linesCleared];
             RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
+        }
+
+        private void ActivateItem(Dictionary<int, GameItem> pendingItems, int frameCount,
+            GameGrid target)
+        {
+            if (pendingItems.ContainsKey(frameCount))
+            {
+                switch (pendingItems[frameCount])
+                {
+                    case GameItem.Shotgun:
+                        target.TargetedShotgun();
+                        break;
+                    case GameItem.MirrorBlock:
+                        target.TargetedMirrorBlock();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                pendingItems.Remove(frameCount);
+            }
         }
 
         private static void SetupDisplayColor(GameObject obj)

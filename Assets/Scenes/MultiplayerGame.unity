@@ -155,11 +155,21 @@ Prefab:
       propertyPath: m_Name
       value: LocalGameCamera
       objectReference: {fileID: 0}
-    - target: {fileID: 20280414981322456, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
+    - target: {fileID: 212396334849821766, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
         type: 2}
-      propertyPath: m_TargetTexture
-      value: 
-      objectReference: {fileID: 8400000, guid: afc0cc22072840e4286276115d44b2d1, type: 2}
+      propertyPath: m_Size.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 212396334849821766, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
+        type: 2}
+      propertyPath: m_Size.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 212396334849821766, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
+        type: 2}
+      propertyPath: m_WasSpriteAssigned
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
   m_IsPrefabParent: 0
@@ -387,9 +397,18 @@ Prefab:
       propertyPath: m_RootOrder
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 4740170393095642, guid: 1d9935284836492419aa3b586812f579, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1d9935284836492419aa3b586812f579, type: 2}
   m_IsPrefabParent: 0
+--- !u!95 &366057903 stripped
+Animator:
+  m_PrefabParentObject: {fileID: 95320035392737276, guid: 1d9935284836492419aa3b586812f579,
+    type: 2}
+  m_PrefabInternal: {fileID: 366057902}
 --- !u!1 &366057904 stripped
 GameObject:
   m_PrefabParentObject: {fileID: 1806242470252600, guid: 1d9935284836492419aa3b586812f579,
@@ -700,6 +719,16 @@ Prefab:
       propertyPath: LevelText
       value: 
       objectReference: {fileID: 336069459}
+    - target: {fileID: 114263088831875764, guid: c85664f1fd524a0489e3522ccdf6c1ad,
+        type: 2}
+      propertyPath: LocalFlipAnimator
+      value: 
+      objectReference: {fileID: 366057903}
+    - target: {fileID: 114263088831875764, guid: c85664f1fd524a0489e3522ccdf6c1ad,
+        type: 2}
+      propertyPath: RemoteFlipAnimator
+      value: 
+      objectReference: {fileID: 1143601298}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: c85664f1fd524a0489e3522ccdf6c1ad, type: 2}
   m_IsPrefabParent: 0
@@ -1562,6 +1591,11 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4a0627d983dda942ba31fe2d4e7e10d, type: 2}
   m_IsPrefabParent: 0
+--- !u!95 &1143601298 stripped
+Animator:
+  m_PrefabParentObject: {fileID: 95714974535915414, guid: a4a0627d983dda942ba31fe2d4e7e10d,
+    type: 2}
+  m_PrefabInternal: {fileID: 1143601297}
 --- !u!1 &1144137487
 GameObject:
   m_ObjectHideFlags: 0

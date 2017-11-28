@@ -8,8 +8,8 @@ namespace Assets.Scripts.Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 69;
-        public const string VersionName = "0.1-alpha.3.69";
+        public const int VersionCode = 70;
+        public const string VersionName = "0.1-alpha.3.70";
 
         public static IEnumerator FadeOutLoadScene(string sceneName)
         {

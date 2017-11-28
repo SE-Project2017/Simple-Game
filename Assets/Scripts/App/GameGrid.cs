@@ -13,7 +13,8 @@ namespace Assets.Scripts.App
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
         public GameObject ItemClearEffectPrefab;
-        public GameObject ExplosionEffectPrefab;
+        public Animator ExplosionEffect;
+        public Animator FlipMaskAnimator;
         public int Gravity;
         public int EntryDelay;
         public int ClearEntryDelay;
@@ -31,6 +32,8 @@ namespace Assets.Scripts.App
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
         public event Action OnShotgunActivated;
+        public event Action OnMirrorBlockActivated;
+        public event Action OnPlayFlipAnimation;
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
@@ -48,7 +51,6 @@ namespace Assets.Scripts.App
         private int mActivatingItemFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
-        private Animator mExplosionEffect;
         private Tetromino mActiveTetromino = Tetromino.Undefined;
         private Tetromino mHoldTetromino = Tetromino.Undefined;
         private GameItem mActivatingItem = GameItem.None;
@@ -58,12 +60,14 @@ namespace Assets.Scripts.App
         private int mRotation;
         private int mAccumulatedGravity;
         private int mItemClearingHighestRow;
+        private int mMirrorBlockTurns;
         private bool mDownPressed;
         private bool mRotateLeftPressed;
         private bool mRotateRightPressed;
         private bool mHoldPressed;
         private bool mHoldEnabled = true;
         private bool mInitialHold = true;
+        private bool mMirrorExecuted;
         private IEnumerator<Tetromino> mTetrominoGenerator;
         private MersenneTwister mRandom;
 
@@ -73,6 +77,7 @@ namespace Assets.Scripts.App
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
         private const int ShotgunActivationDuration = 150;
+        private const int MirrorBlockActivationDuration = 40;
 
         public void Awake()
         {
@@ -82,9 +87,6 @@ namespace Assets.Scripts.App
                     .GetComponent<Animator>();
                 mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
             }
-            mExplosionEffect =
-                Instantiate(ExplosionEffectPrefab, transform).GetComponent<Animator>();
-            mExplosionEffect.transform.localPosition = new Vector3(0, 0, -2);
         }
 
         public void OnDestroy()
@@ -237,7 +239,8 @@ namespace Assets.Scripts.App
 
         public void GenerateNextItem()
         {
-            mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
+            //            mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
+            mNextGameItem = GameItem.MirrorBlock;
         }
 
         public void TargetedShotgun()
@@ -252,6 +255,31 @@ namespace Assets.Scripts.App
             mActivatingItem = GameItem.Shotgun;
             mTetrominoState = TetrominoState.AcitvatingItem;
             mActivatingItemFrames = ShotgunActivationDuration;
+        }
+
+        public void TargetedMirrorBlock()
+        {
+            if (mTetrominoState == TetrominoState.Clearing ||
+                mTetrominoState == TetrominoState.AcitvatingItem)
+            {
+                mPendingTargetedItems.Enqueue(GameItem.MirrorBlock);
+                return;
+            }
+            mMirrorBlockTurns = 3;
+            DestroyActiveTetromino();
+            StartNewTetromino();
+        }
+
+        private void ExecuteMirrorBlock()
+        {
+            mActivatingItem = GameItem.MirrorBlock;
+            mTetrominoState = TetrominoState.AcitvatingItem;
+            mActivatingItemFrames = MirrorBlockActivationDuration;
+            FlipMaskAnimator.SetTrigger("Play");
+            if (OnPlayFlipAnimation != null)
+            {
+                OnPlayFlipAnimation.Invoke();
+            }
         }
 
         private void TetrominoIdleFrame()
@@ -278,6 +306,7 @@ namespace Assets.Scripts.App
                 {
                     TryRotateRight();
                 }
+                mMirrorExecuted = false;
             }
         }
 
@@ -408,8 +437,13 @@ namespace Assets.Scripts.App
             --mActivatingItemFrames;
             if (mActivatingItemFrames == 0)
             {
+                var item = mActivatingItem;
                 mActivatingItem = GameItem.None;
                 StartNewTetromino();
+                if (item == GameItem.MirrorBlock)
+                {
+                    mIdleFrames = 1;
+                }
                 return;
             }
             switch (mActivatingItem)
@@ -426,7 +460,8 @@ namespace Assets.Scripts.App
                 case GameItem.Shotgun:
                     ShotgunFrame();
                     break;
-                case GameItem.None:
+                case GameItem.MirrorBlock:
+                    MirrorBlockFrame();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -525,7 +560,7 @@ namespace Assets.Scripts.App
         {
             if (mActivatingItemFrames + 20 == ShotgunActivationDuration)
             {
-                mExplosionEffect.SetTrigger("Play");
+                ExplosionEffect.SetTrigger("Play");
             }
             else if (mActivatingItemFrames == 50)
             {
@@ -544,6 +579,34 @@ namespace Assets.Scripts.App
                         DestroyBlock(row, col);
                     }
                 }
+            }
+        }
+
+        private void MirrorBlockFrame()
+        {
+            if (mActivatingItemFrames == 20)
+            {
+                for (int row = 0; row < mGrid.GetLength(0); ++row)
+                {
+                    for (int col = 0; col < mGrid.GetLength(1) / 2; ++col)
+                    {
+                        int anotherCol = mGrid.GetLength(1) - col - 1;
+                        if (mGrid[row, col] != null)
+                        {
+                            mGrid[row, col].transform.localPosition =
+                                RowColToPosition(row, anotherCol);
+                        }
+                        if (mGrid[row, anotherCol] != null)
+                        {
+                            mGrid[row, anotherCol].transform.localPosition =
+                                RowColToPosition(row, col);
+                        }
+                        var block = mGrid[row, col];
+                        mGrid[row, col] = mGrid[row, anotherCol];
+                        mGrid[row, anotherCol] = block;
+                    }
+                }
+                transform.rotation = Quaternion.identity;
             }
         }
 
@@ -1203,9 +1266,18 @@ namespace Assets.Scripts.App
                     case GameItem.Shotgun:
                         TargetedShotgun();
                         break;
+                    case GameItem.MirrorBlock:
+                        TargetedMirrorBlock();
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+            }
+            else if (mMirrorBlockTurns > 0 && !mMirrorExecuted)
+            {
+                --mMirrorBlockTurns;
+                mMirrorExecuted = true;
+                ExecuteMirrorBlock();
             }
         }
 
@@ -1273,6 +1345,12 @@ namespace Assets.Scripts.App
                             if (OnShotgunActivated != null)
                             {
                                 OnShotgunActivated.Invoke();
+                            }
+                            break;
+                        case GameItem.MirrorBlock:
+                            if (OnMirrorBlockActivated != null)
+                            {
+                                OnMirrorBlockActivated.Invoke();
                             }
                             break;
                         case GameItem.None:
