@@ -250,8 +250,7 @@ namespace Assets.Scripts.App
 
         public void GenerateNextItem()
         {
-            //mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
-            mNextGameItem = GameItem.XRay;
+            mNextGameItem = (GameItem) mRandom.Range(4, Enum.GetNames(typeof(GameItem)).Length - 1);
         }
 
         public void TargetedShotgun()
