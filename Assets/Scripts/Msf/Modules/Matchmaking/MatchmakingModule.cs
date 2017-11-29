@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using Assets.Scripts.Multiplayer;
-
 using Barebones.MasterServer;
 using Barebones.Networking;
 
+using Multiplayer;
+
 using UnityEngine;
 
-namespace Assets.Scripts.Msf.Modules.Matchmaking
+namespace Msf.Modules.Matchmaking
 {
     public class MatchmakingModule : ServerModuleBehaviour
     {

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
-using Assets.Scripts.Utils;
-
 using Barebones.MasterServer;
 using Barebones.Networking;
 
-namespace Assets.Scripts.Msf.Modules.Auth
+using Utils;
+
+namespace Msf.Modules.Auth
 {
     public class AuthClient : MsfAuthClient
     {

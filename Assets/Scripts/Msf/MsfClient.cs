@@ -1,8 +1,8 @@
-﻿using Assets.Scripts.Msf.Modules.Auth;
+﻿using Barebones.Networking;
 
-using Barebones.Networking;
+using Msf.Modules.Auth;
 
-namespace Assets.Scripts.Msf
+namespace Msf
 {
     public class MsfClient : Barebones.MasterServer.MsfClient
     {

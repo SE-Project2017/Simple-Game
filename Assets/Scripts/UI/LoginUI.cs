@@ -1,13 +1,15 @@
 ﻿using System.Collections;
 
-using Assets.Scripts.App;
-using Assets.Scripts.Msf;
-using Assets.Scripts.Utils;
+using App;
+
+using Msf;
 
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Assets.Scripts.UI
+using Utils;
+
+namespace UI
 {
     public class LoginUI : MonoBehaviour
     {

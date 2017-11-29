@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using Assets.Scripts.App;
-using Assets.Scripts.Msf;
+using App;
+
+using Msf;
 
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Networking;
 
-namespace Assets.Scripts.Multiplayer
+namespace Multiplayer
 {
     public class NetworkPlayer : NetworkBehaviour
     {

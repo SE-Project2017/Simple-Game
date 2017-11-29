@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Msf
+﻿namespace Msf
 {
     public class SpawnerServer : SpawnerBehaviour
     {

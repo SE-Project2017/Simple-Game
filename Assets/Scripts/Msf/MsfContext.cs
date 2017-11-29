@@ -1,6 +1,6 @@
 ﻿using Barebones.Networking;
 
-namespace Assets.Scripts.Msf
+namespace Msf
 {
     public static class MsfContext
     {

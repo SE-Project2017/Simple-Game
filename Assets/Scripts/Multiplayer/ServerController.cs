@@ -1,15 +1,16 @@
-﻿using Assets.Scripts.Msf;
-using Assets.Scripts.Utils;
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
+using Msf;
+
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Multiplayer
+using Utils;
+
+namespace Multiplayer
 {
     public class ServerController : Singleton<ServerController>
     {
@@ -72,12 +73,14 @@ namespace Assets.Scripts.Multiplayer
                     player.Type = PlayerType.PlayerA;
                     player.Username = mPlayerAName;
                     break;
+
                 case PlayerType.PlayerB:
                     Assert.IsTrue(mPlayerB == null);
                     mPlayerB = player;
                     player.Type = PlayerType.PlayerB;
                     player.Username = mPlayerBName;
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -102,6 +105,7 @@ namespace Assets.Scripts.Multiplayer
                         mPlayerB.SetMaxFrame(frameCount);
                     }
                     break;
+
                 case PlayerType.PlayerB:
                     Assert.IsTrue(!mPlayerBEnded);
                     mPlayerBEnded = true;
@@ -111,6 +115,7 @@ namespace Assets.Scripts.Multiplayer
                         mPlayerA.SetMaxFrame(frameCount);
                     }
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -144,9 +149,11 @@ namespace Assets.Scripts.Multiplayer
                 case PlayerType.PlayerA:
                     PlayerAEvents.Add(events);
                     break;
+
                 case PlayerType.PlayerB:
                     PlayerBEvents.Add(events);
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
-namespace Assets.Scripts.App
+namespace App
 {
     public class ScreenTransition : MonoBehaviour
     {

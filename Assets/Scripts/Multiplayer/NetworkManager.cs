@@ -1,9 +1,9 @@
-﻿using Assets.Scripts.App;
+﻿using App;
 
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
-namespace Assets.Scripts.Multiplayer
+namespace Multiplayer
 {
     public class NetworkManager : UnityEngine.Networking.NetworkManager
     {

@@ -1,8 +1,8 @@
-﻿using Assets.Scripts.Utils;
+﻿using UnityEngine;
 
-using UnityEngine;
+using Utils;
 
-namespace Assets.Scripts.App
+namespace App
 {
     public class GlobalContext : Singleton<GlobalContext>
     {
@@ -13,7 +13,7 @@ namespace Assets.Scripts.App
         public GameObject AlertDialogButtonPrefab;
 
         public readonly int[] LevelGravity = new int[2000];
-        public readonly int[] LevelAdvance = new[] {1, 1, 2, 4, 6};
+        public readonly int[] LevelAdvance = {1, 1, 2, 4, 6};
 
         public GlobalContext()
         {

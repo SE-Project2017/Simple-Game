@@ -1,8 +1,8 @@
-﻿using Assets.Scripts.Multiplayer;
+﻿using Multiplayer;
 
 using UnityEngine;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class MultiplayerGameEndUI : MonoBehaviour
     {

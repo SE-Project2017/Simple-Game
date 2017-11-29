@@ -6,7 +6,7 @@ using Barebones.Networking;
 
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Multiplayer
+namespace Multiplayer
 {
     public struct PlayerToken
     {

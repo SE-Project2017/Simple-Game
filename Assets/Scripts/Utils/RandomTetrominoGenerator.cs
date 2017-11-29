@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 
-namespace Assets.Scripts.Utils
+namespace Utils
 {
     public class RandomTetrominoGenerator
     {

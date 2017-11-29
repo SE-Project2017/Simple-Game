@@ -1,10 +1,10 @@
 ﻿using System;
 
-using Assets.Scripts.Utils;
-
 using UnityEditor;
 
-namespace Assets.Editor
+using Utils;
+
+namespace Editor
 {
     public class Build
     {

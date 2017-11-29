@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using Assets.Scripts.Utils;
-
 using UnityEngine;
 
-namespace Assets.Scripts.App
+using Utils;
+
+namespace App
 {
     public class GameGrid : MonoBehaviour
     {
@@ -23,15 +23,25 @@ namespace Assets.Scripts.App
         public int ClearDelay;
 
         public event Action<ClearingBlocks> OnLineCleared;
+
         public event Action<Tetromino> OnNewTetrominoGenerated;
+
         public event Action<Tetromino> OnHoldTetrominoChanged;
+
         public event Action<GameItem> OnTargetItemActivated;
+
         public event Action<bool> OnHoldEnableStateChanged;
+
         public event Action<int, int, Block.Data> OnPlayClearEffect;
+
         public event Action OnNextTetrominoConsumued;
+
         public event Action OnGameEnd;
+
         public event Action OnGameItemCreated;
+
         public event Action OnTetrominoLocked;
+
         public event Action OnPlayFlipAnimation;
 
         private readonly Block[,] mGrid = new Block[20, 10];
@@ -156,18 +166,23 @@ namespace Assets.Scripts.App
                 case TetrominoState.Idle:
                     TetrominoIdleFrame();
                     break;
+
                 case TetrominoState.Dropping:
                     TetrominoDroppingFrame();
                     break;
+
                 case TetrominoState.Locking:
                     TetrominoLockingFrame();
                     break;
+
                 case TetrominoState.Clearing:
                     LineClearFrame();
                     break;
+
                 case TetrominoState.AcitvatingItem:
                     ActivatingItemFrame();
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -485,18 +500,23 @@ namespace Assets.Scripts.App
                 case GameItem.ClearTopHalf:
                     ClearTopHalfFrame();
                     break;
+
                 case GameItem.ClearBottomHalf:
                     ClearBottomHalfFrame();
                     break;
+
                 case GameItem.ClearEven:
                     ClearEvenFrame();
                     break;
+
                 case GameItem.Shotgun:
                     ShotgunFrame();
                     break;
+
                 case GameItem.MirrorBlock:
                     MirrorBlockFrame();
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -648,7 +668,7 @@ namespace Assets.Scripts.App
             {
                 for (int i = 0; i < (mGrid.GetLength(1) + 1) / 2; ++i)
                 {
-                    foreach (int col in new[] { i, mGrid.GetLength(1) - 1 - i})
+                    foreach (int col in new[] {i, mGrid.GetLength(1) - 1 - i})
                     {
                         if (mGrid[row, col] != null)
                         {
@@ -819,8 +839,10 @@ namespace Assets.Scripts.App
                         mRotation = 0;
                     }
                     break;
+
                 case Tetromino.O:
                     break;
+
                 case Tetromino.T:
                 case Tetromino.J:
                 case Tetromino.L:
@@ -829,21 +851,26 @@ namespace Assets.Scripts.App
                         case 0:
                             mRotation = 270;
                             break;
+
                         case 270:
                             ++mRow;
                             mRotation = 180;
                             break;
+
                         case 180:
                             --mRow;
                             mRotation = 90;
                             break;
+
                         case 90:
                             mRotation = 0;
                             break;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
                     break;
+
                 case Tetromino.S:
                     if (mRotation == 0)
                     {
@@ -856,9 +883,11 @@ namespace Assets.Scripts.App
                         mRotation = 0;
                     }
                     break;
+
                 case Tetromino.Z:
                     mRotation = mRotation == 0 ? 90 : 0;
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -889,8 +918,10 @@ namespace Assets.Scripts.App
                         mRotation = 0;
                     }
                     break;
+
                 case Tetromino.O:
                     break;
+
                 case Tetromino.T:
                 case Tetromino.J:
                 case Tetromino.L:
@@ -899,21 +930,26 @@ namespace Assets.Scripts.App
                         case 0:
                             mRotation = 90;
                             break;
+
                         case 90:
                             ++mRow;
                             mRotation = 180;
                             break;
+
                         case 180:
                             --mRow;
                             mRotation = 270;
                             break;
+
                         case 270:
                             mRotation = 0;
                             break;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
                     break;
+
                 case Tetromino.S:
                     if (mRotation == 0)
                     {
@@ -926,9 +962,11 @@ namespace Assets.Scripts.App
                         mRotation = 0;
                     }
                     break;
+
                 case Tetromino.Z:
                     mRotation = mRotation == 0 ? 90 : 0;
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -966,9 +1004,11 @@ namespace Assets.Scripts.App
                 case GameButtonEvent.EventType.ButtonDown:
                     HandleButtonDown(gameEvent.Button);
                     break;
+
                 case GameButtonEvent.EventType.ButtonUp:
                     HandleButtonUp(gameEvent.Button);
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -981,15 +1021,18 @@ namespace Assets.Scripts.App
                 case GameButtonEvent.ButtonType.Left:
                     OnLeftDown();
                     break;
+
                 case GameButtonEvent.ButtonType.Right:
                     OnRightDown();
                     break;
+
                 case GameButtonEvent.ButtonType.Up:
                     if (mTetrominoState == TetrominoState.Dropping)
                     {
                         SonicDrop();
                     }
                     break;
+
                 case GameButtonEvent.ButtonType.Down:
                     mDownPressed = true;
                     if (mTetrominoState == TetrominoState.Locking)
@@ -997,20 +1040,24 @@ namespace Assets.Scripts.App
                         LockTetromino();
                     }
                     break;
+
                 case GameButtonEvent.ButtonType.RotateLeft:
                     mRotateLeftPressed = true;
                     TryRotateLeft();
                     TryUnlockTetromino();
                     break;
+
                 case GameButtonEvent.ButtonType.RotateRight:
                     mRotateRightPressed = true;
                     TryRotateRight();
                     TryUnlockTetromino();
                     break;
+
                 case GameButtonEvent.ButtonType.Hold:
                     mHoldPressed = true;
                     TryHoldTetromino();
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -1023,23 +1070,30 @@ namespace Assets.Scripts.App
                 case GameButtonEvent.ButtonType.Left:
                     OnLeftUp();
                     break;
+
                 case GameButtonEvent.ButtonType.Right:
                     OnRightUp();
                     break;
+
                 case GameButtonEvent.ButtonType.Up:
                     break;
+
                 case GameButtonEvent.ButtonType.Down:
                     mDownPressed = false;
                     break;
+
                 case GameButtonEvent.ButtonType.RotateLeft:
                     mRotateLeftPressed = false;
                     break;
+
                 case GameButtonEvent.ButtonType.RotateRight:
                     mRotateRightPressed = false;
                     break;
+
                 case GameButtonEvent.ButtonType.Hold:
                     mHoldPressed = false;
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -1164,18 +1218,22 @@ namespace Assets.Scripts.App
                 case Tetromino.I:
                 case Tetromino.O:
                     return false;
+
                 case Tetromino.T:
                     switch (mRotation)
                     {
                         case 90:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow, mCol + 1);
+
                         case 270:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow, mCol - 1);
+
                         case 0:
                         case 180:
                             return true;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -1185,12 +1243,15 @@ namespace Assets.Scripts.App
                         case 90:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow - 1, mCol + 1);
+
                         case 270:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow + 1, mCol - 1);
+
                         case 0:
                         case 180:
                             return true;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -1200,18 +1261,22 @@ namespace Assets.Scripts.App
                         case 90:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow + 1, mCol + 1);
+
                         case 270:
                             return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
                                 CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow - 1, mCol - 1);
+
                         case 0:
                         case 180:
                             return true;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
                 case Tetromino.S:
                 case Tetromino.Z:
                     return true;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1258,6 +1323,7 @@ namespace Assets.Scripts.App
             {
                 case DasState.Idle:
                     break;
+
                 case DasState.DelayLeft:
                     --mDasDelayFrames;
                     if (mDasDelayFrames == 0)
@@ -1265,6 +1331,7 @@ namespace Assets.Scripts.App
                         mDasState = DasState.Left;
                     }
                     break;
+
                 case DasState.DelayRight:
                     --mDasDelayFrames;
                     if (mDasDelayFrames == 0)
@@ -1272,12 +1339,15 @@ namespace Assets.Scripts.App
                         mDasState = DasState.Right;
                     }
                     break;
+
                 case DasState.Left:
                     TryMoveHorizontally(-1);
                     break;
+
                 case DasState.Right:
                     TryMoveHorizontally(1);
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1293,9 +1363,11 @@ namespace Assets.Scripts.App
                     mDasDelayFrames = DasDelay;
                     mDasState = DasState.DelayLeft;
                     break;
+
                 case DasState.DelayLeft:
                 case DasState.Left:
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1320,9 +1392,11 @@ namespace Assets.Scripts.App
                     mDasDelayFrames = DasDelay;
                     mDasState = DasState.DelayRight;
                     break;
+
                 case DasState.DelayRight:
                 case DasState.Right:
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1348,9 +1422,11 @@ namespace Assets.Scripts.App
                     case GameItem.Shotgun:
                         TargetedShotgun();
                         break;
+
                     case GameItem.MirrorBlock:
                         TargetedMirrorBlock();
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -1417,12 +1493,15 @@ namespace Assets.Scripts.App
                         case GameItem.ClearTopHalf:
                             ActivateClearTopHalf();
                             break;
+
                         case GameItem.ClearBottomHalf:
                             ActivateClearBottomHalf();
                             break;
+
                         case GameItem.ClearEven:
                             ActivateClearEven();
                             break;
+
                         case GameItem.Shotgun:
                         case GameItem.MirrorBlock:
                         case GameItem.ColorBlock:
@@ -1432,8 +1511,10 @@ namespace Assets.Scripts.App
                                 OnTargetItemActivated.Invoke(mGrid[row, col].Item);
                             }
                             break;
+
                         case GameItem.None:
                             break;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -1623,7 +1704,7 @@ namespace Assets.Scripts.App
                     {
                         action(mGrid[row, col], row, col);
                     }
-                } 
+                }
             }
         }
 

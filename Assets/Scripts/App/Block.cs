@@ -1,11 +1,8 @@
-﻿using System;
+﻿using UnityEngine;
 
-using Assets.Scripts.Utils;
+using Utils;
 
-using UnityEngine;
-using UnityEngine.Assertions;
-
-namespace Assets.Scripts.App
+namespace App
 {
     [RequireComponent(typeof(SpriteRenderer))]
     public class Block : MonoBehaviour

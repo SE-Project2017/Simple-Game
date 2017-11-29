@@ -1,11 +1,8 @@
-﻿namespace Assets.Scripts.Msf
+﻿namespace Msf
 {
     public class MsfArgs : Barebones.MasterServer.MsfArgs
     {
-        public string MachineAddress
-        {
-            get { return MachineIp; }
-        }
+        public string MachineAddress { get { return MachineIp; } }
 
         public string PlayerAToken { get; private set; }
         public string PlayerBToken { get; private set; }
@@ -25,8 +22,11 @@
         public new class MsfArgNames : Barebones.MasterServer.MsfArgs.MsfArgNames
         {
             public string PlayerAToken { get { return "--player-a-token"; } }
+
             public string PlayerBToken { get { return "--player-b-token"; } }
+
             public string PlayerAName { get { return "--player-a-name"; } }
+
             public string PlayerBName { get { return "--player-b-name"; } }
         }
     }

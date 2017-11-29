@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 
-using Assets.Scripts.Utils;
-
 using UnityEngine;
 
-namespace Assets.Scripts.Msf
+using Utils;
+
+namespace Msf
 {
     public class ConnectionToMaster : Singleton<ConnectionToMaster>
     {

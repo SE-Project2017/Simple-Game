@@ -4,7 +4,7 @@ using CnControls;
 
 using UnityEngine;
 
-namespace Assets.Scripts.App
+namespace App
 {
     public class InputController : MonoBehaviour
     {

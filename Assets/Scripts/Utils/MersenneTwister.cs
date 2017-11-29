@@ -2,7 +2,7 @@
 
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Utils
+namespace Utils
 {
     public class MersenneTwister
     {

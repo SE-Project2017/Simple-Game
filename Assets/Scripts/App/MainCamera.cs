@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.App
+namespace App
 {
     [ExecuteInEditMode, RequireComponent(typeof(Camera))]
     public class MainCamera : MonoBehaviour

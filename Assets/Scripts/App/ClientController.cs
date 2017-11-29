@@ -1,17 +1,20 @@
 ﻿using System.Collections;
 
-using Assets.Scripts.Msf;
-using Assets.Scripts.Multiplayer;
-using Assets.Scripts.UI;
-using Assets.Scripts.Utils;
-
 using Barebones.Networking;
+
+using Msf;
+
+using Multiplayer;
+
+using UI;
 
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
 
-namespace Assets.Scripts.App
+using Utils;
+
+namespace App
 {
     public class ClientController : Singleton<ClientController>
     {

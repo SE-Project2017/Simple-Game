@@ -1,8 +1,8 @@
-﻿using Assets.Scripts.App;
+﻿using App;
 
 using UnityEngine;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class MainMenuUI : MonoBehaviour
     {

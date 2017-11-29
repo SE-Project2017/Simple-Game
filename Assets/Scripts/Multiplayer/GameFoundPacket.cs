@@ -1,6 +1,6 @@
 ﻿using Barebones.Networking;
 
-namespace Assets.Scripts.Multiplayer
+namespace Multiplayer
 {
     public class GameFoundPacket : SerializablePacket
     {

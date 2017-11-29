@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 
-using Assets.Scripts.App;
+using App;
 
 using UnityEngine.SceneManagement;
 
-namespace Assets.Scripts.Utils
+namespace Utils
 {
     public static class Utilities
     {

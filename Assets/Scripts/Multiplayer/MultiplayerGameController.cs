@@ -2,15 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using Assets.Scripts.App;
-using Assets.Scripts.UI;
-using Assets.Scripts.Utils;
+using App;
+
+using UI;
 
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
-namespace Assets.Scripts.Multiplayer
+using Utils;
+
+namespace Multiplayer
 {
     public class MultiplayerGameController : MonoBehaviour
     {
@@ -237,10 +239,12 @@ namespace Assets.Scripts.Multiplayer
                     LocalGameGrid.SeedRandom(info.PlayerASeed);
                     RemoteGameGrid.SeedRandom(info.PlayerBSeed);
                     break;
+
                 case ServerController.PlayerType.PlayerB:
                     LocalGameGrid.SeedRandom(info.PlayerBSeed);
                     RemoteGameGrid.SeedRandom(info.PlayerASeed);
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -410,15 +414,19 @@ namespace Assets.Scripts.Multiplayer
                     case GameItem.Shotgun:
                         target.TargetedShotgun();
                         break;
+
                     case GameItem.MirrorBlock:
                         target.TargetedMirrorBlock();
                         break;
+
                     case GameItem.ColorBlock:
                         target.TargetedColorBlock();
                         break;
+
                     case GameItem.XRay:
                         target.TargetedXRay();
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -457,6 +465,7 @@ namespace Assets.Scripts.Multiplayer
                             Button = ButtonToType((InputController.Button) playerEvent.Data)
                         });
                         break;
+
                     case NetworkPlayer.PlayerEvent.EventType.ButtonUp:
                         events.Add(new GameGrid.GameButtonEvent
                         {
@@ -464,6 +473,7 @@ namespace Assets.Scripts.Multiplayer
                             Button = ButtonToType((InputController.Button) playerEvent.Data)
                         });
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -478,18 +488,25 @@ namespace Assets.Scripts.Multiplayer
             {
                 case InputController.Button.Up:
                     return GameGrid.GameButtonEvent.ButtonType.Up;
+
                 case InputController.Button.Down:
                     return GameGrid.GameButtonEvent.ButtonType.Down;
+
                 case InputController.Button.Left:
                     return GameGrid.GameButtonEvent.ButtonType.Left;
+
                 case InputController.Button.Right:
                     return GameGrid.GameButtonEvent.ButtonType.Right;
+
                 case InputController.Button.RotateLeft:
                     return GameGrid.GameButtonEvent.ButtonType.RotateLeft;
+
                 case InputController.Button.RotateRight:
                     return GameGrid.GameButtonEvent.ButtonType.RotateRight;
+
                 case InputController.Button.Hold:
                     return GameGrid.GameButtonEvent.ButtonType.Hold;
+
                 default:
                     throw new ArgumentOutOfRangeException("button", button, null);
             }
