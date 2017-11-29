@@ -1,6 +1,10 @@
 ﻿using System;
+using System.IO;
+using System.Text.RegularExpressions;
 
 using UnityEditor;
+
+using UnityEngine;
 
 using Utils;
 
@@ -121,7 +125,30 @@ namespace Editor
         {
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
-            PlayerSettings.bundleVersion = Utilities.VersionName;
+            PlayerSettings.bundleVersion = BumpVersion();
+        }
+
+        private static string BumpVersion()
+        {
+            const string path = "Assets/Scripts/Utils/Utilities.cs";
+            var text = File.ReadAllText(path);
+            Regex regex = new Regex(@"^\s*public\s+const\s+int\s+VersionCode\s*=\s*(\d+);$",
+                RegexOptions.Multiline);
+            var group = regex.Match(text).Groups[1];
+            int versionCode = int.Parse(group.Value);
+            ++versionCode;
+            text = text.Remove(group.Index, group.Length);
+            text = text.Insert(group.Index, versionCode.ToString());
+            regex = new Regex(@"^\s*public\s+const\s+string\s+VersionName\s*=\s*\"".*\.(\d+)\"";$",
+                RegexOptions.Multiline);
+            group = regex.Match(text).Groups[1];
+            text = text.Remove(group.Index, group.Length);
+            text = text.Insert(group.Index, versionCode.ToString());
+            File.WriteAllText(path, text);
+            AssetDatabase.Refresh();
+            regex = new Regex(@"^\s*public\s+const\s+string\s+VersionName\s*=\s*\""(.*)\"";$",
+                RegexOptions.Multiline);
+            return regex.Match(text).Groups[1].Value;
         }
 
         private static void InternalBuildDebugWindows()

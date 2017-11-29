@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 
 using App;
 
@@ -8,8 +8,8 @@ namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 74;
-        public const string VersionName = "0.1-alpha.4.74";
+        public const int VersionCode = 78;
+        public const string VersionName = "0.1-alpha.4.78";
 
         public static IEnumerator FadeOutLoadScene(string sceneName)
         {
