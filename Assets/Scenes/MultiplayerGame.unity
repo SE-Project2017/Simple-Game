@@ -750,6 +750,16 @@ Prefab:
       propertyPath: RemoteFlipAnimator
       value: 
       objectReference: {fileID: 1143601298}
+    - target: {fileID: 114263088831875764, guid: c85664f1fd524a0489e3522ccdf6c1ad,
+        type: 2}
+      propertyPath: LocalAreaAnimator
+      value: 
+      objectReference: {fileID: 366057903}
+    - target: {fileID: 114263088831875764, guid: c85664f1fd524a0489e3522ccdf6c1ad,
+        type: 2}
+      propertyPath: RemoteAreaAnimator
+      value: 
+      objectReference: {fileID: 1143601298}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: c85664f1fd524a0489e3522ccdf6c1ad, type: 2}
   m_IsPrefabParent: 0

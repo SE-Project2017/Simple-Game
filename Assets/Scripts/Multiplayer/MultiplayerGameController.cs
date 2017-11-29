@@ -31,8 +31,8 @@ namespace Multiplayer
         public GameObject ClearParticleParent;
         public GameObject LocalGameArea;
         public Animator ConnectingAnimator;
-        public Animator LocalFlipAnimator;
-        public Animator RemoteFlipAnimator;
+        public Animator LocalAreaAnimator;
+        public Animator RemoteAreaAnimator;
         public Image ItemProgress;
         public Text LevelText;
         public float NextScale = 0.5f;
@@ -173,8 +173,12 @@ namespace Multiplayer
             RemoteGameGrid.OnTargetItemActivated += item =>
                 mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, item);
 
-            LocalGameGrid.OnPlayFlipAnimation += () => LocalFlipAnimator.SetTrigger("Play");
-            RemoteGameGrid.OnPlayFlipAnimation += () => RemoteFlipAnimator.SetTrigger("Play");
+            LocalGameGrid.OnPlayFlipAnimation += () => LocalAreaAnimator.SetTrigger("PlayFlip");
+            LocalGameGrid.OnPlayUpsideDownAnimation += () =>
+                LocalAreaAnimator.SetTrigger("PlayLocalUpsideDown");
+            RemoteGameGrid.OnPlayFlipAnimation += () => RemoteAreaAnimator.SetTrigger("PlayFlip");
+            RemoteGameGrid.OnPlayUpsideDownAnimation += () =>
+                RemoteAreaAnimator.SetTrigger("PlayRemoteUpsideDown");
 
             LocalGameGrid.Gravity = mContext.LevelGravity[mLocalLevel];
             RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
@@ -425,6 +429,9 @@ namespace Multiplayer
                         break;
                     case GameItem.Laser:
                         target.TargetedLaser();
+                        break;
+                    case GameItem.UpsideDown:
+                        target.TargetedUpsideDown();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

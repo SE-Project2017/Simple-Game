@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 using Utils;
 
@@ -34,8 +35,10 @@ namespace App
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
         public event Action OnPlayFlipAnimation;
+        public event Action OnPlayUpsideDownAnimation;
 
         private readonly Block[,] mGrid = new Block[20, 10];
+        private readonly Block[,] mUpsideDownGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
         private readonly List<int> mClearingLines = new List<int>();
         private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
@@ -83,6 +86,7 @@ namespace App
         private const int ShotgunActivationDuration = 150;
         private const int MirrorBlockActivationDuration = 40;
         private const int LaserActivationDuration = 30;
+        private const int UpsideDownActivationDuration = 100;
         private const int XRayDuration = 300;
 
         public void Awake()
@@ -261,7 +265,7 @@ namespace App
         public void GenerateNextItem()
         {
             //            mNextGameItem = (GameItem) mRandom.Range(4, Enum.GetNames(typeof(GameItem)).Length - 1);
-            mNextGameItem = GameItem.Laser;
+            mNextGameItem = GameItem.UpsideDown;
         }
 
         public void TargetedShotgun()
@@ -323,6 +327,24 @@ namespace App
             position = obj.transform.localPosition;
             position.x = ColToX(mLaserTargetCol + 1);
             obj.transform.localPosition = position;
+        }
+
+        public void TargetedUpsideDown()
+        {
+            if (mTetrominoState == TetrominoState.Clearing ||
+                mTetrominoState == TetrominoState.AcitvatingItem)
+            {
+                mPendingTargetedItems.Enqueue(GameItem.UpsideDown);
+                return;
+            }
+            DestroyActiveTetromino();
+            mActivatingItem = GameItem.UpsideDown;
+            mTetrominoState = TetrominoState.AcitvatingItem;
+            mActivatingItemFrames = UpsideDownActivationDuration;
+            if (OnPlayUpsideDownAnimation != null)
+            {
+                OnPlayUpsideDownAnimation.Invoke();
+            }
         }
 
         private void ExecuteMirrorBlock()
@@ -536,6 +558,9 @@ namespace App
                 case GameItem.Laser:
                     LaserFrame();
                     break;
+                case GameItem.UpsideDown:
+                    UpsideDownFrame();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -742,6 +767,36 @@ namespace App
                     DestroyBlock(row, mLaserTargetCol);
                     DestroyBlock(row, mLaserTargetCol + 1);
                 }
+            }
+        }
+
+        private void UpsideDownFrame()
+        {
+            if (1 < mActivatingItemFrames && mActivatingItemFrames <= 40)
+            {
+                if (Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
+                    mUpsideDownGrid[0, col] == null))
+                {
+                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    {
+                        mUpsideDownGrid[0, col] = mGrid[0, col];
+                        mGrid[0, col] = null;
+                    }
+                    MoveBlockRows(1, mGrid.GetLength(0), 1, true);
+                }
+                if (Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
+                    mUpsideDownGrid[mGrid.GetLength(0) - 1, col] == null))
+                {
+                    MoveBlockRows(0, mGrid.GetLength(0), 1, false, mUpsideDownGrid);
+                }
+            }
+            else if (mActivatingItemFrames == 1)
+            {
+                Assert.IsTrue(Enumerable.Range(0, mGrid.GetLength(0)).All(row =>
+                    Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
+                        mGrid[row, col] == null)));
+                Array.Copy(mUpsideDownGrid, mGrid, mGrid.Length);
+                Array.Clear(mUpsideDownGrid, 0, mGrid.Length);
             }
         }
 
@@ -1537,6 +1592,7 @@ namespace App
                         case GameItem.ColorBlock:
                         case GameItem.XRay:
                         case GameItem.Laser:
+                        case GameItem.UpsideDown:
                             if (OnTargetItemActivated != null)
                             {
                                 OnTargetItemActivated.Invoke(mGrid[row, col].Item);
@@ -1691,38 +1747,6 @@ namespace App
             }
         }
 
-        private void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up)
-        {
-            if (up)
-            {
-                for (int row = rowBegin; row < rowEnd; ++row)
-                {
-                    MoveBlockRow(row, row - distance);
-                }
-            }
-            else
-            {
-                for (int row = rowEnd - 1; row >= rowBegin; --row)
-                {
-                    MoveBlockRow(row, row + distance);
-                }
-            }
-        }
-
-        private void MoveBlockRow(int from, int to)
-        {
-            for (int col = 0; col < mGrid.GetLength(1); ++col)
-            {
-                if (mGrid[from, col] == null)
-                {
-                    continue;
-                }
-                mGrid[from, col].transform.localPosition = RowColToPosition(to, col);
-                mGrid[to, col] = mGrid[from, col];
-                mGrid[from, col] = null;
-            }
-        }
-
         private void ForEachBlockNonNull(Action<Block, int, int> action)
         {
             for (int row = 0; row < mGrid.GetLength(0); ++row)
@@ -1734,6 +1758,49 @@ namespace App
                         action(mGrid[row, col], row, col);
                     }
                 }
+            }
+        }
+
+        private void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up)
+        {
+            MoveBlockRows(rowBegin, rowEnd, distance, up, mGrid);
+        }
+
+        private void MoveBlockRow(int from, int to)
+        {
+            MoveBlockRow(from, to, mGrid);
+        }
+
+        private static void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up,
+            Block[,] grid)
+        {
+            if (up)
+            {
+                for (int row = rowBegin; row < rowEnd; ++row)
+                {
+                    MoveBlockRow(row, row - distance, grid);
+                }
+            }
+            else
+            {
+                for (int row = rowEnd - 1; row >= rowBegin; --row)
+                {
+                    MoveBlockRow(row, row + distance, grid);
+                }
+            }
+        }
+
+        private static void MoveBlockRow(int from, int to, Block[,] grid)
+        {
+            for (int col = 0; col < grid.GetLength(1); ++col)
+            {
+                if (grid[from, col] == null)
+                {
+                    continue;
+                }
+                grid[from, col].transform.localPosition = RowColToPosition(to, col);
+                grid[to, col] = grid[from, col];
+                grid[from, col] = null;
             }
         }
 

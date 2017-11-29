@@ -10,6 +10,7 @@
         ColorBlock,
         XRay,
         Laser,
+        UpsideDown,
         None = -1,
     }
 }
