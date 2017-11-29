@@ -23,11 +23,11 @@ namespace Msf
 
         public void Start()
         {
-            if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterIp))
+            if (MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterIp))
             {
                 mServerAddress = MsfContext.Args.MasterIp;
             }
-            if (MsfContext.Args.IsProvided(MsfContext.Args.Names.MasterPort))
+            if (MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterPort))
             {
                 mServerPort = MsfContext.Args.MasterPort;
             }

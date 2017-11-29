@@ -1,6 +1,6 @@
 ﻿namespace Msf
 {
-    public class MsfArgs : Barebones.MasterServer.MsfArgs
+    public class MsfArg : Barebones.MasterServer.MsfArgs
     {
         public string MachineAddress { get { return MachineIp; } }
 
@@ -9,17 +9,17 @@
         public string PlayerAName { get; private set; }
         public string PlayerBName { get; private set; }
 
-        public new MsfArgNames Names = new MsfArgNames();
+        public MsfArgName Name = new MsfArgName();
 
-        public MsfArgs()
+        public MsfArg()
         {
-            PlayerAToken = ExtractValue(Names.PlayerAToken);
-            PlayerBToken = ExtractValue(Names.PlayerBToken);
-            PlayerAName = ExtractValue(Names.PlayerAName);
-            PlayerBName = ExtractValue(Names.PlayerBName);
+            PlayerAToken = ExtractValue(Name.PlayerAToken);
+            PlayerBToken = ExtractValue(Name.PlayerBToken);
+            PlayerAName = ExtractValue(Name.PlayerAName);
+            PlayerBName = ExtractValue(Name.PlayerBName);
         }
 
-        public new class MsfArgNames : Barebones.MasterServer.MsfArgs.MsfArgNames
+        public class MsfArgName : MsfArgNames
         {
             public string PlayerAToken { get { return "--player-a-token"; } }
 

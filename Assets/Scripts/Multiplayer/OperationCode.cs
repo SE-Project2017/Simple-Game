@@ -1,6 +1,6 @@
 ﻿namespace Multiplayer
 {
-    public enum OperationCode
+    public enum OperationCode : short
     {
         StartSearchGame,
         GameFound,

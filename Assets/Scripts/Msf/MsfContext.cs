@@ -10,12 +10,12 @@ namespace Msf
         }
 
         public static MsfClient Client { get; private set; }
-        public static MsfArgs Args { get; private set; }
+        public static MsfArg Args { get; private set; }
 
         static MsfContext()
         {
             Client = new MsfClient(Connection);
-            Args = new MsfArgs();
+            Args = new MsfArg();
         }
     }
 }

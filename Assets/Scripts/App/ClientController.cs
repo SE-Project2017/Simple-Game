@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 
+using Barebones.MasterServer;
 using Barebones.Networking;
 
 using Msf;
@@ -14,20 +16,98 @@ using UnityEngine.SceneManagement;
 
 using Utils;
 
+using ConnectionToMaster = Msf.ConnectionToMaster;
+
 namespace App
 {
     public class ClientController : Singleton<ClientController>
     {
         public GameFoundPacket GameInfo;
 
+        public event Action<string> OnPlayerNameChange;
+        public event Action<int> OnWinCountChange;
+        public event Action<int> OnLossCountChange;
+        public event Action<int> OnGameCountChange;
+
+        public string PlayerName
+        {
+            get { return mPlayerName; }
+            private set
+            {
+                mPlayerName = value;
+                if (OnPlayerNameChange != null)
+                {
+                    OnPlayerNameChange.Invoke(value);
+                }
+            }
+        }
+
+        public int Wins
+        {
+            get { return mWins; }
+            private set
+            {
+                mWins = value;
+                if (OnWinCountChange != null)
+                {
+                    OnWinCountChange.Invoke(value);
+                }
+            }
+        }
+
+        public int Losses
+        {
+            get { return mLosses; }
+            private set
+            {
+                mLosses = value;
+                if (OnLossCountChange != null)
+                {
+                    OnLossCountChange.Invoke(value);
+                }
+            }
+        }
+
+        public int GamesPlayed
+        {
+            get { return mGamesPlayed; }
+            private set
+            {
+                mGamesPlayed = value;
+                if (OnGameCountChange != null)
+                {
+                    OnGameCountChange.Invoke(value);
+                }
+            }
+        }
+
         private string mUsername;
         private string mPassword;
         private State mState = State.Idle;
 
-        public void Start()
+        private string mPlayerName;
+        private int mWins;
+        private int mLosses;
+        private int mGamesPlayed;
+
+        public IEnumerator Start()
         {
             MsfContext.Connection.SetHandler((short) OperationCode.GameFound, OnGameFound);
             MsfContext.Connection.Disconnected += () => { StartCoroutine(OnDisconnected()); };
+
+            while (!MsfContext.Connection.IsConnected)
+            {
+                yield return null;
+            }
+
+            var profile = new ObservableProfile
+            {
+                new ObservableString(ProfileKey.Name, string.Empty),
+                new ObservableInt(ProfileKey.Wins),
+                new ObservableInt(ProfileKey.Losses),
+                new ObservableInt(ProfileKey.GamesPlayed),
+            };
+            RetriveProfile(profile);
         }
 
         public void OnStartSearchGame()
@@ -93,6 +173,30 @@ namespace App
                             () => StartCoroutine(Utilities.FadeOutLoadScene("Login")))
                         .Show();
                 }
+            });
+        }
+
+        private void RetriveProfile(ObservableProfile profile)
+        {
+            MsfContext.Client.Profiles.GetProfileValues(profile, (successful, error) =>
+            {
+                if (!successful)
+                {
+                    RetriveProfile(profile);
+                    return;
+                }
+                var nameProp = profile.GetProperty<ObservableString>(ProfileKey.Name);
+                PlayerName = nameProp.Value;
+                nameProp.OnDirty += property => PlayerName = nameProp.Value;
+                var winsProp = profile.GetProperty<ObservableInt>(ProfileKey.Wins);
+                Wins = winsProp.Value;
+                winsProp.OnDirty += property => Wins = winsProp.Value;
+                var lossesProp = profile.GetProperty<ObservableInt>(ProfileKey.Losses);
+                Losses = lossesProp.Value;
+                lossesProp.OnDirty += property => Losses = lossesProp.Value;
+                var gamesPlayedProp = profile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed);
+                GamesPlayed = gamesPlayedProp.Value;
+                gamesPlayedProp.OnDirty += property => GamesPlayed = gamesPlayedProp.Value;
             });
         }
 
