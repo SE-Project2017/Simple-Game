@@ -94,26 +94,28 @@ namespace Editor
         public static void BuildAndroid()
         {
             ApplySettings();
-            PlayerSettings.Android.bundleVersionCode = Utilities.VersionCode;
-            PlayerSettings.Android.keystoreName = AndroidKeystorePath;
-            PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
-            PlayerSettings.Android.keyaliasName = AndroidKeyalias;
-            PlayerSettings.Android.keyaliasPass = AndroidKeyaliasPassword;
-            FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
-            BuildClient(
-                AndroidBuildPath(false) + "client.apk",
-                BuildTarget.Android,
-                BuildOptions.None);
+            InternalBuildAndroid();
         }
 
-        [MenuItem("Build/Enable Local Server", false, 400)]
+        [MenuItem("Build/Build All", false, 400)]
+        public static void BuildAll()
+        {
+            ApplySettings();
+            InternalBuildAndroid();
+            InternalBuildReleaseLinux();
+            InternalBuildReleaseWindows();
+            InternalBuildDebugLinux();
+            InternalBuildDebugWindows();
+        }
+
+        [MenuItem("Build/Enable Local Server", false, 500)]
         public static void EnableLocalServer()
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
                 "LOCAL_SERVER");
         }
 
-        [MenuItem("Build/Disable Local Server", false, 410)]
+        [MenuItem("Build/Disable Local Server", false, 510)]
         public static void DisableLocalServer()
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "");
@@ -121,12 +123,18 @@ namespace Editor
 
         private static void ApplySettings()
         {
+            var version = BumpVersion();
+            PlayerSettings.Android.bundleVersionCode = version.VersionCode;
+            PlayerSettings.Android.keystoreName = AndroidKeystorePath;
+            PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
+            PlayerSettings.Android.keyaliasName = AndroidKeyalias;
+            PlayerSettings.Android.keyaliasPass = AndroidKeyaliasPassword;
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
-            PlayerSettings.bundleVersion = BumpVersion();
+            PlayerSettings.bundleVersion = version.VersionName;
         }
 
-        private static string BumpVersion()
+        private static VersionNumber BumpVersion()
         {
             const string path = "Assets/Scripts/Utils/Utilities.cs";
             var text = File.ReadAllText(path);
@@ -146,7 +154,11 @@ namespace Editor
             AssetDatabase.Refresh();
             regex = new Regex(@"^\s*public\s+const\s+string\s+VersionName\s*=\s*\""(.*)\"";$",
                 RegexOptions.Multiline);
-            return regex.Match(text).Groups[1].Value;
+            return new VersionNumber
+            {
+                VersionCode = versionCode,
+                VersionName = regex.Match(text).Groups[1].Value
+            };
         }
 
         private static void InternalBuildDebugWindows()
@@ -233,6 +245,15 @@ namespace Editor
                 BuildOptions.None);
         }
 
+        private static void InternalBuildAndroid()
+        {
+            FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
+            BuildClient(
+                AndroidBuildPath(false) + "client.apk",
+                BuildTarget.Android,
+                BuildOptions.None);
+        }
+
         private static void BuildMasterServer(string path, BuildTarget target, BuildOptions options)
         {
             PlayerSettings.productName = "TetrisMasterServer";
@@ -299,6 +320,12 @@ namespace Editor
         private static string SceneRoot()
         {
             return "Assets/Scenes/";
+        }
+
+        private struct VersionNumber
+        {
+            public int VersionCode;
+            public string VersionName;
         }
     }
 }
