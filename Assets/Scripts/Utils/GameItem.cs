@@ -9,6 +9,7 @@
         MirrorBlock,
         ColorBlock,
         XRay,
+        Laser,
         None = -1,
     }
 }

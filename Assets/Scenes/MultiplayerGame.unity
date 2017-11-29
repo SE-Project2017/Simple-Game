@@ -125,7 +125,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4276930902214402, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 50
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4276930902214402, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
       propertyPath: m_LocalPosition.z
@@ -169,6 +169,27 @@ Prefab:
         type: 2}
       propertyPath: m_WasSpriteAssigned
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1009976161356054, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1265371089269620, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1588606642359344, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1778740343363844, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 20280414981322456, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
+        type: 2}
+      propertyPath: m_CullingMask.m_Bits
+      value: 256
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
@@ -2059,7 +2080,7 @@ Prefab:
     - target: {fileID: 224854900977939412, guid: cde847f9827ce524d9be39a193190b72,
         type: 2}
       propertyPath: m_LocalPosition.x
-      value: 178
+      value: 178.5
       objectReference: {fileID: 0}
     - target: {fileID: 224854900977939412, guid: cde847f9827ce524d9be39a193190b72,
         type: 2}
@@ -2182,7 +2203,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4276930902214402, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 100
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4276930902214402, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
       propertyPath: m_LocalPosition.z
@@ -2217,6 +2238,27 @@ Prefab:
       propertyPath: m_TargetTexture
       value: 
       objectReference: {fileID: 8400000, guid: 8259684793947b949ab3adc66932f3c9, type: 2}
+    - target: {fileID: 20280414981322456, guid: a6a5c73ab52e38a4bb0156d35eb978a6,
+        type: 2}
+      propertyPath: m_CullingMask.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
+    - target: {fileID: 1009976161356054, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1265371089269620, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1778740343363844, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1588606642359344, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a6a5c73ab52e38a4bb0156d35eb978a6, type: 2}
   m_IsPrefabParent: 0

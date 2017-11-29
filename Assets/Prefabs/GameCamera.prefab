@@ -233,6 +233,8 @@ MonoBehaviour:
     type: 2}
   ItemClearEffectPrefab: {fileID: 1468382008597240, guid: ef2ad9f9fa497c8468f3560226e97ee6,
     type: 2}
+  LaserPrefab: {fileID: 1376900083006578, guid: 61eb4e8700fe6594da9b2fd248f382a7,
+    type: 2}
   ExplosionEffect: {fileID: 95491868834627194}
   FlipMaskAnimator: {fileID: 95024528322682170}
   Gravity: 1024

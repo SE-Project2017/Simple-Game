@@ -13,6 +13,7 @@ namespace App
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
         public GameObject ItemClearEffectPrefab;
+        public GameObject LaserPrefab;
         public Animator ExplosionEffect;
         public Animator FlipMaskAnimator;
         public int Gravity;
@@ -23,25 +24,15 @@ namespace App
         public int ClearDelay;
 
         public event Action<ClearingBlocks> OnLineCleared;
-
         public event Action<Tetromino> OnNewTetrominoGenerated;
-
         public event Action<Tetromino> OnHoldTetrominoChanged;
-
         public event Action<GameItem> OnTargetItemActivated;
-
         public event Action<bool> OnHoldEnableStateChanged;
-
         public event Action<int, int, Block.Data> OnPlayClearEffect;
-
         public event Action OnNextTetrominoConsumued;
-
         public event Action OnGameEnd;
-
         public event Action OnGameItemCreated;
-
         public event Action OnTetrominoLocked;
-
         public event Action OnPlayFlipAnimation;
 
         private readonly Block[,] mGrid = new Block[20, 10];
@@ -73,6 +64,7 @@ namespace App
         private int mItemClearingHighestRow;
         private int mMirrorBlockTurns;
         private int mColorBlockTurns;
+        private int mLaserTargetCol;
         private bool mDownPressed;
         private bool mRotateLeftPressed;
         private bool mRotateRightPressed;
@@ -90,6 +82,7 @@ namespace App
         private const int ClearItemActivationDuration = 60;
         private const int ShotgunActivationDuration = 150;
         private const int MirrorBlockActivationDuration = 40;
+        private const int LaserActivationDuration = 30;
         private const int XRayDuration = 300;
 
         public void Awake()
@@ -98,6 +91,7 @@ namespace App
             {
                 mItemClearEffects[row] = Instantiate(ItemClearEffectPrefab, transform)
                     .GetComponent<Animator>();
+                mItemClearEffects[row].transform.SetLayer(gameObject.layer);
                 mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
             }
         }
@@ -233,6 +227,7 @@ namespace App
                     if (valid[i, col])
                     {
                         mGrid[row, col] = Instantiate(BlockPrefab).GetComponent<Block>();
+                        mGrid[row, col].transform.SetLayer(gameObject.layer);
                         mGrid[row, col].transform.parent = transform;
                         mGrid[row, col].transform.localPosition = RowColToPosition(row, col);
                         mGrid[row, col].Properties = properties[i, col];
@@ -265,7 +260,8 @@ namespace App
 
         public void GenerateNextItem()
         {
-            mNextGameItem = (GameItem) mRandom.Range(4, Enum.GetNames(typeof(GameItem)).Length - 1);
+            //            mNextGameItem = (GameItem) mRandom.Range(4, Enum.GetNames(typeof(GameItem)).Length - 1);
+            mNextGameItem = GameItem.Laser;
         }
 
         public void TargetedShotgun()
@@ -304,6 +300,29 @@ namespace App
         public void TargetedXRay()
         {
             mXRayFrames = XRayDuration;
+        }
+
+        public void TargetedLaser()
+        {
+            if (mTetrominoState == TetrominoState.Clearing ||
+                mTetrominoState == TetrominoState.AcitvatingItem)
+            {
+                mPendingTargetedItems.Enqueue(GameItem.Laser);
+                return;
+            }
+            DestroyActiveTetromino();
+            mActivatingItem = GameItem.Laser;
+            mTetrominoState = TetrominoState.AcitvatingItem;
+            mActivatingItemFrames = LaserActivationDuration;
+            mLaserTargetCol = mRandom.Range(0, mGrid.GetLength(1) - 1);
+            var obj = Instantiate(LaserPrefab, transform);
+            var position = obj.transform.localPosition;
+            position.x = ColToX(mLaserTargetCol);
+            obj.transform.localPosition = position;
+            obj = Instantiate(LaserPrefab, transform);
+            position = obj.transform.localPosition;
+            position.x = ColToX(mLaserTargetCol + 1);
+            obj.transform.localPosition = position;
         }
 
         private void ExecuteMirrorBlock()
@@ -366,6 +385,7 @@ namespace App
             mCol = mSpawnCols[(int) mActiveTetromino];
             mRotation = 0;
             mActiveObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
+            mActiveObject.transform.SetLayer(gameObject.layer);
             foreach (var block in mActiveObject.GetComponentsInChildren<Block>())
             {
                 if (mNextGameItem == GameItem.None)
@@ -379,6 +399,7 @@ namespace App
             mRow = mSpawnRows[(int) mActiveTetromino];
             mCol = mSpawnCols[(int) mActiveTetromino];
             mGhostObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
+            mGhostObject.transform.SetLayer(gameObject.layer);
             foreach (var block in mGhostObject.GetComponentsInChildren<Block>())
             {
                 var color = mNextGameItem == GameItem.None ? block.Type.Color() : block.Color;
@@ -500,23 +521,21 @@ namespace App
                 case GameItem.ClearTopHalf:
                     ClearTopHalfFrame();
                     break;
-
                 case GameItem.ClearBottomHalf:
                     ClearBottomHalfFrame();
                     break;
-
                 case GameItem.ClearEven:
                     ClearEvenFrame();
                     break;
-
                 case GameItem.Shotgun:
                     ShotgunFrame();
                     break;
-
                 case GameItem.MirrorBlock:
                     MirrorBlockFrame();
                     break;
-
+                case GameItem.Laser:
+                    LaserFrame();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -708,6 +727,20 @@ namespace App
                     var color = mGrid[row, col].Color;
                     color.a = 1;
                     mGrid[row, col].Color = color;
+                }
+            }
+        }
+
+        private void LaserFrame()
+        {
+            if (10 <= mActivatingItemFrames && mActivatingItemFrames < 20)
+            {
+                int rowBegin = (19 - mActivatingItemFrames) * 2;
+                int rowEnd = rowBegin + 2;
+                for (int row = rowBegin; row < rowEnd; ++row)
+                {
+                    DestroyBlock(row, mLaserTargetCol);
+                    DestroyBlock(row, mLaserTargetCol + 1);
                 }
             }
         }
@@ -1493,28 +1526,24 @@ namespace App
                         case GameItem.ClearTopHalf:
                             ActivateClearTopHalf();
                             break;
-
                         case GameItem.ClearBottomHalf:
                             ActivateClearBottomHalf();
                             break;
-
                         case GameItem.ClearEven:
                             ActivateClearEven();
                             break;
-
                         case GameItem.Shotgun:
                         case GameItem.MirrorBlock:
                         case GameItem.ColorBlock:
                         case GameItem.XRay:
+                        case GameItem.Laser:
                             if (OnTargetItemActivated != null)
                             {
                                 OnTargetItemActivated.Invoke(mGrid[row, col].Item);
                             }
                             break;
-
                         case GameItem.None:
                             break;
-
                         default:
                             throw new ArgumentOutOfRangeException();
                     }

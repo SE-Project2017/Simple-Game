@@ -404,7 +404,7 @@ namespace Multiplayer
             RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
         }
 
-        private void ActivateItem(Dictionary<int, GameItem> pendingItems, int frameCount,
+        private static void ActivateItem(IDictionary<int, GameItem> pendingItems, int frameCount,
             GameGrid target)
         {
             if (pendingItems.ContainsKey(frameCount))
@@ -414,19 +414,18 @@ namespace Multiplayer
                     case GameItem.Shotgun:
                         target.TargetedShotgun();
                         break;
-
                     case GameItem.MirrorBlock:
                         target.TargetedMirrorBlock();
                         break;
-
                     case GameItem.ColorBlock:
                         target.TargetedColorBlock();
                         break;
-
                     case GameItem.XRay:
                         target.TargetedXRay();
                         break;
-
+                    case GameItem.Laser:
+                        target.TargetedLaser();
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

@@ -2,14 +2,22 @@ using System.Collections;
 
 using App;
 
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 78;
-        public const string VersionName = "0.1-alpha.4.78";
+        public const int VersionCode = 87;
+        public const string VersionName = "0.1-alpha.4.87";
+
+        public const string BuildType =
+#if DEVELOPMENT_BUILD
+            "Debug";
+#else
+            "Release";
+#endif
 
         public static IEnumerator FadeOutLoadScene(string sceneName)
         {
@@ -23,6 +31,15 @@ namespace Utils
             for (int i = begin; i != end; ++i)
             {
                 array[i] = value;
+            }
+        }
+
+        public static void SetLayer(this Transform transform, int layer)
+        {
+            transform.gameObject.layer = layer;
+            foreach (Transform child in transform)
+            {
+                child.SetLayer(layer);
             }
         }
     }
