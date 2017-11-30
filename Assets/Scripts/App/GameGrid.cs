@@ -164,23 +164,18 @@ namespace App
                 case TetrominoState.Idle:
                     TetrominoIdleFrame();
                     break;
-
                 case TetrominoState.Dropping:
                     TetrominoDroppingFrame();
                     break;
-
                 case TetrominoState.Locking:
                     TetrominoLockingFrame();
                     break;
-
                 case TetrominoState.Clearing:
                     LineClearFrame();
                     break;
-
                 case TetrominoState.AcitvatingItem:
                     ActivatingItemFrame();
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -926,10 +921,8 @@ namespace App
                         mRotation = 0;
                     }
                     break;
-
                 case Tetromino.O:
                     break;
-
                 case Tetromino.T:
                 case Tetromino.J:
                 case Tetromino.L:
@@ -957,7 +950,6 @@ namespace App
                             throw new ArgumentOutOfRangeException();
                     }
                     break;
-
                 case Tetromino.S:
                     if (mRotation == 0)
                     {
@@ -970,11 +962,9 @@ namespace App
                         mRotation = 0;
                     }
                     break;
-
                 case Tetromino.Z:
                     mRotation = mRotation == 0 ? 90 : 0;
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1005,10 +995,8 @@ namespace App
                         mRotation = 0;
                     }
                     break;
-
                 case Tetromino.O:
                     break;
-
                 case Tetromino.T:
                 case Tetromino.J:
                 case Tetromino.L:
@@ -1036,7 +1024,6 @@ namespace App
                             throw new ArgumentOutOfRangeException();
                     }
                     break;
-
                 case Tetromino.S:
                     if (mRotation == 0)
                     {
@@ -1049,11 +1036,9 @@ namespace App
                         mRotation = 0;
                     }
                     break;
-
                 case Tetromino.Z:
                     mRotation = mRotation == 0 ? 90 : 0;
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1091,11 +1076,9 @@ namespace App
                 case GameButtonEvent.EventType.ButtonDown:
                     HandleButtonDown(gameEvent.Button);
                     break;
-
                 case GameButtonEvent.EventType.ButtonUp:
                     HandleButtonUp(gameEvent.Button);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1108,18 +1091,15 @@ namespace App
                 case GameButtonEvent.ButtonType.Left:
                     OnLeftDown();
                     break;
-
                 case GameButtonEvent.ButtonType.Right:
                     OnRightDown();
                     break;
-
                 case GameButtonEvent.ButtonType.Up:
                     if (mTetrominoState == TetrominoState.Dropping)
                     {
                         SonicDrop();
                     }
                     break;
-
                 case GameButtonEvent.ButtonType.Down:
                     mDownPressed = true;
                     if (mTetrominoState == TetrominoState.Locking)
@@ -1127,24 +1107,20 @@ namespace App
                         LockTetromino();
                     }
                     break;
-
                 case GameButtonEvent.ButtonType.RotateLeft:
                     mRotateLeftPressed = true;
                     TryRotateLeft();
                     TryUnlockTetromino();
                     break;
-
                 case GameButtonEvent.ButtonType.RotateRight:
                     mRotateRightPressed = true;
                     TryRotateRight();
                     TryUnlockTetromino();
                     break;
-
                 case GameButtonEvent.ButtonType.Hold:
                     mHoldPressed = true;
                     TryHoldTetromino();
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -1157,30 +1133,23 @@ namespace App
                 case GameButtonEvent.ButtonType.Left:
                     OnLeftUp();
                     break;
-
                 case GameButtonEvent.ButtonType.Right:
                     OnRightUp();
                     break;
-
                 case GameButtonEvent.ButtonType.Up:
                     break;
-
                 case GameButtonEvent.ButtonType.Down:
                     mDownPressed = false;
                     break;
-
                 case GameButtonEvent.ButtonType.RotateLeft:
                     mRotateLeftPressed = false;
                     break;
-
                 case GameButtonEvent.ButtonType.RotateRight:
                     mRotateRightPressed = false;
                     break;
-
                 case GameButtonEvent.ButtonType.Hold:
                     mHoldPressed = false;
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -1305,7 +1274,6 @@ namespace App
                 case Tetromino.I:
                 case Tetromino.O:
                     return false;
-
                 case Tetromino.T:
                     switch (mRotation)
                     {
@@ -1363,7 +1331,6 @@ namespace App
                 case Tetromino.S:
                 case Tetromino.Z:
                     return true;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1410,7 +1377,6 @@ namespace App
             {
                 case DasState.Idle:
                     break;
-
                 case DasState.DelayLeft:
                     --mDasDelayFrames;
                     if (mDasDelayFrames == 0)
@@ -1418,7 +1384,6 @@ namespace App
                         mDasState = DasState.Left;
                     }
                     break;
-
                 case DasState.DelayRight:
                     --mDasDelayFrames;
                     if (mDasDelayFrames == 0)
@@ -1426,15 +1391,12 @@ namespace App
                         mDasState = DasState.Right;
                     }
                     break;
-
                 case DasState.Left:
                     TryMoveHorizontally(-1);
                     break;
-
                 case DasState.Right:
                     TryMoveHorizontally(1);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1450,11 +1412,9 @@ namespace App
                     mDasDelayFrames = DasDelay;
                     mDasState = DasState.DelayLeft;
                     break;
-
                 case DasState.DelayLeft:
                 case DasState.Left:
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1479,11 +1439,9 @@ namespace App
                     mDasDelayFrames = DasDelay;
                     mDasState = DasState.DelayRight;
                     break;
-
                 case DasState.DelayRight:
                 case DasState.Right:
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -1509,11 +1467,21 @@ namespace App
                     case GameItem.Shotgun:
                         TargetedShotgun();
                         break;
-
                     case GameItem.MirrorBlock:
                         TargetedMirrorBlock();
                         break;
-
+                    case GameItem.ColorBlock:
+                        TargetedColorBlock();
+                        break;
+                    case GameItem.XRay:
+                        TargetedXRay();
+                        break;
+                    case GameItem.Laser:
+                        TargetedLaser();
+                        break;
+                    case GameItem.UpsideDown:
+                        TargetedUpsideDown();
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

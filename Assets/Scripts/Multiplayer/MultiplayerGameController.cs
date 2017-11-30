@@ -243,12 +243,10 @@ namespace Multiplayer
                     LocalGameGrid.SeedRandom(info.PlayerASeed);
                     RemoteGameGrid.SeedRandom(info.PlayerBSeed);
                     break;
-
                 case ServerController.PlayerType.PlayerB:
                     LocalGameGrid.SeedRandom(info.PlayerBSeed);
                     RemoteGameGrid.SeedRandom(info.PlayerASeed);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -471,7 +469,6 @@ namespace Multiplayer
                             Button = ButtonToType((InputController.Button) playerEvent.Data)
                         });
                         break;
-
                     case NetworkPlayer.PlayerEvent.EventType.ButtonUp:
                         events.Add(new GameGrid.GameButtonEvent
                         {
@@ -479,7 +476,6 @@ namespace Multiplayer
                             Button = ButtonToType((InputController.Button) playerEvent.Data)
                         });
                         break;
-
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -494,25 +490,18 @@ namespace Multiplayer
             {
                 case InputController.Button.Up:
                     return GameGrid.GameButtonEvent.ButtonType.Up;
-
                 case InputController.Button.Down:
                     return GameGrid.GameButtonEvent.ButtonType.Down;
-
                 case InputController.Button.Left:
                     return GameGrid.GameButtonEvent.ButtonType.Left;
-
                 case InputController.Button.Right:
                     return GameGrid.GameButtonEvent.ButtonType.Right;
-
                 case InputController.Button.RotateLeft:
                     return GameGrid.GameButtonEvent.ButtonType.RotateLeft;
-
                 case InputController.Button.RotateRight:
                     return GameGrid.GameButtonEvent.ButtonType.RotateRight;
-
                 case InputController.Button.Hold:
                     return GameGrid.GameButtonEvent.ButtonType.Hold;
-
                 default:
                     throw new ArgumentOutOfRangeException("button", button, null);
             }

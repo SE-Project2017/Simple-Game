@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
+using Barebones.MasterServer;
+
 using Msf;
 
 using UnityEngine;
@@ -73,14 +75,12 @@ namespace Multiplayer
                     player.Type = PlayerType.PlayerA;
                     player.Username = mPlayerAName;
                     break;
-
                 case PlayerType.PlayerB:
                     Assert.IsTrue(mPlayerB == null);
                     mPlayerB = player;
                     player.Type = PlayerType.PlayerB;
                     player.Username = mPlayerBName;
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -105,7 +105,6 @@ namespace Multiplayer
                         mPlayerB.SetMaxFrame(frameCount);
                     }
                     break;
-
                 case PlayerType.PlayerB:
                     Assert.IsTrue(!mPlayerBEnded);
                     mPlayerBEnded = true;
@@ -115,7 +114,6 @@ namespace Multiplayer
                         mPlayerA.SetMaxFrame(frameCount);
                     }
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -149,11 +147,9 @@ namespace Multiplayer
                 case PlayerType.PlayerA:
                     PlayerAEvents.Add(events);
                     break;
-
                 case PlayerType.PlayerB:
                     PlayerBEvents.Add(events);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
@@ -177,8 +173,37 @@ namespace Multiplayer
 
         private IEnumerator ReportGameResult(GameResult result)
         {
-            // TODO Implement
-            yield return null;
+            ObservableServerProfile playerAProfile = null;
+            ObservableServerProfile playerBProfile = null;
+            OpenServerProfile(mPlayerAName, profile => playerAProfile = profile);
+            OpenServerProfile(mPlayerBName, profile => playerBProfile = profile);
+            while (playerAProfile == null || playerBProfile == null)
+            {
+                yield return null;
+            }
+            switch (result)
+            {
+                case GameResult.NotStarted:
+                    break;
+                case GameResult.Draw:
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    break;
+                case GameResult.PlayerAWon:
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.Wins).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.Losses).Add(1);
+                    break;
+                case GameResult.PlayerBWon:
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.Losses).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.Wins).Add(1);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("result", result, null);
+            }
         }
 
         private IEnumerator StopServer()
@@ -199,6 +224,28 @@ namespace Multiplayer
                 seed[i] = BitConverter.ToUInt64(bytes, i * 8);
             }
             return seed;
+        }
+
+        private static void OpenServerProfile(string username,
+            Action<ObservableServerProfile> callback)
+        {
+            var profile = new ObservableServerProfile(username)
+            {
+                new ObservableInt(ProfileKey.Wins),
+                new ObservableInt(ProfileKey.Losses),
+                new ObservableInt(ProfileKey.GamesPlayed),
+            };
+            MsfContext.Server.Profiles.FillProfileValues(profile, (successful, error) =>
+            {
+                if (successful)
+                {
+                    callback(profile);
+                }
+                else
+                {
+                    OpenServerProfile(username, callback);
+                }
+            });
         }
 
         public struct PlayerInfo

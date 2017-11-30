@@ -73,7 +73,7 @@ namespace UI
             float value = 0;
             if (mController.GamesPlayed != 0)
             {
-                value = 100.0f * mController.Wins / mController.GamesPlayed;
+                value = (float) mController.Wins / mController.GamesPlayed;
             }
             WinRateText.text = string.Format("Win Rate: {0:0%}", value);
         }

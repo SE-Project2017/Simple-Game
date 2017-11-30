@@ -90,24 +90,21 @@ namespace App
         private int mLosses;
         private int mGamesPlayed;
 
-        public IEnumerator Start()
+        public void Start()
         {
             MsfContext.Connection.SetHandler((short) OperationCode.GameFound, OnGameFound);
             MsfContext.Connection.Disconnected += () => { StartCoroutine(OnDisconnected()); };
-
-            while (!MsfContext.Connection.IsConnected)
+            MsfContext.Client.Auth.LoggedIn += () =>
             {
-                yield return null;
-            }
-
-            var profile = new ObservableProfile
-            {
-                new ObservableString(ProfileKey.Name, string.Empty),
-                new ObservableInt(ProfileKey.Wins),
-                new ObservableInt(ProfileKey.Losses),
-                new ObservableInt(ProfileKey.GamesPlayed),
+                var profile = new ObservableProfile
+                {
+                    new ObservableString(ProfileKey.Name, string.Empty),
+                    new ObservableInt(ProfileKey.Wins),
+                    new ObservableInt(ProfileKey.Losses),
+                    new ObservableInt(ProfileKey.GamesPlayed),
+                };
+                RetriveProfile(profile);
             };
-            RetriveProfile(profile);
         }
 
         public void OnStartSearchGame()

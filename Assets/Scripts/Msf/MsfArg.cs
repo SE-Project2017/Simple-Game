@@ -22,11 +22,8 @@
         public class MsfArgName : MsfArgNames
         {
             public string PlayerAToken { get { return "--player-a-token"; } }
-
             public string PlayerBToken { get { return "--player-b-token"; } }
-
             public string PlayerAName { get { return "--player-a-name"; } }
-
             public string PlayerBName { get { return "--player-b-name"; } }
         }
     }
