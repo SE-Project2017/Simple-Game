@@ -37,7 +37,7 @@ GameObject:
   - component: {fileID: 212016063167328464}
   - component: {fileID: 95064140628259670}
   - component: {fileID: 114687848107323800}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: LaserAnimation
   m_TagString: Untagged
   m_Icon: {fileID: 0}

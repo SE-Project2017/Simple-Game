@@ -317,10 +317,12 @@ namespace App
             var position = obj.transform.localPosition;
             position.x = ColToX(mLaserTargetCol);
             obj.transform.localPosition = position;
+            obj.transform.SetLayer(gameObject.layer);
             obj = Instantiate(LaserPrefab, transform);
             position = obj.transform.localPosition;
             position.x = ColToX(mLaserTargetCol + 1);
             obj.transform.localPosition = position;
+            obj.transform.SetLayer(gameObject.layer);
         }
 
         public void TargetedUpsideDown()
