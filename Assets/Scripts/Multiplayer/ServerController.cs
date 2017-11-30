@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 
 using Barebones.MasterServer;
 
-using Msf;
+using MsfWrapper;
 
 using UnityEngine;
 using UnityEngine.Assertions;

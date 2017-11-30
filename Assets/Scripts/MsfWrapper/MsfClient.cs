@@ -1,8 +1,8 @@
 ﻿using Barebones.Networking;
 
-using Msf.Modules.Auth;
+using MsfWrapper.Modules.Auth;
 
-namespace Msf
+namespace MsfWrapper
 {
     public class MsfClient : Barebones.MasterServer.MsfClient
     {

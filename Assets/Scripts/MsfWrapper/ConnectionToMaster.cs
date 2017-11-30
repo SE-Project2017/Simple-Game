@@ -4,7 +4,7 @@ using UnityEngine;
 
 using Utils;
 
-namespace Msf
+namespace MsfWrapper
 {
     public class ConnectionToMaster : Singleton<ConnectionToMaster>
     {

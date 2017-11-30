@@ -1,4 +1,4 @@
-﻿namespace Msf
+﻿namespace MsfWrapper
 {
     public static class ProfileKey
     {

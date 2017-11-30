@@ -2,7 +2,7 @@
 
 using App;
 
-using Msf;
+using MsfWrapper;
 
 using UnityEngine;
 using UnityEngine.UI;

@@ -1,7 +1,7 @@
 ﻿using Barebones.MasterServer;
 using Barebones.Networking;
 
-namespace Msf
+namespace MsfWrapper
 {
     public static class MsfContext
     {

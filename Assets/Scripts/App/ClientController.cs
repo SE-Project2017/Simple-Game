@@ -4,7 +4,7 @@ using System.Collections;
 using Barebones.MasterServer;
 using Barebones.Networking;
 
-using Msf;
+using MsfWrapper;
 
 using Multiplayer;
 
@@ -16,7 +16,7 @@ using UnityEngine.SceneManagement;
 
 using Utils;
 
-using ConnectionToMaster = Msf.ConnectionToMaster;
+using ConnectionToMaster = MsfWrapper.ConnectionToMaster;
 
 namespace App
 {

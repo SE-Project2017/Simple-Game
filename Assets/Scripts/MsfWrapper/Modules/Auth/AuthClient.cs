@@ -5,7 +5,7 @@ using Barebones.Networking;
 
 using Utils;
 
-namespace Msf.Modules.Auth
+namespace MsfWrapper.Modules.Auth
 {
     public class AuthClient : MsfAuthClient
     {

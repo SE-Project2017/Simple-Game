@@ -9,7 +9,7 @@ using Multiplayer;
 
 using UnityEngine;
 
-namespace Msf.Modules.Matchmaking
+namespace MsfWrapper.Modules.Matchmaking
 {
     public class MatchmakingModule : ServerModuleBehaviour
     {

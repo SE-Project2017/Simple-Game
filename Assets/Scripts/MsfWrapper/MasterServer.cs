@@ -1,6 +1,6 @@
 ﻿using Barebones.MasterServer;
 
-namespace Msf
+namespace MsfWrapper
 {
     public class MasterServer : MasterServerBehaviour
     {
