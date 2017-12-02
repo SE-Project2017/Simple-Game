@@ -14,8 +14,8 @@ namespace UI
         public GameObject ContentVersus;
         public GameObject ContentSingle;
         public GameObject SearchingUI;
-        public Image VersusButtonImage;
-        public Image SingleButtonImage;
+        public Button VersusButton;
+        public Button SingleButton;
         public Button SearchButton;
 
         public Color TabDefaultColor;
@@ -99,20 +99,34 @@ namespace UI
             switch (tab)
             {
                 case Tab.Versus:
-                    SingleButtonImage.color = TabDefaultColor;
-                    VersusButtonImage.color = TabSelectedColor;
+                    UnselectTab(SingleButton);
+                    SelectTab(VersusButton);
                     ContentSingle.SetActive(false);
                     ContentVersus.SetActive(true);
                     break;
                 case Tab.Single:
-                    VersusButtonImage.color = TabDefaultColor;
-                    SingleButtonImage.color = TabSelectedColor;
+                    UnselectTab(VersusButton);
+                    SelectTab(SingleButton);
                     ContentVersus.SetActive(false);
                     ContentSingle.SetActive(true);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("tab", tab, null);
             }
+        }
+
+        private void UnselectTab(Selectable selectable)
+        {
+            var colors = selectable.colors;
+            colors.normalColor = TabDefaultColor;
+            selectable.colors = colors;
+        }
+
+        private void SelectTab(Selectable selectable)
+        {
+            var colors = selectable.colors;
+            colors.normalColor = TabSelectedColor;
+            selectable.colors = colors;
         }
 
         public enum Tab
