@@ -10,8 +10,8 @@ namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 109;
-        public const string VersionName = "0.1-alpha.5.109";
+        public const int VersionCode = 110;
+        public const string VersionName = "0.2-alpha.0.110";
 
         public const string BuildType =
 #if DEVELOPMENT_BUILD
@@ -19,11 +19,6 @@ namespace Utils
 #else
             "Release";
 #endif
-
-        public const string AvatarBaseUrl = "https://tetris-avatar.moandor.tk/media/";
-
-        public const string DefaultAvatar =
-            AvatarBaseUrl + "0a8c8005-dc57-4b9c-9e36-6a60c48149f5.png";
 
         public static IEnumerator FadeOutLoadScene(string sceneName)
         {
