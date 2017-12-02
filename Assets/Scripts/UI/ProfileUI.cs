@@ -7,7 +7,6 @@ namespace UI
 {
     public class ProfileUI : MonoBehaviour
     {
-        public Image AvatarImage;
         public Text NameText;
         public Text GamesPlayedText;
         public Text WinsText;

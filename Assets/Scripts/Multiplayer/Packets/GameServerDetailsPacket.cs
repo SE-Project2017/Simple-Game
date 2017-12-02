@@ -1,6 +1,6 @@
 ﻿using Barebones.Networking;
 
-namespace Multiplayer
+namespace Multiplayer.Packets
 {
     public class GameServerDetailsPacket : SerializablePacket
     {

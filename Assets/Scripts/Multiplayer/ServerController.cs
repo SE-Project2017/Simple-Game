@@ -7,6 +7,8 @@ using Barebones.MasterServer;
 
 using MsfWrapper;
 
+using Multiplayer.Packets;
+
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -50,18 +52,20 @@ namespace Multiplayer
             PlayerBToken = PlayerToken.FromBase64(MsfContext.Args.PlayerBToken);
             mPlayerAName = MsfContext.Args.PlayerAName;
             mPlayerBName = MsfContext.Args.PlayerBName;
-            string address = MsfContext.Args.MachineAddress;
-            int port = MsfContext.Args.AssignedPort;
-            int spawnID = MsfContext.Args.SpawnId;
             while (!MsfContext.Connection.IsConnected)
             {
                 yield return null;
             }
             var manager = NetworkManager.Instance;
-            manager.networkPort = port;
+            manager.networkPort = MsfContext.Args.AssignedPort;
             manager.StartServer();
             MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameServerSpawned,
-                new GameServerDetailsPacket {Address = address, Port = port, SpawnID = spawnID});
+                new GameServerDetailsPacket
+                {
+                    Address = MsfContext.Args.MachineAddress,
+                    Port = MsfContext.Args.AssignedPort,
+                    SpawnID = MsfContext.Args.SpawnId
+                });
             StartCoroutine(WaitForConnection());
         }
 
@@ -204,6 +208,8 @@ namespace Multiplayer
                 default:
                     throw new ArgumentOutOfRangeException("result", result, null);
             }
+            MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameEnded,
+                new GameEndedPacket {SpawnID = MsfContext.Args.SpawnId});
         }
 
         private IEnumerator StopServer()

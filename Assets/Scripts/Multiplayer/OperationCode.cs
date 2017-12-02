@@ -5,5 +5,8 @@
         StartSearchGame,
         GameFound,
         GameServerSpawned,
+        GameEnded,
+
+        QuerySearchStatus,
     }
 }

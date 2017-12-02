@@ -7,6 +7,7 @@ using Barebones.Networking;
 using MsfWrapper;
 
 using Multiplayer;
+using Multiplayer.Packets;
 
 using UI;
 
@@ -22,12 +23,15 @@ namespace App
 {
     public class ClientController : Singleton<ClientController>
     {
+        public MainMenuUI.Tab MainMenuTab = MainMenuUI.Tab.Versus;
         public GameFoundPacket GameInfo;
 
         public event Action<string> OnPlayerNameChange;
         public event Action<int> OnWinCountChange;
         public event Action<int> OnLossCountChange;
         public event Action<int> OnGameCountChange;
+        public event Action OnSearchStarted;
+        public event Action OnSearchStopped;
 
         public string PlayerName
         {
@@ -98,13 +102,14 @@ namespace App
             {
                 var profile = new ObservableProfile
                 {
-                    new ObservableString(ProfileKey.Name, string.Empty),
+                    new ObservableString(ProfileKey.Name),
                     new ObservableInt(ProfileKey.Wins),
                     new ObservableInt(ProfileKey.Losses),
                     new ObservableInt(ProfileKey.GamesPlayed),
                 };
                 RetriveProfile(profile);
             };
+            StartCoroutine(QuerySearchStatus());
         }
 
         public void OnStartSearchGame()
@@ -113,6 +118,10 @@ namespace App
             MsfContext.Connection.Peer.SendMessage(
                 MessageHelper.Create((short) OperationCode.StartSearchGame));
             mState = State.SearchingGame;
+            if (OnSearchStarted != null)
+            {
+                OnSearchStarted.Invoke();
+            }
         }
 
         public void OnGameEnd()
@@ -129,13 +138,13 @@ namespace App
 
         private void OnGameFound(IIncommingMessage message)
         {
-            if (mState != State.SearchingGame)
-            {
-                return;
-            }
             GameInfo = message.Deserialize(new GameFoundPacket());
-            mState = State.PlayingMultiplayer;
             StartCoroutine(Utilities.FadeOutLoadScene("MultiplayerGame"));
+            if (mState == State.SearchingGame && OnSearchStopped != null)
+            {
+                OnSearchStopped.Invoke();
+            }
+            mState = State.PlayingMultiplayer;
         }
 
         private IEnumerator OnDisconnected()
@@ -182,19 +191,56 @@ namespace App
                     RetriveProfile(profile);
                     return;
                 }
+
                 var nameProp = profile.GetProperty<ObservableString>(ProfileKey.Name);
                 PlayerName = nameProp.Value;
                 nameProp.OnDirty += property => PlayerName = nameProp.Value;
+
                 var winsProp = profile.GetProperty<ObservableInt>(ProfileKey.Wins);
                 Wins = winsProp.Value;
                 winsProp.OnDirty += property => Wins = winsProp.Value;
+
                 var lossesProp = profile.GetProperty<ObservableInt>(ProfileKey.Losses);
                 Losses = lossesProp.Value;
                 lossesProp.OnDirty += property => Losses = lossesProp.Value;
+
                 var gamesPlayedProp = profile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed);
                 GamesPlayed = gamesPlayedProp.Value;
                 gamesPlayedProp.OnDirty += property => GamesPlayed = gamesPlayedProp.Value;
             });
+        }
+
+        private IEnumerator QuerySearchStatus()
+        {
+            while (IsRunning)
+            {
+                if (mState == State.SearchingGame && MsfContext.Connection.IsConnected)
+                {
+                    MsfContext.Connection.Peer.SendMessage(
+                        MessageHelper.Create((short) OperationCode.QuerySearchStatus),
+                        (status, response) =>
+                        {
+                            if (status != ResponseStatus.Success && mState == State.SearchingGame)
+                            {
+                                mState = State.Idle;
+                                if (OnSearchStopped != null)
+                                {
+                                    OnSearchStopped.Invoke();
+                                }
+                            }
+                        });
+                    yield return new WaitForSecondsRealtime(3);
+                }
+                else if (mState == State.SearchingGame)
+                {
+                    mState = State.Idle;
+                    if (OnSearchStopped != null)
+                    {
+                        OnSearchStopped.Invoke();
+                    }
+                }
+                yield return null;
+            }
         }
 
         private enum State

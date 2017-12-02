@@ -6,8 +6,10 @@ using Barebones.MasterServer;
 using Barebones.Networking;
 
 using Multiplayer;
+using Multiplayer.Packets;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace MsfWrapper.Modules.Matchmaking
 {
@@ -17,6 +19,7 @@ namespace MsfWrapper.Modules.Matchmaking
             new Dictionary<string, MatchmakingPlayer>();
 
         private readonly Dictionary<int, Match> mMatches = new Dictionary<int, Match>();
+        private readonly HashSet<string> mPlayersInGame = new HashSet<string>();
 
         private SpawnersModule mSpawnersModule;
         private bool mRunning = true;
@@ -32,6 +35,8 @@ namespace MsfWrapper.Modules.Matchmaking
             mSpawnersModule = server.GetModule<SpawnersModule>();
             server.SetHandler((short) OperationCode.StartSearchGame, OnStartSearchGame);
             server.SetHandler((short) OperationCode.GameServerSpawned, OnGameServerSpawned);
+            server.SetHandler((short) OperationCode.GameEnded, OnGameEnded);
+            server.SetHandler((short) OperationCode.QuerySearchStatus, OnQuerySearchStatus);
             StartCoroutine(MatchmakingWorker());
         }
 
@@ -64,10 +69,7 @@ namespace MsfWrapper.Modules.Matchmaking
         private void OnGameServerSpawned(IIncommingMessage message)
         {
             var packet = message.Deserialize(new GameServerDetailsPacket());
-            if (!mMatches.ContainsKey(packet.SpawnID))
-            {
-                return;
-            }
+            Assert.IsTrue(mMatches.ContainsKey(packet.SpawnID));
             var match = mMatches[packet.SpawnID];
             match.PlayerA.Peer.SendMessage(MessageHelper.Create((short) OperationCode.GameFound,
                 new GameFoundPacket
@@ -83,6 +85,40 @@ namespace MsfWrapper.Modules.Matchmaking
                     PlayerType = ServerController.PlayerType.PlayerB,
                     Token = match.PlayerBToken,
                 }));
+        }
+
+        private void OnGameEnded(IIncommingMessage message)
+        {
+            var packet = message.Deserialize(new GameEndedPacket());
+            Assert.IsTrue(mMatches.ContainsKey(packet.SpawnID));
+            var match = mMatches[packet.SpawnID];
+            mPlayersInGame.Remove(match.PlayerA.Name);
+            mPlayersInGame.Remove(match.PlayerB.Name);
+            mMatches.Remove(packet.SpawnID);
+        }
+
+        private void OnQuerySearchStatus(IIncommingMessage message)
+        {
+            int peerId = message.Peer.Id;
+            var peer = Server.GetPeer(peerId);
+            if (peer == null)
+            {
+                message.Respond("Peer not valid.", ResponseStatus.NotConnected);
+                return;
+            }
+            var user = peer.GetExtension<IUserExtension>();
+            if (user == null)
+            {
+                message.Respond("User not logged in.", ResponseStatus.Unauthorized);
+                return;
+            }
+            var username = user.Username;
+            if (!mSearchingPlayers.ContainsKey(username) && !mPlayersInGame.Contains(username))
+            {
+                message.Respond("User not searching.", ResponseStatus.Error);
+            }
+            message.Respond(new SearchStatusPacket {Username = username},
+                ResponseStatus.Success);
         }
 
         private IEnumerator MatchmakingWorker()
@@ -106,12 +142,7 @@ namespace MsfWrapper.Modules.Matchmaking
                             MsfContext.Args.Name.PlayerBToken, playerBToken.ToBase64(),
                             MsfContext.Args.Name.PlayerAName, playerA.Name,
                             MsfContext.Args.Name.PlayerBName, playerB.Name));
-                    if (task == null)
-                    {
-                        AddPlayer(playerA);
-                        AddPlayer(playerB);
-                    }
-                    else
+                    if (task != null)
                     {
                         mMatches.Add(task.SpawnId,
                             new Match
@@ -121,6 +152,8 @@ namespace MsfWrapper.Modules.Matchmaking
                                 PlayerAToken = playerAToken,
                                 PlayerBToken = playerBToken,
                             });
+                        mPlayersInGame.Add(playerA.Name);
+                        mPlayersInGame.Add(playerB.Name);
                     }
                 }
             }
