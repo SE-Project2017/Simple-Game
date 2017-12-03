@@ -82,7 +82,7 @@ namespace App
 
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
-        private const int ShotgunActivationDuration = 150;
+        private const int ShotgunActivationDuration = 60;
         private const int MirrorBlockActivationDuration = 40;
         private const int LaserActivationDuration = 30;
         private const int UpsideDownActivationDuration = 100;
@@ -719,19 +719,34 @@ namespace App
             {
                 ExplosionEffect.SetTrigger("Play");
             }
-            else if (mActivatingItemFrames == 50)
+            else if (mActivatingItemFrames == 20)
             {
+                int count = 0;
+                // ReSharper disable once AccessToModifiedClosure
+                ForEachBlockNonNull((block, row, col) => ++count);
+                var selected = new HashSet<int>();
+                int index;
+                for (int i = 0; i < (count + 9) / 10; ++i)
+                {
+                    index = mRandom.Range(0, count);
+                    while (selected.Contains(index))
+                    {
+                        index = mRandom.Range(0, count);
+                    }
+                    selected.Add(index);
+                }
+                index = 0;
                 ForEachBlockNonNull((block, row, col) =>
                 {
-                    if (mRandom.Range(0, 10) != 0)
+                    if (selected.Contains(index))
                     {
-                        return;
+                        DestroyBlock(row, col);
+                        if (OnPlayClearEffect != null)
+                        {
+                            OnPlayClearEffect.Invoke(row, col, block.Properties);
+                        }
                     }
-                    if (OnPlayClearEffect != null)
-                    {
-                        OnPlayClearEffect.Invoke(row, col, block.Properties);
-                    }
-                    DestroyBlock(row, col);
+                    ++index;
                 });
             }
         }
