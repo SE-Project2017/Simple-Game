@@ -39,8 +39,13 @@ namespace UI
 
             public AlertDialog Show()
             {
+                var canvas = FindObjectOfType<Canvas>();
+                if (canvas == null)
+                {
+                    return null;
+                }
                 var dialog = Instantiate(GlobalContext.Instance.AlertDialogPrefab,
-                    FindObjectOfType<Canvas>().transform).GetComponent<AlertDialog>();
+                    canvas.transform).GetComponent<AlertDialog>();
                 if (mMessage != null)
                 {
                     dialog.Message.SetActive(true);

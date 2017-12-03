@@ -17,6 +17,8 @@ namespace Multiplayer
         public ServerController.PlayerType Type;
         public string Username;
 
+        public const int MaxGameDuration = 5184000;
+
         private const int MaxFrameDiff = 30;
 
         private bool mIsServer;
@@ -24,7 +26,6 @@ namespace Multiplayer
         private bool mIsLocalPlayer;
 
         private int mFrameCount;
-        private int mMaxFrames = 311040000;
 
         private State mState = State.Connecting;
         private MultiplayerGameController mGameController;
@@ -51,13 +52,17 @@ namespace Multiplayer
             {
                 if (mState == State.Playing)
                 {
-                    mServerController.OnPlayerGameEnd(Type, mFrameCount);
+                    mServerController.OnPlayerDisconnect(Type);
                     mState = State.Ended;
                 }
             }
             if (mIsClient)
             {
                 mGameController.Players.Remove(this);
+                if (mGameController.LocalPlayer == this)
+                {
+                    mGameController.LocalPlayer = null;
+                }
             }
             if (mState == State.Playing && mIsLocalPlayer)
             {
@@ -73,18 +78,35 @@ namespace Multiplayer
         }
 
         [Server]
-        public void SetMaxFrame(int maxFrame)
-        {
-            mMaxFrames = maxFrame;
-            RpcSetMaxFrame(maxFrame);
-        }
-
-        [Server]
         public void OnRegisterComplete(ServerController.GameInfo info)
         {
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
             RpcOnRegisterComplete(info, Type, Username);
+        }
+
+        [Server]
+        public void OnPlayerWin()
+        {
+            TargetOnPlayerWin(connectionToClient);
+        }
+
+        [Server]
+        public void OnPlayerLose()
+        {
+            TargetOnPlayerLose(connectionToClient);
+        }
+
+        [Server]
+        public void OnGameDraw()
+        {
+            TargetOnGameDraw(connectionToClient);
+        }
+
+        [Server]
+        public void OnDataOutOfSync()
+        {
+            TargetOnDataOutOfSync(connectionToClient);
         }
 
         [Client]
@@ -120,6 +142,14 @@ namespace Multiplayer
         }
 
         [Client]
+        public void OnLocalGameEnd(ServerController.GameResult result)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            CmdPlayerEnded(result);
+            mState = State.Ended;
+        }
+
+        [Client]
         private IEnumerator CheckConnection()
         {
             yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
@@ -144,12 +174,7 @@ namespace Multiplayer
                 {
                     ++mFrameCount;
                     CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                    if (mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents.ToArray()) ||
-                        mFrameCount > mMaxFrames)
-                    {
-                        CmdPlayerEnded(mFrameCount);
-                        mState = State.Ended;
-                    }
+                    mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
                     mPlayerEvents.Clear();
                 } while (mState == State.Playing &&
                     mGameController.Players.Count > 1 &&
@@ -168,24 +193,17 @@ namespace Multiplayer
         }
 
         [Command]
-        private void CmdPlayerEnded(int frameCount)
+        private void CmdPlayerEnded(ServerController.GameResult result)
         {
             Assert.IsTrue(mState == State.Connecting || mState == State.Playing);
             mState = State.Ended;
-            mServerController.OnPlayerGameEnd(Type, frameCount);
+            mServerController.OnPlayerGameEnd(Type, result);
         }
 
-        [ClientRpc]
-        public void RpcOnPlayerWin()
+        [Command]
+        private void CmdPlayerLost()
         {
-            if (mIsLocalPlayer)
-            {
-                mGameController.OnLocalPlayerWin();
-            }
-            else
-            {
-                mGameController.OnLocalPlayerLose();
-            }
+            
         }
 
         [ClientRpc]
@@ -197,6 +215,7 @@ namespace Multiplayer
             if (mIsLocalPlayer)
             {
                 mGameController.OnGameStart(info);
+                mGameController.LocalPlayer = this;
             }
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
@@ -214,16 +233,32 @@ namespace Multiplayer
             mGameController.OnRemoteUpdateFrame(mFrameCount, events);
         }
 
-        [ClientRpc]
-        private void RpcSetMaxFrame(int maxFrame)
+        [TargetRpc]
+        private void TargetOnGameDraw(NetworkConnection conn)
         {
-            mMaxFrames = maxFrame;
+            Assert.IsTrue(mIsLocalPlayer);
+            mGameController.OnGameDraw();
         }
 
         [TargetRpc]
-        public void TargetOnGameDraw(NetworkConnection connection)
+        private void TargetOnDataOutOfSync(NetworkConnection conn)
         {
-            mGameController.OnGameDraw();
+            Assert.IsTrue(mIsLocalPlayer);
+            mGameController.OnDataOutOfSync();
+        }
+
+        [TargetRpc]
+        private void TargetOnPlayerWin(NetworkConnection conn)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            mGameController.OnLocalPlayerWin();
+        }
+
+        [TargetRpc]
+        private void TargetOnPlayerLose(NetworkConnection conn)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            mGameController.OnLocalPlayerLose();
         }
 
         public struct PlayerEvent

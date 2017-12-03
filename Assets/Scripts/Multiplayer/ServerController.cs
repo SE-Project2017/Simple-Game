@@ -31,8 +31,9 @@ namespace Multiplayer
 
         private bool mPlayerAEnded;
         private bool mPlayerBEnded;
-        private int mPlayerAEndFrame;
-        private int mPlayerBEndFrame;
+        private GameResult mPlayerAResult = GameResult.Undefined;
+        private GameResult mPlayerBResult = GameResult.Undefined;
+
         private string mPlayerAName;
         private string mPlayerBName;
         private State mState = State.Connecting;
@@ -96,51 +97,75 @@ namespace Multiplayer
             }
         }
 
-        public void OnPlayerGameEnd(PlayerType type, int frameCount)
+        public void OnPlayerGameEnd(PlayerType type, GameResult result)
         {
             switch (type)
             {
                 case PlayerType.PlayerA:
                     Assert.IsTrue(!mPlayerAEnded);
                     mPlayerAEnded = true;
-                    mPlayerAEndFrame = frameCount;
-                    if (!mPlayerBEnded)
-                    {
-                        mPlayerB.SetMaxFrame(frameCount);
-                    }
+                    mPlayerAResult = result;
                     break;
                 case PlayerType.PlayerB:
                     Assert.IsTrue(!mPlayerBEnded);
                     mPlayerBEnded = true;
-                    mPlayerBEndFrame = frameCount;
-                    if (!mPlayerAEnded)
-                    {
-                        mPlayerA.SetMaxFrame(frameCount);
-                    }
+                    mPlayerBResult = result;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }
             if (mPlayerAEnded && mPlayerBEnded)
             {
-                if (mPlayerAEndFrame < mPlayerBEndFrame)
+                if (mPlayerAResult != mPlayerBResult)
                 {
-                    mPlayerB.RpcOnPlayerWin();
-                    StartCoroutine(EndGame(GameResult.PlayerBWon));
-                }
-                else if (mPlayerBEndFrame < mPlayerAEndFrame)
-                {
-                    mPlayerA.RpcOnPlayerWin();
-                    StartCoroutine(EndGame(GameResult.PlayerAWon));
+                    mPlayerA.OnDataOutOfSync();
+                    mPlayerB.OnDataOutOfSync();
+                    StartCoroutine(EndGame(GameResult.DataOutOfSync));
                 }
                 else
                 {
-                    foreach (var player in new[] {mPlayerA, mPlayerB})
+                    switch (mPlayerAResult)
                     {
-                        player.TargetOnGameDraw(player.connectionToClient);
+                        case GameResult.Draw:
+                            mPlayerA.OnGameDraw();
+                            mPlayerB.OnGameDraw();
+                            break;
+                        case GameResult.PlayerAWon:
+                            mPlayerA.OnPlayerWin();
+                            mPlayerB.OnPlayerLose();
+                            break;
+                        case GameResult.PlayerBWon:
+                            mPlayerA.OnPlayerLose();
+                            mPlayerB.OnPlayerWin();
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
-                    StartCoroutine(EndGame(GameResult.Draw));
+                    StartCoroutine(EndGame(mPlayerAResult));
                 }
+            }
+        }
+
+        public void OnPlayerDisconnect(PlayerType type)
+        {
+            if (mState != State.Running)
+            {
+                return;
+            }
+            mState = State.Ending;
+
+            switch (type)
+            {
+                case PlayerType.PlayerA:
+                    mPlayerB.OnPlayerWin();
+                    StartCoroutine(EndGame(GameResult.PlayerBWon));
+                    break;
+                case PlayerType.PlayerB:
+                    mPlayerA.OnPlayerWin();
+                    StartCoroutine(EndGame(GameResult.PlayerAWon));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("type", type, null);
             }
         }
 
@@ -161,6 +186,7 @@ namespace Multiplayer
 
         private IEnumerator EndGame(GameResult result)
         {
+            mState = State.Ending;
             yield return StartCoroutine(ReportGameResult(result));
             yield return StartCoroutine(StopServer());
         }
@@ -280,6 +306,8 @@ namespace Multiplayer
             Draw,
             PlayerAWon,
             PlayerBWon,
+            DataOutOfSync,
+            Undefined = -1,
         }
 
         private enum State

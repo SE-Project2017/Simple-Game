@@ -1,17 +1,17 @@
 using System.Collections;
+using System.Collections.Generic;
 
 using App;
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 110;
-        public const string VersionName = "0.2-alpha.0.110";
+        public const int VersionCode = 119;
+        public const string VersionName = "0.2-alpha.0.119";
 
         public const string BuildType =
 #if DEVELOPMENT_BUILD
@@ -33,6 +33,13 @@ namespace Utils
             {
                 array[i] = value;
             }
+        }
+
+        public static T PopFront<T>(this List<T> list)
+        {
+            var value = list[0];
+            list.RemoveAt(0);
+            return value;
         }
 
         public static void SetLayer(this Transform transform, int layer)

@@ -25,26 +25,25 @@ namespace App
         public int ClearDelay;
 
         public event Action<ClearingBlocks> OnLineCleared;
-        public event Action<Tetromino> OnNewTetrominoGenerated;
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<GameItem> OnTargetItemActivated;
         public event Action<bool> OnHoldEnableStateChanged;
         public event Action<int, int, Block.Data> OnPlayClearEffect;
-        public event Action OnNextTetrominoConsumued;
         public event Action OnGameEnd;
         public event Action OnGameItemCreated;
         public event Action OnTetrominoLocked;
         public event Action OnPlayFlipAnimation;
         public event Action OnPlayUpsideDownAnimation;
+        public event Action OnNextTetrominosChanged;
 
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly Block[,] mUpsideDownGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
         private readonly List<int> mClearingLines = new List<int>();
-        private readonly Queue<Tetromino> mNextTetrominos = new Queue<Tetromino>();
+        private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
         private readonly Queue<GameItem> mPendingTargetedItems = new Queue<GameItem>();
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
-        private GameState mState = GameState.Idle;
+        private GameState mState;
         private TetrominoState mTetrominoState;
         private DasState mDasState;
         private int mIdleFrames;
@@ -56,10 +55,10 @@ namespace App
         private int mXRayFrames;
         private GameObject mActiveObject;
         private GameObject mGhostObject;
-        private Tetromino mActiveTetromino = Tetromino.Undefined;
-        private Tetromino mHoldTetromino = Tetromino.Undefined;
-        private GameItem mActivatingItem = GameItem.None;
-        private GameItem mNextGameItem = GameItem.None;
+        private Tetromino mActiveTetromino;
+        private Tetromino mHoldTetromino;
+        private GameItem mActivatingItem;
+        private GameItem mNextGameItem;
         private int mRow;
         private int mCol;
         private int mRotation;
@@ -72,8 +71,8 @@ namespace App
         private bool mRotateLeftPressed;
         private bool mRotateRightPressed;
         private bool mHoldPressed;
-        private bool mHoldEnabled = true;
-        private bool mInitialHold = true;
+        private bool mHoldEnabled;
+        private bool mInitialHold;
         private bool mMirrorExecuted;
         private IEnumerator<Tetromino> mTetrominoGenerator;
         private MersenneTwister mRandom;
@@ -98,6 +97,7 @@ namespace App
                 mItemClearEffects[row].transform.SetLayer(gameObject.layer);
                 mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
             }
+            Initialize();
         }
 
         public void OnDestroy()
@@ -131,28 +131,23 @@ namespace App
 
         public void StartGame()
         {
-            if (mState == GameState.Running)
-            {
-                throw new InvalidOperationException();
-            }
-            for (int i = 0; i < mGrid.GetLength(0); ++i)
-            {
-                for (int j = 0; j < mGrid.GetLength(1); ++j)
-                {
-                    DestroyBlock(i, j);
-                }
-            }
+            Initialize();
             mState = GameState.Running;
             GenerateNewTetrominos();
             StartNewTetromino();
         }
 
-        /// <returns>Returns true if game is no longer running</returns>
-        public bool UpdateFrame(GameButtonEvent[] events)
+        public void StopGame()
+        {
+            Assert.IsTrue(mState == GameState.Running);
+            mState = GameState.Ended;
+        }
+
+        public void UpdateFrame(GameButtonEvent[] events)
         {
             if (mState != GameState.Running)
             {
-                return true;
+                return;
             }
             foreach (var buttonEvent in events)
             {
@@ -192,7 +187,6 @@ namespace App
             {
                 XRayFrame();
             }
-            return mState != GameState.Running;
         }
 
         public void AddBlocks(ClearingBlocks blocks)
@@ -343,6 +337,74 @@ namespace App
             }
         }
 
+        public Tetromino GetNextTetromino(int index)
+        {
+            return mNextTetrominos[index];
+        }
+
+        private void Initialize()
+        {
+            foreach (var grid in new[] {mGrid, mUpsideDownGrid})
+            {
+                for (int row = 0; row < grid.GetLength(0); ++row)
+                {
+                    for (int col = 0; col < grid.GetLength(1); ++col)
+                    {
+                        if (grid[row, col] != null)
+                        {
+                            Destroy(grid[row, col].gameObject);
+                        }
+                        grid[row, col] = null;
+                    }
+                }
+            }
+
+            mClearingLines.Clear();
+            mNextTetrominos.Clear();
+            mPendingTargetedItems.Clear();
+            mPendingAddBlocks.Clear();
+
+            mState = GameState.Idle;
+            mTetrominoState = TetrominoState.Idle;
+            mDasState = DasState.Idle;
+
+            mIdleFrames = 0;
+            mLockingFrames = 0;
+            mDasDelayFrames = 0;
+            mClearingFrames = 0;
+            mActivatingItemFrames = 0;
+            mColorBlockFrames = 0;
+            mXRayFrames = 0;
+
+            Destroy(mActiveObject);
+            mActiveObject = null;
+            Destroy(mGhostObject);
+            mGhostObject = null;
+
+            mActiveTetromino = Tetromino.Undefined;
+            mHoldTetromino = Tetromino.Undefined;
+
+            mActivatingItem = GameItem.None;
+            mNextGameItem = GameItem.None;
+
+            mRow = 0;
+            mCol = 0;
+            mRotation = 0;
+            mAccumulatedGravity = 0;
+            mItemClearingHighestRow = 0;
+            mMirrorBlockTurns = 0;
+            mColorBlockTurns = 0;
+            mLaserTargetCol = 0;
+
+            mDownPressed = false;
+            mRotateLeftPressed = false;
+            mRotateRightPressed = false;
+            mHoldPressed = false;
+            mHoldEnabled = true;
+            mInitialHold = true;
+            mMirrorExecuted = false;
+        }
+
         private void ExecuteMirrorBlock()
         {
             mActivatingItem = GameItem.MirrorBlock;
@@ -361,12 +423,13 @@ namespace App
             if (mIdleFrames == 0)
             {
                 GenerateNewTetrominos();
-                SpawnTetromino(mNextTetrominos.Dequeue());
-                mTetrominoState = TetrominoState.Dropping;
-                if (OnNextTetrominoConsumued != null)
+                SpawnTetromino(mNextTetrominos.PopFront());
+                if (OnNextTetrominosChanged != null)
                 {
-                    OnNextTetrominoConsumued.Invoke();
+                    OnNextTetrominosChanged.Invoke();
                 }
+
+                mTetrominoState = TetrominoState.Dropping;
                 if (mHoldPressed)
                 {
                     TryHoldTetromino();
@@ -1661,11 +1724,7 @@ namespace App
             {
                 mTetrominoGenerator.MoveNext();
                 var tetromino = mTetrominoGenerator.Current;
-                mNextTetrominos.Enqueue(tetromino);
-                if (OnNewTetrominoGenerated != null)
-                {
-                    OnNewTetrominoGenerated.Invoke(tetromino);
-                }
+                mNextTetrominos.Add(tetromino);
             }
         }
 
@@ -1682,10 +1741,10 @@ namespace App
                 mHoldTetromino = mActiveTetromino;
                 DestroyActiveTetromino();
                 GenerateNewTetrominos();
-                SpawnTetromino(mNextTetrominos.Dequeue());
-                if (OnNextTetrominoConsumued != null)
+                SpawnTetromino(mNextTetrominos.PopFront());
+                if (OnNextTetrominosChanged != null)
                 {
-                    OnNextTetrominoConsumued.Invoke();
+                    OnNextTetrominosChanged.Invoke();
                 }
             }
             else
