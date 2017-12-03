@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 using App;
 
@@ -42,6 +43,11 @@ namespace Multiplayer
         public GameObject WinText;
         public GameObject LoseText;
         public GameObject DrawText;
+
+        public Image[] LocalWinIcons;
+        public Image[] RemoteWinIcons;
+        public Color WinIconInactiveColor;
+        public Color WinIconActiveColor;
 
         public NetworkPlayer LocalPlayer;
 
@@ -230,6 +236,11 @@ namespace Multiplayer
             }
 
             Initialize();
+
+            foreach (var icon in LocalWinIcons.Concat(RemoteWinIcons))
+            {
+                icon.color = WinIconInactiveColor;
+            }
         }
 
         public void OnLocalUpdateFrame(int frameCount, NetworkPlayer.PlayerEvent[] playerEvents)
@@ -514,11 +525,13 @@ namespace Multiplayer
 
             if (mLocalEndFrame < mRemoteEndFrame)
             {
+                RemoteWinIcons[mRemoteWinCount].color = WinIconActiveColor;
                 ++mRemoteWinCount;
                 LoseText.SetActive(true);
             }
             else if (mRemoteEndFrame < mLocalEndFrame)
             {
+                LocalWinIcons[mLocalWinCount].color = WinIconActiveColor;
                 ++mLocalWinCount;
                 WinText.SetActive(true);
             }
