@@ -435,6 +435,10 @@ namespace Multiplayer
         private void OnGameEnded()
         {
             mNetworkManager.StopClient();
+
+            WinText.SetActive(false);
+            LoseText.SetActive(false);
+            DrawText.SetActive(false);
         }
 
         private void HoldTetrominoChanged(Tetromino tetromino)

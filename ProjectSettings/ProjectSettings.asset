@@ -123,7 +123,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 0.2-alpha.1.127
+  bundleVersion: 0.2-alpha.1.129
   preloadedAssets: []
   metroInputSource: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -151,7 +151,7 @@ PlayerSettings:
     Android: org.seproject.tetris
     Standalone: org.seproject.tetris
   buildNumber: {}
-  AndroidBundleVersionCode: 127
+  AndroidBundleVersionCode: 129
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 0
