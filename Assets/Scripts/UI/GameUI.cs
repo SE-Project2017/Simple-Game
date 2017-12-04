@@ -9,7 +9,7 @@ namespace UI
     public class GameUI : MonoBehaviour
     {
         [SerializeField]
-        private GameObject[] mDisplayTetrominos;
+        private GameObject[] mDisplayTetrominos = null;
 
         [SerializeField]
         private Vector3 mNextPos = new Vector3(-0.8f, 4.15f);
@@ -24,16 +24,16 @@ namespace UI
         private Vector3 mHoldPos = new Vector3(-2.3f, 4.3f);
 
         [SerializeField]
-        private Color mHoldDisabledColor;
+        private Color mHoldDisabledColor = Color.clear;
 
         [SerializeField]
-        private GameObject mClearParticlePrefab;
+        private GameObject mClearParticlePrefab = null;
 
         [SerializeField]
-        private GameObject mClearParticleParent;
+        private GameObject mClearParticleParent = null;
 
         [SerializeField]
-        private GameObject mGameArea;
+        private GameObject mGameArea = null;
 
         [SerializeField]
         private float mNextScale = 0.5f;
@@ -45,7 +45,7 @@ namespace UI
         private float mHoldScale = 0.25f;
 
         [SerializeField]
-        private GameGrid mGameGrid;
+        private GameGrid mGameGrid = null;
 
         private GameObject mNext;
         private GameObject mNext2;

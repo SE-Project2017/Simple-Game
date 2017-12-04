@@ -61,18 +61,32 @@ namespace Multiplayer
             set
             {
                 mLocalLevel = value;
+                mLocalGameGrid.SetLevel(value);
                 LevelText.text = value.ToString();
             }
         }
 
-        [SerializeField]
-        private GameGrid mLocalGameGrid;
+        private int RemoteLevel
+        {
+            get
+            {
+                return mRemoteLevel;
+            }
+            set
+            {
+                mRemoteLevel = value;
+                mRemoteGameGrid.SetLevel(value);
+            }
+        }
 
         [SerializeField]
-        private GameGrid mRemoteGameGrid;
+        private GameGrid mLocalGameGrid = null;
 
         [SerializeField]
-        private GameUI mLocalGameUI;
+        private GameGrid mRemoteGameGrid = null;
+
+        [SerializeField]
+        private GameUI mLocalGameUI = null;
 
         private GlobalContext mContext;
 
@@ -351,10 +365,7 @@ namespace Multiplayer
             mRemoteItemCharge = 0;
 
             LocalLevel = 0;
-            mRemoteLevel = 0;
-
-            mLocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
-            mRemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
+            RemoteLevel = 0;
 
             WinText.SetActive(false);
             LoseText.SetActive(false);
@@ -415,21 +426,19 @@ namespace Multiplayer
             {
                 LocalLevel = MaxLevel;
             }
-            mLocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
         }
 
         private void RemoteLevelAdvance(int linesCleared)
         {
-            if (mRemoteLevel % 100 == 99 && linesCleared == 0)
+            if (RemoteLevel % 100 == 99 && linesCleared == 0)
             {
                 return;
             }
-            mRemoteLevel += mContext.LevelAdvance[linesCleared];
-            if (mRemoteLevel > MaxLevel)
+            RemoteLevel += mContext.LevelAdvance[linesCleared];
+            if (RemoteLevel > MaxLevel)
             {
-                mRemoteLevel = MaxLevel;
+                RemoteLevel = MaxLevel;
             }
-            mRemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
         }
 
         private void CheckGameResult()

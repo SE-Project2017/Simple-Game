@@ -13,6 +13,11 @@ namespace App
         public GameObject AlertDialogButtonPrefab;
 
         public readonly int[] LevelGravity = new int[2000];
+        public readonly int[] LevelEntryDelay = new int[2000];
+        public readonly int[] LevelClearEntryDelay = new int[2000];
+        public readonly int[] LevelDasDelay = new int[2000];
+        public readonly int[] LevelLockDelay = new int[2000];
+        public readonly int[] LevelClearDelay = new int[2000];
         public readonly int[] LevelAdvance = {1, 1, 2, 4, 6};
 
         public GlobalContext()
@@ -47,6 +52,34 @@ namespace App
             LevelGravity.Fill(420, 450, 262144);
             LevelGravity.Fill(450, 500, 196608);
             LevelGravity.Fill(500, LevelGravity.Length, 1310720);
+
+            LevelEntryDelay.Fill(0, 700, 25);
+            LevelEntryDelay.Fill(700, 800, 16);
+            LevelEntryDelay.Fill(800, 1000, 12);
+            LevelEntryDelay.Fill(1000, 1100, 6);
+            LevelEntryDelay.Fill(1100, 1200, 5);
+            LevelEntryDelay.Fill(1200, LevelEntryDelay.Length, 4);
+
+            LevelClearEntryDelay.Fill(0, 600, 25);
+            LevelClearEntryDelay.Fill(600, 700, 16);
+            LevelClearEntryDelay.Fill(700, 800, 12);
+            LevelClearEntryDelay.Fill(800, 1100, 6);
+            LevelClearEntryDelay.Fill(1100, 1200, 5);
+            LevelClearEntryDelay.Fill(1200, LevelClearEntryDelay.Length, 4);
+
+            LevelDasDelay.Fill(0, 500, 14);
+            LevelDasDelay.Fill(500, 900, 8);
+            LevelDasDelay.Fill(900, LevelDasDelay.Length, 6);
+
+            LevelLockDelay.Fill(0, 900, 30);
+            LevelLockDelay.Fill(900, 1100, 17);
+            LevelLockDelay.Fill(1100, LevelLockDelay.Length, 15);
+
+            LevelClearDelay.Fill(0, 500, 40);
+            LevelClearDelay.Fill(500, 600, 25);
+            LevelClearDelay.Fill(600, 700, 16);
+            LevelClearDelay.Fill(700, 800, 12);
+            LevelClearDelay.Fill(800, LevelClearDelay.Length, 6);
         }
     }
 }

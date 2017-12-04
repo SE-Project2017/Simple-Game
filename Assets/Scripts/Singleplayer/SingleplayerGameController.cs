@@ -15,19 +15,19 @@ namespace Singleplayer
     public class SingleplayerGameController : MonoBehaviour
     {
         [SerializeField]
-        private GameGrid mGameGrid;
+        private GameGrid mGameGrid = null;
 
         [SerializeField]
-        private GameUI mGameUI;
+        private GameUI mGameUI = null;
 
         [SerializeField]
-        private Text mLevelText;
+        private Text mLevelText = null;
 
         [SerializeField]
-        private Text mNextLevelText;
+        private Text mNextLevelText = null;
 
         [SerializeField]
-        private InputController mInputController;
+        private InputController mInputController = null;
 
         private GlobalContext mContext;
         private ClientController mController;
@@ -41,18 +41,17 @@ namespace Singleplayer
             set
             {
                 mLevel = value;
+                mGameGrid.SetLevel(value);
                 mLevelText.text = value.ToString();
-                mNextLevelText.text = value <= MaxLevel - 100
+                mNextLevelText.text = value <= mMaxLevel - 100
                     ? ((value + 100) / 100 * 100).ToString()
-                    : MaxLevel.ToString();
-
-                mGameGrid.Gravity = mContext.LevelGravity[Level];
+                    : mMaxLevel.ToString();
             }
         }
 
         private int mLevel;
 
-        private const int MaxLevel = 999;
+        private int mMaxLevel = 500;
 
         public void Awake()
         {
@@ -102,14 +101,14 @@ namespace Singleplayer
 
         private void LevelAdvance(int linesCleared)
         {
-            if ((Level % 100 == 99 || Level == MaxLevel - 1) && linesCleared == 0)
+            if ((Level % 100 == 99 || Level == mMaxLevel - 1) && linesCleared == 0)
             {
                 return;
             }
             Level += mContext.LevelAdvance[linesCleared];
-            if (Level >= MaxLevel)
+            if (Level >= mMaxLevel)
             {
-                Level = MaxLevel;
+                Level = mMaxLevel;
                 EndGame();
             }
         }

@@ -23,16 +23,6 @@ namespace App
 {
     public class ClientController : Singleton<ClientController>
     {
-        public MainMenuUI.Tab MainMenuTab = MainMenuUI.Tab.Versus;
-        public GameFoundPacket GameInfo;
-
-        public event Action<string> OnPlayerNameChange;
-        public event Action<int> OnWinCountChange;
-        public event Action<int> OnLossCountChange;
-        public event Action<int> OnGameCountChange;
-        public event Action OnSearchStarted;
-        public event Action OnSearchStopped;
-
         public string PlayerName
         {
             get { return mPlayerName; }
@@ -85,6 +75,28 @@ namespace App
             }
         }
 
+        public bool IsOfflineMode
+        {
+            get { return mIsOfflineMode; }
+            set
+            {
+                mIsOfflineMode = value; if (!value)
+                {
+                    MainMenuTab = MainMenuUI.Tab.Single;
+                }
+            }
+        }
+
+        public MainMenuUI.Tab MainMenuTab = MainMenuUI.Tab.Versus;
+        public GameFoundPacket GameInfo;
+
+        public event Action<string> OnPlayerNameChange;
+        public event Action<int> OnWinCountChange;
+        public event Action<int> OnLossCountChange;
+        public event Action<int> OnGameCountChange;
+        public event Action OnSearchStarted;
+        public event Action OnSearchStopped;
+
         private string mUsername;
         private string mPassword;
         private State mState = State.Idle;
@@ -93,6 +105,8 @@ namespace App
         private int mWins;
         private int mLosses;
         private int mGamesPlayed;
+
+        private bool mIsOfflineMode;
 
         public void Start()
         {
@@ -162,7 +176,12 @@ namespace App
 
         private IEnumerator OnDisconnected()
         {
-            while (SceneManager.GetActiveScene().name == "MultiplayerGame")
+            if (IsOfflineMode)
+            {
+                yield break;
+            }
+            while (SceneManager.GetActiveScene().name == "MultiplayerGame" ||
+                SceneManager.GetActiveScene().name == "SingleplayerGame")
             {
                 yield return null;
             }

@@ -17,12 +17,6 @@ namespace App
         public GameObject LaserPrefab;
         public Animator ExplosionEffect;
         public Animator FlipMaskAnimator;
-        public int Gravity;
-        public int EntryDelay;
-        public int ClearEntryDelay;
-        public int DasDelay;
-        public int LockDelay;
-        public int ClearDelay;
 
         public event Action<ClearingBlocks> OnLineCleared;
         public event Action<Tetromino> OnHoldTetrominoChanged;
@@ -36,6 +30,13 @@ namespace App
         public event Action OnPlayUpsideDownAnimation;
         public event Action OnNextTetrominosChanged;
 
+        private int mGravity;
+        private int mEntryDelay;
+        private int mClearEntryDelay;
+        private int mDasDelay;
+        private int mLockDelay;
+        private int mClearDelay;
+
         private readonly Block[,] mGrid = new Block[20, 10];
         private readonly Block[,] mUpsideDownGrid = new Block[20, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
@@ -43,6 +44,7 @@ namespace App
         private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
         private readonly Queue<GameItem> mPendingTargetedItems = new Queue<GameItem>();
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
+
         private GameState mState;
         private TetrominoState mTetrominoState;
         private DasState mDasState;
@@ -77,6 +79,8 @@ namespace App
         private IEnumerator<Tetromino> mTetrominoGenerator;
         private MersenneTwister mRandom;
 
+        private GlobalContext mContext;
+
         private readonly int[] mSpawnRows = {0, 1, 0, 0, 0, 0, 0};
         private readonly int[] mSpawnCols = {6, 4, 4, 4, 4, 4, 4};
 
@@ -90,6 +94,8 @@ namespace App
 
         public void Awake()
         {
+            mContext = GlobalContext.Instance;
+
             for (int row = 0; row < mItemClearEffects.Length; ++row)
             {
                 mItemClearEffects[row] = Instantiate(ItemClearEffectPrefab, transform)
@@ -97,7 +103,7 @@ namespace App
                 mItemClearEffects[row].transform.SetLayer(gameObject.layer);
                 mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
             }
-            Initialize();
+            ResetState();
         }
 
         public void OnDestroy()
@@ -131,7 +137,7 @@ namespace App
 
         public void StartGame()
         {
-            Initialize();
+            ResetState();
             mState = GameState.Running;
             GenerateNewTetrominos();
             StartNewTetromino();
@@ -342,7 +348,17 @@ namespace App
             return mNextTetrominos[index];
         }
 
-        private void Initialize()
+        public void SetLevel(int level)
+        {
+            mGravity = mContext.LevelGravity[level];
+            mEntryDelay = mContext.LevelEntryDelay[level];
+            mClearEntryDelay = mContext.LevelClearEntryDelay[level];
+            mDasDelay = mContext.LevelDasDelay[level];
+            mLockDelay = mContext.LevelLockDelay[level];
+            mClearDelay = mContext.LevelClearDelay[level];
+        }
+
+        private void ResetState()
         {
             foreach (var grid in new[] {mGrid, mUpsideDownGrid})
             {
@@ -403,6 +419,8 @@ namespace App
             mHoldEnabled = true;
             mInitialHold = true;
             mMirrorExecuted = false;
+
+            SetLevel(0);
         }
 
         private void ExecuteMirrorBlock()
@@ -496,7 +514,7 @@ namespace App
                 EndGame();
                 return;
             }
-            mAccumulatedGravity = Gravity;
+            mAccumulatedGravity = mGravity;
             TetrominoDroppingFrame();
             if (mNextGameItem != GameItem.None)
             {
@@ -524,9 +542,9 @@ namespace App
                 }
                 mAccumulatedGravity -= FullGravity;
             }
-            if (!mDownPressed || Gravity > FullGravity)
+            if (!mDownPressed || mGravity > FullGravity)
             {
-                mAccumulatedGravity += Gravity;
+                mAccumulatedGravity += mGravity;
             }
             else
             {
@@ -575,7 +593,7 @@ namespace App
             if (mActivatingItem == GameItem.None)
             {
                 StartNewTetromino();
-                mIdleFrames = ClearEntryDelay;
+                mIdleFrames = mClearEntryDelay;
             }
             else
             {
@@ -877,7 +895,7 @@ namespace App
         private void StartLocking()
         {
             mTetrominoState = TetrominoState.Locking;
-            mLockingFrames = LockDelay;
+            mLockingFrames = mLockDelay;
         }
 
         private void LockTetromino()
@@ -1489,7 +1507,7 @@ namespace App
                 case DasState.Idle:
                 case DasState.DelayRight:
                 case DasState.Right:
-                    mDasDelayFrames = DasDelay;
+                    mDasDelayFrames = mDasDelay;
                     mDasState = DasState.DelayLeft;
                     break;
                 case DasState.DelayLeft:
@@ -1516,7 +1534,7 @@ namespace App
                 case DasState.Idle:
                 case DasState.DelayLeft:
                 case DasState.Left:
-                    mDasDelayFrames = DasDelay;
+                    mDasDelayFrames = mDasDelay;
                     mDasState = DasState.DelayRight;
                     break;
                 case DasState.DelayRight:
@@ -1539,7 +1557,7 @@ namespace App
         private void StartNewTetromino()
         {
             mTetrominoState = TetrominoState.Idle;
-            mIdleFrames = EntryDelay;
+            mIdleFrames = mEntryDelay;
             if (mPendingTargetedItems.Count > 0)
             {
                 switch (mPendingTargetedItems.Dequeue())
@@ -1614,7 +1632,7 @@ namespace App
                 return false;
             }
             mTetrominoState = TetrominoState.Clearing;
-            mClearingFrames = ClearDelay;
+            mClearingFrames = mClearDelay;
             foreach (int row in mClearingLines)
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)

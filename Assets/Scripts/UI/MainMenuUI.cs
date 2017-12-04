@@ -10,12 +10,16 @@ namespace UI
     public class MainMenuUI : MonoBehaviour
     {
         public Text NameText;
-        public Text SearchingTimeText;
+
         public GameObject ContentVersus;
         public GameObject ContentSingle;
+
         public GameObject SearchingUI;
         public Button VersusButton;
+        public Text SearchingTimeText;
+
         public Button SingleButton;
+
         public Button SearchButton;
         public Button PlaySingleButton;
 
@@ -23,6 +27,9 @@ namespace UI
         public Color TabSelectedColor;
 
         public GameObject ProfileUIPrefab;
+
+        [SerializeField]
+        private Button mPlayerInfoButton = null;
 
         private ClientController mController;
 
@@ -40,6 +47,17 @@ namespace UI
             mController.OnSearchStopped += OnSearchStopped;
             OnNameChange(null);
             SwitchToTab(mController.MainMenuTab);
+            
+            if (mController.IsOfflineMode)
+            {
+                SwitchToTab(Tab.Single);
+
+                VersusButton.interactable = false;
+                VersusButton.GetComponentInChildren<Text>().enabled = false;
+
+                mPlayerInfoButton.interactable = false;
+                mPlayerInfoButton.GetComponentInChildren<Text>().text = "Offline";
+            }
         }
 
         public void OnDisable()

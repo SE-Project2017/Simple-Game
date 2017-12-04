@@ -17,6 +17,13 @@ namespace UI
         public InputField Password;
         public Text StatusText;
 
+        private ClientController mController;
+
+        public void Awake()
+        {
+            mController = ClientController.Instance;
+        }
+
         public void OnLoginClick()
         {
             StartCoroutine(Login());
@@ -25,6 +32,13 @@ namespace UI
         public void OnRegisterClick()
         {
             StartCoroutine(Register());
+        }
+        
+        public void OnOfflineClick()
+        {
+            mController.IsOfflineMode = true;
+            MsfContext.Connection.Disconnect();
+            StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
         }
 
         private IEnumerator Login()
@@ -43,7 +57,7 @@ namespace UI
             {
                 if (info != null)
                 {
-                    ClientController.Instance.OnLoggedIn(username, password);
+                    mController.OnLoggedIn(username, password);
                     StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
                 }
                 else

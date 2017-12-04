@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 
+using App;
+
 using UnityEngine;
 
 using Utils;
@@ -20,6 +22,14 @@ namespace MsfWrapper
 
         private const float MinTimeToConnect = 0.5f;
         private const float MaxTimeToConnect = 10.0f;
+
+        private ClientController mController;
+
+        public override void Awake()
+        {
+            base.Awake();
+            mController = ClientController.Instance;
+        }
 
         public void Start()
         {
@@ -50,7 +60,7 @@ namespace MsfWrapper
             {
                 yield return null;
 
-                if (connection.IsConnected)
+                if (connection.IsConnected || (mController != null && mController.IsOfflineMode))
                 {
                     yield break;
                 }
