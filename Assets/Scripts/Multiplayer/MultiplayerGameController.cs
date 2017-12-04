@@ -60,11 +60,15 @@ namespace Multiplayer
             new List<NetworkPlayer.PlayerEvent[]>();
 
         private const int InteractionDelay = 40;
+
         private const int MaxItemCharge = 20;
         private const int ItemChargeRate = 2;
+
         private const int TimeBetweenGame = 120;
         private const int MaxGameCount = 3;
         private const int GameCountToWin = (MaxGameCount + 1) / 2;
+
+        private const int MaxLevel = 999;
 
         private int LocalItemCharge
         {
@@ -502,8 +506,11 @@ namespace Multiplayer
                 return;
             }
             LocalLevel += mContext.LevelAdvance[linesCleared];
+            if (LocalLevel > MaxLevel)
+            {
+                LocalLevel = MaxLevel;
+            }
             LocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
-            LevelText.text = LocalLevel.ToString();
         }
 
         private void RemoteLevelAdvance(int linesCleared)
@@ -513,6 +520,10 @@ namespace Multiplayer
                 return;
             }
             mRemoteLevel += mContext.LevelAdvance[linesCleared];
+            if (mRemoteLevel > MaxLevel)
+            {
+                mRemoteLevel = MaxLevel;
+            }
             RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
         }
 
