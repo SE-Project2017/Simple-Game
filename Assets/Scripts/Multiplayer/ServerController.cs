@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography;
+
+using App;
 
 using Barebones.MasterServer;
 
@@ -216,20 +217,26 @@ namespace Multiplayer
                 case GameResult.NotStarted:
                     break;
                 case GameResult.Draw:
-                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
-                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
                     break;
                 case GameResult.PlayerAWon:
-                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
-                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
-                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.Wins).Add(1);
-                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.Losses).Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerWins).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerLosses).Add(1);
                     break;
                 case GameResult.PlayerBWon:
-                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
-                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed).Add(1);
-                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.Losses).Add(1);
-                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.Wins).Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
+                        .Add(1);
+                    playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerLosses).Add(1);
+                    playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerWins).Add(1);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("result", result, null);
@@ -250,9 +257,9 @@ namespace Multiplayer
         {
             var profile = new ObservableServerProfile(username)
             {
-                new ObservableInt(ProfileKey.Wins),
-                new ObservableInt(ProfileKey.Losses),
-                new ObservableInt(ProfileKey.GamesPlayed),
+                new ObservableInt(ProfileKey.MultiplayerWins),
+                new ObservableInt(ProfileKey.MultiplayerLosses),
+                new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
             };
             MsfContext.Server.Profiles.FillProfileValues(profile, (successful, error) =>
             {

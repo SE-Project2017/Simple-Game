@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using App;
+
+using MsfWrapper;
+
+using Singleplayer.Packets;
 
 using UI;
 
@@ -95,6 +100,10 @@ namespace Singleplayer
 
         private void EndGame()
         {
+            if (!mController.IsOfflineMode)
+            {
+                StartCoroutine(UploadGameResult());
+            }
             mController.OnSingleplayerGameEnd();
             StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
         }
@@ -111,6 +120,17 @@ namespace Singleplayer
                 Level = mMaxLevel;
                 EndGame();
             }
+        }
+
+        private IEnumerator UploadGameResult()
+        {
+            while (!MsfContext.Connection.IsConnected)
+            {
+                yield return null;
+            }
+
+            MsfContext.Connection.Peer.SendMessage((short) OperationCode.UploadSingleplayerResult,
+                new SingleplayerResultPacket());
         }
 
         private static GameGrid.GameButtonEvent.ButtonType ButtonToType(

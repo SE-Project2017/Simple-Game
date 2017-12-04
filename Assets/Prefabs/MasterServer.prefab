@@ -34,9 +34,9 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 4056239047512674}
-  - component: {fileID: 114538189601288742}
+  - component: {fileID: 114306264858477450}
   m_Layer: 0
-  m_Name: ProfilesModule
+  m_Name: ProfileModule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -344,6 +344,22 @@ MonoBehaviour:
   MinChannelNameLength: 2
   MaxChannelNameLength: 25
   LogLevel: 4
+--- !u!114 &114306264858477450
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1001615665719004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34063c27e6d926d4a93353fdfb630cf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UnloadProfileAfter: 20
+  SaveProfileInterval: 1
+  ClientUpdateInterval: 0
+  EditProfilePermissionLevel: 0
+  IgnoreProfileMissmatchError: 0
 --- !u!114 &114469342922022950
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -359,22 +375,6 @@ MonoBehaviour:
   LogLevel: 4
   QueueUpdateFrequency: 0.1
   EnableClientSpawnRequests: 1
---- !u!114 &114538189601288742
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1001615665719004}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4a353abf2efbb243a56de2ebee2194d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UnloadProfileAfter: 20
-  SaveProfileInterval: 1
-  ClientUpdateInterval: 0
-  EditProfilePermissionLevel: 0
-  IgnoreProfileMissmatchError: 0
 --- !u!114 &114648402820751542
 MonoBehaviour:
   m_ObjectHideFlags: 1

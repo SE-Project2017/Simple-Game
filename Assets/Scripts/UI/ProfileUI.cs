@@ -7,11 +7,23 @@ namespace UI
 {
     public class ProfileUI : MonoBehaviour
     {
-        public Text NameText;
-        public Text GamesPlayedText;
-        public Text WinsText;
-        public Text LossesText;
-        public Text WinRateText;
+        [SerializeField]
+        private Text mNameText = null;
+
+        [SerializeField]
+        private Text mMultiplayerGamesPlayedText = null;
+
+        [SerializeField]
+        private Text mMultiplayerWinsText = null;
+
+        [SerializeField]
+        private Text mMultiplayerLossesText = null;
+
+        [SerializeField]
+        private Text mMultiplayerWinRateText = null;
+
+        [SerializeField]
+        private Text mSingleplayerGamesPlayedText = null;
 
         private ClientController mController;
 
@@ -23,20 +35,23 @@ namespace UI
         public void OnEnable()
         {
             mController.OnPlayerNameChange += OnNameChange;
-            mController.OnGameCountChange += OnGamesPlayedChange;
-            mController.OnWinCountChange += OnWinsChange;
-            mController.OnLossCountChange += OnLossesChange;
+            mController.OnMultiplayerGamesPlayedChange += OnMultiplayerGamesPlayedChange;
+            mController.OnMultiplayerWinsChange += OnMultiplayerWinsChange;
+            mController.OnMultiplayerLossesChange += OnMultiplayerLossesChange;
+            mController.OnSingleplayerGameCountChange += OnSingleplayerGamesPlayedChange;
             OnNameChange(null);
-            OnGamesPlayedChange(0);
-            OnWinsChange(0);
-            OnLossesChange(0);
+            OnMultiplayerGamesPlayedChange(0);
+            OnMultiplayerWinsChange(0);
+            OnMultiplayerLossesChange(0);
+            OnSingleplayerGamesPlayedChange(0);
         }
 
         public void OnDisable()
         {
-            mController.OnLossCountChange -= OnLossesChange;
-            mController.OnWinCountChange -= OnWinsChange;
-            mController.OnGameCountChange -= OnGamesPlayedChange;
+            mController.OnSingleplayerGameCountChange -= OnSingleplayerGamesPlayedChange;
+            mController.OnMultiplayerLossesChange -= OnMultiplayerLossesChange;
+            mController.OnMultiplayerWinsChange -= OnMultiplayerWinsChange;
+            mController.OnMultiplayerGamesPlayedChange -= OnMultiplayerGamesPlayedChange;
             mController.OnPlayerNameChange -= OnNameChange;
         }
 
@@ -47,34 +62,42 @@ namespace UI
 
         private void OnNameChange(string value)
         {
-            NameText.text = mController.PlayerName;
+            mNameText.text = mController.PlayerName;
         }
 
-        private void OnGamesPlayedChange(int value)
+        private void OnMultiplayerGamesPlayedChange(int value)
         {
-            GamesPlayedText.text = string.Format("Games Played: {0}", mController.GamesPlayed);
+            mMultiplayerGamesPlayedText.text =
+                string.Format("Games Played: {0}", mController.MultiplayerGamesPlayed);
             UpdateWinRate();
         }
 
-        private void OnWinsChange(int value)
+        private void OnMultiplayerWinsChange(int value)
         {
-            WinsText.text = string.Format("Wins: {0}", mController.Wins);
+            mMultiplayerWinsText.text = string.Format("Wins: {0}", mController.MultiplayerWins);
             UpdateWinRate();
         }
 
-        private void OnLossesChange(int value)
+        private void OnMultiplayerLossesChange(int value)
         {
-            LossesText.text = string.Format("Losses: {0}", mController.Losses);
+            mMultiplayerLossesText.text =
+                string.Format("Losses: {0}", mController.MultiplayerLosses);
+        }
+
+        private void OnSingleplayerGamesPlayedChange(int value)
+        {
+            mSingleplayerGamesPlayedText.text = string.Format("Games Played: {0}",
+                mController.SingleplayerGamesPlayed);
         }
 
         private void UpdateWinRate()
         {
             float value = 0;
-            if (mController.GamesPlayed != 0)
+            if (mController.MultiplayerGamesPlayed != 0)
             {
-                value = (float) mController.Wins / mController.GamesPlayed;
+                value = (float) mController.MultiplayerWins / mController.MultiplayerGamesPlayed;
             }
-            WinRateText.text = string.Format("Win Rate: {0:0%}", value);
+            mMultiplayerWinRateText.text = string.Format("Win Rate: {0:0%}", value);
         }
     }
 }

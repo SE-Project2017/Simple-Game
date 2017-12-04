@@ -6,7 +6,6 @@ using Barebones.Networking;
 
 using MsfWrapper;
 
-using Multiplayer;
 using Multiplayer.Packets;
 
 using UI;
@@ -36,41 +35,54 @@ namespace App
             }
         }
 
-        public int Wins
+        public int MultiplayerWins
         {
-            get { return mWins; }
+            get { return mMultiplayerWins; }
             private set
             {
-                mWins = value;
-                if (OnWinCountChange != null)
+                mMultiplayerWins = value;
+                if (OnMultiplayerWinsChange != null)
                 {
-                    OnWinCountChange.Invoke(value);
+                    OnMultiplayerWinsChange.Invoke(value);
                 }
             }
         }
 
-        public int Losses
+        public int MultiplayerLosses
         {
-            get { return mLosses; }
+            get { return mMultiplayerLosses; }
             private set
             {
-                mLosses = value;
-                if (OnLossCountChange != null)
+                mMultiplayerLosses = value;
+                if (OnMultiplayerLossesChange != null)
                 {
-                    OnLossCountChange.Invoke(value);
+                    OnMultiplayerLossesChange.Invoke(value);
                 }
             }
         }
 
-        public int GamesPlayed
+        public int MultiplayerGamesPlayed
         {
-            get { return mGamesPlayed; }
+            get { return mMultiplayerGamesPlayed; }
             private set
             {
-                mGamesPlayed = value;
-                if (OnGameCountChange != null)
+                mMultiplayerGamesPlayed = value;
+                if (OnMultiplayerGamesPlayedChange != null)
                 {
-                    OnGameCountChange.Invoke(value);
+                    OnMultiplayerGamesPlayedChange.Invoke(value);
+                }
+            }
+        }
+
+        public int SingleplayerGamesPlayed
+        {
+            get { return mSingleplayerGamesPlayed; }
+            private set
+            {
+                mSingleplayerGamesPlayed = value;
+                if (OnSingleplayerGameCountChange != null)
+                {
+                    OnSingleplayerGameCountChange.Invoke(value);
                 }
             }
         }
@@ -80,7 +92,8 @@ namespace App
             get { return mIsOfflineMode; }
             set
             {
-                mIsOfflineMode = value; if (!value)
+                mIsOfflineMode = value;
+                if (!value)
                 {
                     MainMenuTab = MainMenuUI.Tab.Single;
                 }
@@ -91,9 +104,13 @@ namespace App
         public GameFoundPacket GameInfo;
 
         public event Action<string> OnPlayerNameChange;
-        public event Action<int> OnWinCountChange;
-        public event Action<int> OnLossCountChange;
-        public event Action<int> OnGameCountChange;
+
+        public event Action<int> OnMultiplayerWinsChange;
+        public event Action<int> OnMultiplayerLossesChange;
+        public event Action<int> OnMultiplayerGamesPlayedChange;
+
+        public event Action<int> OnSingleplayerGameCountChange;
+
         public event Action OnSearchStarted;
         public event Action OnSearchStopped;
 
@@ -102,9 +119,12 @@ namespace App
         private State mState = State.Idle;
 
         private string mPlayerName;
-        private int mWins;
-        private int mLosses;
-        private int mGamesPlayed;
+
+        private int mMultiplayerWins;
+        private int mMultiplayerLosses;
+        private int mMultiplayerGamesPlayed;
+
+        private int mSingleplayerGamesPlayed;
 
         private bool mIsOfflineMode;
 
@@ -117,9 +137,10 @@ namespace App
                 var profile = new ObservableProfile
                 {
                     new ObservableString(ProfileKey.Name),
-                    new ObservableInt(ProfileKey.Wins),
-                    new ObservableInt(ProfileKey.Losses),
-                    new ObservableInt(ProfileKey.GamesPlayed),
+                    new ObservableInt(ProfileKey.MultiplayerWins),
+                    new ObservableInt(ProfileKey.MultiplayerLosses),
+                    new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
+                    new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
                 };
                 RetriveProfile(profile);
             };
@@ -228,17 +249,29 @@ namespace App
                 PlayerName = nameProp.Value;
                 nameProp.OnDirty += property => PlayerName = nameProp.Value;
 
-                var winsProp = profile.GetProperty<ObservableInt>(ProfileKey.Wins);
-                Wins = winsProp.Value;
-                winsProp.OnDirty += property => Wins = winsProp.Value;
+                var multiplayerWinsProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.MultiplayerWins);
+                MultiplayerWins = multiplayerWinsProp.Value;
+                multiplayerWinsProp.OnDirty +=
+                    property => MultiplayerWins = multiplayerWinsProp.Value;
 
-                var lossesProp = profile.GetProperty<ObservableInt>(ProfileKey.Losses);
-                Losses = lossesProp.Value;
-                lossesProp.OnDirty += property => Losses = lossesProp.Value;
+                var multiplayerLossesProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.MultiplayerLosses);
+                MultiplayerLosses = multiplayerLossesProp.Value;
+                multiplayerLossesProp.OnDirty += property =>
+                    MultiplayerLosses = multiplayerLossesProp.Value;
 
-                var gamesPlayedProp = profile.GetProperty<ObservableInt>(ProfileKey.GamesPlayed);
-                GamesPlayed = gamesPlayedProp.Value;
-                gamesPlayedProp.OnDirty += property => GamesPlayed = gamesPlayedProp.Value;
+                var multiplayerGamesPlayedProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed);
+                MultiplayerGamesPlayed = multiplayerGamesPlayedProp.Value;
+                multiplayerGamesPlayedProp.OnDirty += property =>
+                    MultiplayerGamesPlayed = multiplayerGamesPlayedProp.Value;
+
+                var singleplayerGamesPlayedProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.SingleplayerGamesPlayed);
+                SingleplayerGamesPlayed = singleplayerGamesPlayedProp.Value;
+                singleplayerGamesPlayedProp.OnDirty += property =>
+                    SingleplayerGamesPlayed = singleplayerGamesPlayedProp.Value;
             });
         }
 

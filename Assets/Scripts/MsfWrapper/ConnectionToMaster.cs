@@ -99,7 +99,7 @@ namespace MsfWrapper
         public void OnApplicationQuit()
         {
             var connection = MsfContext.Connection;
-            if (connection != null)
+            if (connection != null && connection.IsConnected)
                 connection.Disconnect();
         }
     }

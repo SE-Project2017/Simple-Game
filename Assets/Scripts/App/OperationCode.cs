@@ -1,4 +1,4 @@
-﻿namespace Multiplayer
+﻿namespace App
 {
     public enum OperationCode : short
     {
@@ -6,7 +6,8 @@
         GameFound,
         GameServerSpawned,
         GameEnded,
-
         QuerySearchStatus,
+
+        UploadSingleplayerResult,
     }
 }

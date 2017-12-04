@@ -11,9 +11,10 @@ namespace MsfWrapper
             profileModule.ProfileFactory = (username, peer) => new ObservableServerProfile(username)
             {
                 new ObservableString(ProfileKey.Name, username),
-                new ObservableInt(ProfileKey.Wins),
-                new ObservableInt(ProfileKey.Losses),
-                new ObservableInt(ProfileKey.GamesPlayed),
+                new ObservableInt(ProfileKey.MultiplayerWins),
+                new ObservableInt(ProfileKey.MultiplayerLosses),
+                new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
+                new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
             };
         }
     }
