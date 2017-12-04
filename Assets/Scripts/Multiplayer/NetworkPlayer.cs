@@ -145,6 +145,7 @@ namespace Multiplayer
         public void OnLocalGameEnd(ServerController.GameResult result)
         {
             Assert.IsTrue(mIsLocalPlayer);
+            Assert.IsTrue(mState == State.Playing);
             CmdPlayerEnded(result);
             mState = State.Ended;
         }
@@ -237,7 +238,6 @@ namespace Multiplayer
         private void TargetOnGameDraw(NetworkConnection conn)
         {
             Assert.IsTrue(mIsLocalPlayer);
-            Assert.IsTrue(mState == State.Playing);
             mState = State.Ended;
             mGameController.OnGameDraw();
         }
@@ -246,7 +246,6 @@ namespace Multiplayer
         private void TargetOnDataOutOfSync(NetworkConnection conn)
         {
             Assert.IsTrue(mIsLocalPlayer);
-            Assert.IsTrue(mState == State.Playing);
             mState = State.Ended;
             mGameController.OnDataOutOfSync();
         }
@@ -255,7 +254,6 @@ namespace Multiplayer
         private void TargetOnPlayerWin(NetworkConnection conn)
         {
             Assert.IsTrue(mIsLocalPlayer);
-            Assert.IsTrue(mState == State.Playing);
             mState = State.Ended;
             mGameController.OnLocalPlayerWin();
         }
@@ -264,7 +262,6 @@ namespace Multiplayer
         private void TargetOnPlayerLose(NetworkConnection conn)
         {
             Assert.IsTrue(mIsLocalPlayer);
-            Assert.IsTrue(mState == State.Playing);
             mState = State.Ended;
             mGameController.OnLocalPlayerLose();
         }

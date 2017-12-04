@@ -15,30 +15,17 @@ using Utils;
 
 namespace Multiplayer
 {
-    public class MultiplayerGameController : MonoBehaviour
+    public class MultiplayerGameController : MonoBehaviour, IGameController
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
+        public GameGrid LocalGameGrid { get { return mLocalGameGrid; } }
 
-        public GameGrid LocalGameGrid;
-        public GameGrid RemoteGameGrid;
         public MultiplayerGameEndUI GameEndUI;
-        public GameObject[] DisplayTetrominos;
-        public Vector3 NextPos = new Vector3(-0.8f, 4.15f);
-        public Vector3 Next2Pos = new Vector3(0.9f, 4.15f);
-        public Vector3 Next3Pos = new Vector3(2.0f, 4.15f);
-        public Vector3 HoldPos = new Vector3(-2.3f, 4.3f);
-        public Color HoldDisabledColor;
-        public GameObject ClearParticlePrefab;
-        public GameObject ClearParticleParent;
-        public GameObject LocalGameArea;
         public Animator ConnectingAnimator;
         public Animator LocalAreaAnimator;
         public Animator RemoteAreaAnimator;
         public Image ItemProgress;
         public Text LevelText;
-        public float NextScale = 0.5f;
-        public float Next2Scale = 0.25f;
-        public float HoldScale = 0.25f;
 
         public GameObject WinText;
         public GameObject LoseText;
@@ -58,17 +45,6 @@ namespace Multiplayer
 
         public readonly List<NetworkPlayer.PlayerEvent[]> RemotePlayerEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
-
-        private const int InteractionDelay = 40;
-
-        private const int MaxItemCharge = 20;
-        private const int ItemChargeRate = 2;
-
-        private const int TimeBetweenGame = 120;
-        private const int MaxGameCount = 3;
-        private const int GameCountToWin = (MaxGameCount + 1) / 2;
-
-        private const int MaxLevel = 999;
 
         private int LocalItemCharge
         {
@@ -90,17 +66,16 @@ namespace Multiplayer
             }
         }
 
-        private Tetromino mHoldTetromino;
+        [SerializeField]
+        private GameGrid mLocalGameGrid;
+
+        [SerializeField]
+        private GameGrid mRemoteGameGrid;
+
+        [SerializeField]
+        private GameUI mLocalGameUI;
 
         private GlobalContext mContext;
-
-        private GameObject mNext;
-        private GameObject mNext2;
-        private GameObject mNext3;
-        private GameObject mHold;
-
-        private bool mHoldEnabled;
-        private bool mDisplayHold;
 
         private int mLocalFrameCount;
         private int mRemoteFrameCount;
@@ -119,8 +94,6 @@ namespace Multiplayer
         private int mRemoteEndFrame;
         private int mGameEndFrame = NetworkPlayer.MaxGameDuration;
 
-        private readonly ParticleSystem[,] mClearParticles = new ParticleSystem[20, 10];
-
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
 
@@ -135,6 +108,17 @@ namespace Multiplayer
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
+
+        private const int InteractionDelay = 40;
+
+        private const int MaxItemCharge = 20;
+        private const int ItemChargeRate = 2;
+
+        private const int TimeBetweenGame = 120;
+        private const int MaxGameCount = 3;
+        private const int GameCountToWin = (MaxGameCount + 1) / 2;
+
+        private const int MaxLevel = 999;
 
         public void Awake()
         {
@@ -155,22 +139,10 @@ namespace Multiplayer
 
             StartCoroutine(CheckConnection());
 
-            LocalGameGrid.OnGameEnd += OnLocalGameEnd;
-            RemoteGameGrid.OnGameEnd += OnRemoteGameEnd;
+            mLocalGameGrid.OnGameEnd += OnLocalGameEnd;
+            mRemoteGameGrid.OnGameEnd += OnRemoteGameEnd;
 
-            LocalGameGrid.OnNextTetrominosChanged += RebuildNextDisplay;
-            LocalGameGrid.OnHoldTetrominoChanged += HoldTetrominoChanged;
-            LocalGameGrid.OnHoldEnableStateChanged += HoldEnableStateChanged;
-            LocalGameGrid.OnPlayClearEffect += (row, col, block) =>
-            {
-                var main = mClearParticles[row, col].main;
-                var color = block.Type.Color();
-                color.a = 0.3f;
-                main.startColor = color;
-                mClearParticles[row, col].Play();
-            };
-
-            LocalGameGrid.OnLineCleared += blocks =>
+            mLocalGameGrid.OnLineCleared += blocks =>
             {
                 if (blocks.Data.GetLength(0) >= 2)
                 {
@@ -180,7 +152,7 @@ namespace Multiplayer
                 }
                 LocalLevelAdvance(blocks.Data.GetLength(0));
             };
-            RemoteGameGrid.OnLineCleared += blocks =>
+            mRemoteGameGrid.OnLineCleared += blocks =>
             {
                 if (blocks.Data.GetLength(0) >= 2)
                 {
@@ -191,55 +163,41 @@ namespace Multiplayer
                 RemoteLevelAdvance(blocks.Data.GetLength(0));
             };
 
-            LocalGameGrid.OnTetrominoLocked += () =>
+            mLocalGameGrid.OnTetrominoLocked += () =>
             {
                 LocalItemCharge += ItemChargeRate;
                 if (LocalItemCharge >= MaxItemCharge)
                 {
-                    LocalGameGrid.GenerateNextItem();
+                    mLocalGameGrid.GenerateNextItem();
                 }
                 LocalLevelAdvance(0);
             };
-            RemoteGameGrid.OnTetrominoLocked += () =>
+            mRemoteGameGrid.OnTetrominoLocked += () =>
             {
                 mRemoteItemCharge += ItemChargeRate;
                 if (mRemoteItemCharge >= MaxItemCharge)
                 {
-                    RemoteGameGrid.GenerateNextItem();
+                    mRemoteGameGrid.GenerateNextItem();
                 }
                 RemoteLevelAdvance(0);
             };
 
-            LocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
-            RemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
+            mLocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
+            mRemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
 
-            LocalGameGrid.OnTargetItemActivated += item =>
+            mLocalGameGrid.OnTargetItemActivated += item =>
                 mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, item);
-            RemoteGameGrid.OnTargetItemActivated += item =>
+            mRemoteGameGrid.OnTargetItemActivated += item =>
                 mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, item);
 
-            LocalGameGrid.OnPlayFlipAnimation += () => LocalAreaAnimator.SetTrigger("PlayFlip");
-            LocalGameGrid.OnPlayUpsideDownAnimation += () =>
+            mLocalGameGrid.OnPlayFlipAnimation += () => LocalAreaAnimator.SetTrigger("PlayFlip");
+            mLocalGameGrid.OnPlayUpsideDownAnimation += () =>
                 LocalAreaAnimator.SetTrigger("PlayLocalUpsideDown");
-            RemoteGameGrid.OnPlayFlipAnimation += () => RemoteAreaAnimator.SetTrigger("PlayFlip");
-            RemoteGameGrid.OnPlayUpsideDownAnimation += () =>
+            mRemoteGameGrid.OnPlayFlipAnimation += () => RemoteAreaAnimator.SetTrigger("PlayFlip");
+            mRemoteGameGrid.OnPlayUpsideDownAnimation += () =>
                 RemoteAreaAnimator.SetTrigger("PlayRemoteUpsideDown");
 
-            float width = LocalGameArea.transform.localScale.x;
-            float height = LocalGameArea.transform.localScale.y;
-            for (int row = 0; row < 20; ++row)
-            {
-                for (int col = 0; col < 10; ++col)
-                {
-                    float x = (col / 10.0f + 0.05f) * width - width / 2;
-                    float y = -(row / 20.0f + 0.025f) * height + height / 2;
-                    var obj = Instantiate(ClearParticlePrefab, ClearParticleParent.transform);
-                    obj.transform.localPosition = new Vector3(x, y);
-                    mClearParticles[row, col] = obj.GetComponent<ParticleSystem>();
-                }
-            }
-
-            Initialize();
+            ResetState();
 
             foreach (var icon in LocalWinIcons.Concat(RemoteWinIcons))
             {
@@ -264,16 +222,16 @@ namespace Multiplayer
                 }
                 if (mLocalPendingBlocks.ContainsKey(frameCount))
                 {
-                    LocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
+                    mLocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
                     mLocalPendingBlocks.Remove(frameCount);
                 }
-                ActivateItem(mLocalPendingItems, frameCount, LocalGameGrid);
-                UpdateFrame(playerEvents, LocalGameGrid);
+                ActivateItem(mLocalPendingItems, frameCount, mLocalGameGrid);
+                UpdateFrame(playerEvents, mLocalGameGrid);
             }
             else if (frameCount == mGameEndFrame + TimeBetweenGame)
             {
-                Initialize();
-                LocalGameGrid.StartGame();
+                ResetState();
+                mLocalGameGrid.StartGame();
                 mIsLocalPlaying = true;
             }
         }
@@ -291,15 +249,15 @@ namespace Multiplayer
                 }
                 if (mRemotePendingBlocks.ContainsKey(frameCount))
                 {
-                    RemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
+                    mRemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
                     mRemotePendingBlocks.Remove(frameCount);
                 }
-                ActivateItem(mRemotePendingItems, frameCount, RemoteGameGrid);
-                UpdateFrame(playerEvents, RemoteGameGrid);
+                ActivateItem(mRemotePendingItems, frameCount, mRemoteGameGrid);
+                UpdateFrame(playerEvents, mRemoteGameGrid);
             }
             else if (frameCount == mGameEndFrame + TimeBetweenGame)
             {
-                RemoteGameGrid.StartGame();
+                mRemoteGameGrid.StartGame();
                 mIsRemotePlaying = true;
             }
         }
@@ -309,26 +267,26 @@ namespace Multiplayer
             Assert.IsTrue(mState == State.Waiting);
             mState = State.Playing;
 
-            LocalGameGrid.SeedGenerator(info.GeneratorSeed);
-            RemoteGameGrid.SeedGenerator(info.GeneratorSeed);
+            mLocalGameGrid.SeedGenerator(info.GeneratorSeed);
+            mRemoteGameGrid.SeedGenerator(info.GeneratorSeed);
 
             switch (LocalPlayerType)
             {
                 case ServerController.PlayerType.PlayerA:
-                    LocalGameGrid.SeedRandom(info.PlayerASeed);
-                    RemoteGameGrid.SeedRandom(info.PlayerBSeed);
+                    mLocalGameGrid.SeedRandom(info.PlayerASeed);
+                    mRemoteGameGrid.SeedRandom(info.PlayerBSeed);
                     break;
                 case ServerController.PlayerType.PlayerB:
-                    LocalGameGrid.SeedRandom(info.PlayerBSeed);
-                    RemoteGameGrid.SeedRandom(info.PlayerASeed);
+                    mLocalGameGrid.SeedRandom(info.PlayerBSeed);
+                    mRemoteGameGrid.SeedRandom(info.PlayerASeed);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
-            LocalGameGrid.StartGame();
+            mLocalGameGrid.StartGame();
             mIsLocalPlaying = true;
-            RemoteGameGrid.StartGame();
+            mRemoteGameGrid.StartGame();
             mIsRemotePlaying = true;
 
             ConnectingAnimator.SetBool("Connected", true);
@@ -388,26 +346,22 @@ namespace Multiplayer
                 .Show();
         }
 
-        private void Initialize()
+        private void ResetState()
         {
             LocalItemCharge = 0;
             mRemoteItemCharge = 0;
 
-            mHoldTetromino = Tetromino.Undefined;
-
-            mHoldEnabled = false;
-            mDisplayHold = false;
-            RebuildHoldDisplay();
-
             LocalLevel = 0;
             mRemoteLevel = 0;
 
-            LocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
-            RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
+            mLocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
+            mRemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
 
             WinText.SetActive(false);
             LoseText.SetActive(false);
             DrawText.SetActive(false);
+
+            mLocalGameUI.ResetState();
         }
 
         private void OnLocalGameEnd()
@@ -441,58 +395,6 @@ namespace Multiplayer
             DrawText.SetActive(false);
         }
 
-        private void HoldTetrominoChanged(Tetromino tetromino)
-        {
-            mHoldTetromino = tetromino;
-            mDisplayHold = true;
-            RebuildHoldDisplay();
-        }
-
-        private void HoldEnableStateChanged(bool e)
-        {
-            mHoldEnabled = e;
-            RebuildHoldDisplay();
-        }
-
-        private void RebuildNextDisplay()
-        {
-            Destroy(mNext);
-            Destroy(mNext2);
-            Destroy(mNext3);
-            mNext = Instantiate(DisplayTetrominos[(int) LocalGameGrid.GetNextTetromino(0)]);
-            SetupDisplayColor(mNext);
-            mNext.transform.localScale = new Vector3(NextScale, NextScale);
-            mNext.transform.position = NextPos;
-            mNext2 = Instantiate(DisplayTetrominos[(int) LocalGameGrid.GetNextTetromino(1)]);
-            SetupDisplayColor(mNext2);
-            mNext2.transform.localScale = new Vector3(Next2Scale, Next2Scale);
-            mNext2.transform.position = Next2Pos;
-            mNext3 = Instantiate(DisplayTetrominos[(int) LocalGameGrid.GetNextTetromino(2)]);
-            SetupDisplayColor(mNext3);
-            mNext3.transform.localScale = new Vector3(Next2Scale, Next2Scale);
-            mNext3.transform.position = Next3Pos;
-        }
-
-        private void RebuildHoldDisplay()
-        {
-            Destroy(mHold);
-            if (!mDisplayHold)
-            {
-                return;
-            }
-            mHold = Instantiate(DisplayTetrominos[(int) mHoldTetromino]);
-            if (mHoldEnabled)
-            {
-                SetupDisplayColor(mHold);
-            }
-            else
-            {
-                SetupDisplayColor(mHold, HoldDisabledColor);
-            }
-            mHold.transform.localScale = new Vector3(Next2Scale, Next2Scale);
-            mHold.transform.position = HoldPos;
-        }
-
         private IEnumerator CheckConnection()
         {
             yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
@@ -514,7 +416,7 @@ namespace Multiplayer
             {
                 LocalLevel = MaxLevel;
             }
-            LocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
+            mLocalGameGrid.Gravity = mContext.LevelGravity[LocalLevel];
         }
 
         private void RemoteLevelAdvance(int linesCleared)
@@ -528,7 +430,7 @@ namespace Multiplayer
             {
                 mRemoteLevel = MaxLevel;
             }
-            RemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
+            mRemoteGameGrid.Gravity = mContext.LevelGravity[mRemoteLevel];
         }
 
         private void CheckGameResult()
@@ -627,22 +529,6 @@ namespace Multiplayer
                         throw new ArgumentOutOfRangeException();
                 }
                 pendingItems.Remove(frameCount);
-            }
-        }
-
-        private static void SetupDisplayColor(GameObject obj)
-        {
-            foreach (var block in obj.GetComponentsInChildren<Block>())
-            {
-                block.Color = block.Type.Color();
-            }
-        }
-
-        private static void SetupDisplayColor(GameObject obj, Color color)
-        {
-            foreach (var block in obj.GetComponentsInChildren<Block>())
-            {
-                block.Color = color;
             }
         }
 

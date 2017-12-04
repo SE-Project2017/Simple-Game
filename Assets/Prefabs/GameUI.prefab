@@ -9,50 +9,49 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1813056661317000}
+  m_RootGameObject: {fileID: 1197766042919032}
   m_IsPrefabParent: 1
---- !u!1 &1813056661317000
+--- !u!1 &1197766042919032
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4719726020827348}
-  - component: {fileID: 114263088831875764}
+  - component: {fileID: 4603138504811564}
+  - component: {fileID: 114623126691925658}
   m_Layer: 0
-  m_Name: MultiplayerGameController
+  m_Name: GameUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4719726020827348
+--- !u!4 &4603138504811564
 Transform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1813056661317000}
+  m_GameObject: {fileID: 1197766042919032}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.75, y: 0.24, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114263088831875764
+--- !u!114 &114623126691925658
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1813056661317000}
+  m_GameObject: {fileID: 1197766042919032}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 514589315431fe2488e4be70391b04c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 97ee823d07393734c8ee95ceeb91ef1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GameEndUI: {fileID: 0}
-  DisplayTetrominos:
+  mDisplayTetrominos:
   - {fileID: 1018304926977326, guid: 3e29ed59d25b8f34b918ff97ca2489ad, type: 2}
   - {fileID: 1064201719815406, guid: 378f9de3a88d69b408025b228efb68da, type: 2}
   - {fileID: 1746823878848296, guid: d92f137f58e12c041b96b9276a8942c7, type: 2}
@@ -60,30 +59,16 @@ MonoBehaviour:
   - {fileID: 1115860323663406, guid: 75b8dd8ad8752dc408e61c492fdd1e2f, type: 2}
   - {fileID: 1534722377133142, guid: 4228fa881b48b0d4a87f9d71c83216d9, type: 2}
   - {fileID: 1935195796813852, guid: cb1d233b8375d7f45bc6dd0da8aec880, type: 2}
-  NextPos: {x: -0.8, y: 4.15, z: 0}
-  Next2Pos: {x: 0.9, y: 4.15, z: 0}
-  Next3Pos: {x: 2, y: 4.15, z: 0}
-  HoldPos: {x: -2.3, y: 4.3, z: 0}
-  HoldDisabledColor: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
-  ClearParticlePrefab: {fileID: 1270237796246324, guid: 1d2029118a52a4949a703a155f51cdd3,
+  mNextPos: {x: -0.8, y: 4.15, z: 0}
+  mNext2Pos: {x: 0.9, y: 4.15, z: 0}
+  mNext3Pos: {x: 2, y: 4.15, z: 0}
+  mHoldPos: {x: -2.3, y: 4.3, z: 0}
+  mHoldDisabledColor: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
+  mClearParticlePrefab: {fileID: 1270237796246324, guid: 1d2029118a52a4949a703a155f51cdd3,
     type: 2}
-  ClearParticleParent: {fileID: 0}
-  LocalGameArea: {fileID: 0}
-  ConnectingAnimator: {fileID: 0}
-  LocalAreaAnimator: {fileID: 0}
-  RemoteAreaAnimator: {fileID: 0}
-  ItemProgress: {fileID: 0}
-  LevelText: {fileID: 0}
-  NextScale: 0.5
-  Next2Scale: 0.25
-  HoldScale: 0.25
-  WinText: {fileID: 0}
-  LoseText: {fileID: 0}
-  DrawText: {fileID: 0}
-  LocalWinIcons: []
-  RemoteWinIcons: []
-  WinIconInactiveColor: {r: 0, g: 0, b: 0, a: 0}
-  WinIconActiveColor: {r: 1, g: 1, b: 0, a: 1}
-  LocalPlayer: {fileID: 0}
-  mLocalGameGrid: {fileID: 0}
-  mRemoteGameGrid: {fileID: 0}
+  mClearParticleParent: {fileID: 0}
+  mGameArea: {fileID: 0}
+  mNextScale: 0.5
+  mNext2Scale: 0.25
+  mHoldScale: 0.25
+  mGameGrid: {fileID: 0}
