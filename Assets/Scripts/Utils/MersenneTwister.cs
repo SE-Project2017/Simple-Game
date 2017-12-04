@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 
 using UnityEngine.Assertions;
 
@@ -71,6 +72,19 @@ namespace Utils
             Assert.IsTrue(seed.Length >= mt.Length);
             Array.Copy(seed, mt, mt.Length);
             index = N;
+        }
+
+        public static ulong[] NewSeed()
+        {
+            var provider = new RNGCryptoServiceProvider();
+            var bytes = new byte[2496];
+            provider.GetBytes(bytes);
+            var seed = new ulong[312];
+            for (int i = 0; i < seed.Length; ++i)
+            {
+                seed[i] = BitConverter.ToUInt64(bytes, i * 8);
+            }
+            return seed;
         }
 
         private void Twist()

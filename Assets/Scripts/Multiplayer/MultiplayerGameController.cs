@@ -15,10 +15,9 @@ using Utils;
 
 namespace Multiplayer
 {
-    public class MultiplayerGameController : MonoBehaviour, IGameController
+    public class MultiplayerGameController : MonoBehaviour
     {
         public ServerController.PlayerType LocalPlayerType { get; private set; }
-        public GameGrid LocalGameGrid { get { return mLocalGameGrid; } }
 
         public MultiplayerGameEndUI GameEndUI;
         public Animator ConnectingAnimator;

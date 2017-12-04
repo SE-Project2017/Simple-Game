@@ -42,9 +42,9 @@ namespace Multiplayer
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
-            GeneratorSeed = NewGeneratorSeed(),
-            PlayerASeed = NewGeneratorSeed(),
-            PlayerBSeed = NewGeneratorSeed(),
+            GeneratorSeed = MersenneTwister.NewSeed(),
+            PlayerASeed = MersenneTwister.NewSeed(),
+            PlayerBSeed = MersenneTwister.NewSeed(),
         };
 
         public IEnumerator Start()
@@ -243,19 +243,6 @@ namespace Multiplayer
             yield return new WaitForSecondsRealtime(MaxConnectTime);
             NetworkManager.Instance.StopServer();
             Application.Quit();
-        }
-
-        private static ulong[] NewGeneratorSeed()
-        {
-            var provider = new RNGCryptoServiceProvider();
-            var bytes = new byte[2496];
-            provider.GetBytes(bytes);
-            var seed = new ulong[312];
-            for (int i = 0; i < seed.Length; ++i)
-            {
-                seed[i] = BitConverter.ToUInt64(bytes, i * 8);
-            }
-            return seed;
         }
 
         private static void OpenServerProfile(string username,

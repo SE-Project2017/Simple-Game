@@ -17,6 +17,7 @@ namespace UI
         public Button VersusButton;
         public Button SingleButton;
         public Button SearchButton;
+        public Button PlaySingleButton;
 
         public Color TabDefaultColor;
         public Color TabSelectedColor;
@@ -56,7 +57,12 @@ namespace UI
 
         public void OnSearchGameClick()
         {
-            ClientController.Instance.OnStartSearchGame();
+            mController.OnStartSearchGame();
+        }
+
+        public void OnPlaySingleClick()
+        {
+            mController.OnStartSingleplayerGame();
         }
 
         public void OnPlayerInfoClick()
@@ -84,6 +90,7 @@ namespace UI
         private void OnSearchStarted()
         {
             mSearchStartTime = DateTime.Now;
+            PlaySingleButton.interactable = false;
             SearchButton.interactable = false;
             SearchingUI.SetActive(true);
         }
@@ -92,6 +99,7 @@ namespace UI
         {
             SearchingUI.SetActive(false);
             SearchButton.interactable = true;
+            PlaySingleButton.interactable = true;
         }
 
         private void SwitchToTab(Tab tab)

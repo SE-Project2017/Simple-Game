@@ -15,7 +15,7 @@ namespace Utils
 
         public virtual void Awake()
         {
-            if (sInstance == null)
+            if (sInstance == null || sInstance == this)
             {
                 DontDestroyOnLoad(gameObject);
                 sInstance = (T) this;

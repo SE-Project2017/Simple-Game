@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 20280414981322456}
   - component: {fileID: 124608301828910280}
   - component: {fileID: 92441428392778054}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -38,7 +38,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4607734799047030}
   - component: {fileID: 114151700797205622}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Grid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -55,7 +55,7 @@ GameObject:
   - component: {fileID: 4746121466926572}
   - component: {fileID: 212396334849821766}
   - component: {fileID: 95491868834627194}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Explosion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   - component: {fileID: 4612514896047664}
   - component: {fileID: 212769759471224286}
   - component: {fileID: 95024528322682170}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: FlipMask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -158,7 +158,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 256
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: afc0cc22072840e4286276115d44b2d1, type: 2}
   m_TargetDisplay: 0

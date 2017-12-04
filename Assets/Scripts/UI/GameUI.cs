@@ -51,7 +51,7 @@ namespace UI
         private GameObject mNext2;
         private GameObject mNext3;
 
-        private Tetromino mHoldTetromino;
+        private Tetromino mHoldTetromino = Tetromino.Undefined;
         private GameObject mHold;
         private bool mHoldEnabled;
         private bool mDisplayHold;

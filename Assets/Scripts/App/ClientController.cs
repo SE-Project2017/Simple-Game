@@ -124,6 +124,19 @@ namespace App
             }
         }
 
+        public void OnStartSingleplayerGame()
+        {
+            Assert.IsTrue(mState == State.Idle);
+            mState = State.PlayingSingleplayer;
+            StartCoroutine(Utilities.FadeOutLoadScene("SingleplayerGame"));
+        }
+
+        public void OnSingleplayerGameEnd()
+        {
+            Assert.IsTrue(mState == State.PlayingSingleplayer);
+            mState = State.Idle;
+        }
+
         public void OnGameEnd()
         {
             Assert.IsTrue(mState == State.PlayingMultiplayer);
@@ -248,6 +261,7 @@ namespace App
             Idle,
             SearchingGame,
             PlayingMultiplayer,
+            PlayingSingleplayer,
         }
     }
 }
