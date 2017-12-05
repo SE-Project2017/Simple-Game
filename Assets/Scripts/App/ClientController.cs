@@ -159,6 +159,18 @@ namespace App
             }
         }
 
+        public void OnCancelSearch()
+        {
+            Assert.IsTrue(mState == State.SearchingGame);
+            mState = State.Idle;
+            MsfContext.Connection.Peer.SendMessage(
+                MessageHelper.Create((short) OperationCode.CancelSearch));
+            if (OnSearchStopped != null)
+            {
+                OnSearchStopped.Invoke();
+            }
+        }
+
         public void OnStartSingleplayerGame()
         {
             Assert.IsTrue(mState == State.Idle);

@@ -36,9 +36,10 @@ namespace MsfWrapper.Modules.Matchmaking
             base.Initialize(server);
             mSpawnersModule = server.GetModule<SpawnersModule>();
             server.SetHandler((short) OperationCode.StartSearchGame, OnStartSearchGame);
+            server.SetHandler((short) OperationCode.QuerySearchStatus, OnQuerySearchStatus);
+            server.SetHandler((short) OperationCode.CancelSearch, OnCancelSearch);
             server.SetHandler((short) OperationCode.GameServerSpawned, OnGameServerSpawned);
             server.SetHandler((short) OperationCode.GameEnded, OnGameEnded);
-            server.SetHandler((short) OperationCode.QuerySearchStatus, OnQuerySearchStatus);
             StartCoroutine(MatchmakingWorker());
         }
 
@@ -66,6 +67,22 @@ namespace MsfWrapper.Modules.Matchmaking
                 return;
             }
             AddPlayer(player);
+        }
+
+        private void OnCancelSearch(IIncommingMessage message)
+        {
+            int peerId = message.Peer.Id;
+            var peer = Server.GetPeer(peerId);
+            if (peer == null)
+            {
+                return;
+            }
+            var user = peer.GetExtension<IUserExtension>();
+            if (user == null)
+            {
+                return;
+            }
+            RemovePlayer(new MatchmakingPlayer {Name = user.Username, Peer = peer});
         }
 
         private void OnGameServerSpawned(IIncommingMessage message)

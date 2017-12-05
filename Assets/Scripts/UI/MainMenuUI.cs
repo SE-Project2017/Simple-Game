@@ -20,7 +20,6 @@ namespace UI
 
         public Button SingleButton;
 
-        public Button SearchButton;
         public Button PlaySingleButton;
 
         public Color TabDefaultColor;
@@ -30,6 +29,12 @@ namespace UI
 
         [SerializeField]
         private Button mPlayerInfoButton = null;
+
+        [SerializeField]
+        private GameObject mSearchButton = null;
+
+        [SerializeField]
+        private GameObject mCancelSearchButton = null;
 
         private ClientController mController;
 
@@ -78,6 +83,11 @@ namespace UI
             mController.OnStartSearchGame();
         }
 
+        public void OnCancelSearchClick()
+        {
+            mController.OnCancelSearch();
+        }
+
         public void OnPlaySingleClick()
         {
             mController.OnStartSingleplayerGame();
@@ -109,14 +119,16 @@ namespace UI
         {
             mSearchStartTime = DateTime.Now;
             PlaySingleButton.interactable = false;
-            SearchButton.interactable = false;
+            mSearchButton.SetActive(false);
+            mCancelSearchButton.SetActive(true);
             SearchingUI.SetActive(true);
         }
 
         private void OnSearchStopped()
         {
             SearchingUI.SetActive(false);
-            SearchButton.interactable = true;
+            mCancelSearchButton.SetActive(false);
+            mSearchButton.SetActive(true);
             PlaySingleButton.interactable = true;
         }
 

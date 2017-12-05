@@ -52,6 +52,7 @@ namespace Editor
             ApplySettings();
             InternalBuildDebugWindows();
             InternalBuildDebugLinux();
+            InternalBuildDebugAndroid();
         }
 
         [MenuItem("Build/Build Debug Windows", false, 110)]
@@ -68,12 +69,20 @@ namespace Editor
             InternalBuildDebugLinux();
         }
 
+        [MenuItem("Build/Build Debug Android", false, 130)]
+        public static void BuildDebugAndroid()
+        {
+            ApplySettings();
+            InternalBuildDebugAndroid();
+        }
+
         [MenuItem("Build/Build Release", false, 200)]
         public static void BuildRelease()
         {
             ApplySettings();
             InternalBuildReleaseWindows();
             InternalBuildReleaseLinux();
+            InternalBuildReleaseAndroid();
         }
 
         [MenuItem("Build/Build Release Windows", false, 210)]
@@ -90,20 +99,21 @@ namespace Editor
             InternalBuildReleaseLinux();
         }
 
-        [MenuItem("Build/Build Android", false, 300)]
-        public static void BuildAndroid()
+        [MenuItem("Build/Build Release Android", false, 230)]
+        public static void BuildReleaseAndroid()
         {
             ApplySettings();
-            InternalBuildAndroid();
+            InternalBuildReleaseAndroid();
         }
 
         [MenuItem("Build/Build All", false, 400)]
         public static void BuildAll()
         {
             ApplySettings();
-            InternalBuildAndroid();
+            InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
+            InternalBuildDebugAndroid();
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
         }
@@ -203,6 +213,15 @@ namespace Editor
                 BuildOptions.Development | BuildOptions.AllowDebugging);
         }
 
+        private static void InternalBuildDebugAndroid()
+        {
+            FileUtil.DeleteFileOrDirectory(AndroidBuildPath(true));
+            BuildClient(
+                AndroidBuildPath(true) + "client.apk",
+                BuildTarget.Android,
+                BuildOptions.Development | BuildOptions.AllowDebugging);
+        }
+
         private static void InternalBuildReleaseWindows()
         {
             FileUtil.DeleteFileOrDirectory(WindowsBuildPath(false));
@@ -245,7 +264,7 @@ namespace Editor
                 BuildOptions.None);
         }
 
-        private static void InternalBuildAndroid()
+        private static void InternalBuildReleaseAndroid()
         {
             FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
             BuildClient(
@@ -293,6 +312,7 @@ namespace Editor
                 SceneRoot() + "Login.unity",
                 SceneRoot() + "MainMenu.unity",
                 SceneRoot() + "MultiplayerGame.unity",
+                SceneRoot() + "SingleplayerGame.unity",
             };
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }
