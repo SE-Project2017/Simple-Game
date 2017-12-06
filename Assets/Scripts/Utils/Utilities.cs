@@ -12,8 +12,8 @@ namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 149;
-        public const string VersionName = "0.2-alpha.3.149";
+        public const int VersionCode = 151;
+        public const string VersionName = "0.2-alpha.3.151";
 
         public const string BuildType =
 #if DEVELOPMENT_BUILD
