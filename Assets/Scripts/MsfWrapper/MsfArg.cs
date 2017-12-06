@@ -6,8 +6,11 @@
 
         public string PlayerAToken { get; private set; }
         public string PlayerBToken { get; private set; }
+
         public string PlayerAName { get; private set; }
         public string PlayerBName { get; private set; }
+
+        public string MatchID { get; private set; }
 
         public MsfArgName Name = new MsfArgName();
 
@@ -15,16 +18,22 @@
         {
             PlayerAToken = ExtractValue(Name.PlayerAToken);
             PlayerBToken = ExtractValue(Name.PlayerBToken);
+
             PlayerAName = ExtractValue(Name.PlayerAName);
             PlayerBName = ExtractValue(Name.PlayerBName);
+
+            MatchID = ExtractValue(Name.MatchID);
         }
 
         public class MsfArgName : MsfArgNames
         {
             public string PlayerAToken { get { return "--player-a-token"; } }
             public string PlayerBToken { get { return "--player-b-token"; } }
+
             public string PlayerAName { get { return "--player-a-name"; } }
             public string PlayerBName { get { return "--player-b-name"; } }
+
+            public string MatchID { get { return "--match-id"; } }
         }
     }
 }

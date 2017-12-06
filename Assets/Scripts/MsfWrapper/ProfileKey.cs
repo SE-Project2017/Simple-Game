@@ -9,5 +9,7 @@
         public const short MultiplayerGamesPlayed = 3;
 
         public const short SingleplayerGamesPlayed = 4;
+
+        public const short MatchmakingRating = 5;
     }
 }

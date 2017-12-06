@@ -11,6 +11,9 @@ namespace UI
         private Text mNameText = null;
 
         [SerializeField]
+        private Text mMmrText = null;
+
+        [SerializeField]
         private Text mMultiplayerGamesPlayedText = null;
 
         [SerializeField]
@@ -35,11 +38,13 @@ namespace UI
         public void OnEnable()
         {
             mController.OnPlayerNameChange += OnNameChange;
+            mController.OnMultiplayerMmrChange += OnMultiplayerMmrChange;
             mController.OnMultiplayerGamesPlayedChange += OnMultiplayerGamesPlayedChange;
             mController.OnMultiplayerWinsChange += OnMultiplayerWinsChange;
             mController.OnMultiplayerLossesChange += OnMultiplayerLossesChange;
             mController.OnSingleplayerGameCountChange += OnSingleplayerGamesPlayedChange;
             OnNameChange(null);
+            OnMultiplayerMmrChange(0);
             OnMultiplayerGamesPlayedChange(0);
             OnMultiplayerWinsChange(0);
             OnMultiplayerLossesChange(0);
@@ -52,6 +57,7 @@ namespace UI
             mController.OnMultiplayerLossesChange -= OnMultiplayerLossesChange;
             mController.OnMultiplayerWinsChange -= OnMultiplayerWinsChange;
             mController.OnMultiplayerGamesPlayedChange -= OnMultiplayerGamesPlayedChange;
+            mController.OnMultiplayerMmrChange -= OnMultiplayerMmrChange;
             mController.OnPlayerNameChange -= OnNameChange;
         }
 
@@ -63,6 +69,11 @@ namespace UI
         private void OnNameChange(string value)
         {
             mNameText.text = mController.PlayerName;
+        }
+
+        private void OnMultiplayerMmrChange(int value)
+        {
+            mMmrText.text = string.Format("MMR: {0}", mController.MultiplayerMmr);
         }
 
         private void OnMultiplayerGamesPlayedChange(int value)

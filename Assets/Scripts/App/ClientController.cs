@@ -74,6 +74,19 @@ namespace App
             }
         }
 
+        public int MultiplayerMmr
+        {
+            get { return mMultiplayerMmr; }
+            private set
+            {
+                mMultiplayerMmr = value;
+                if (OnMultiplayerMmrChange != null)
+                {
+                    OnMultiplayerMmrChange.Invoke(value);
+                }
+            }
+        }
+
         public int SingleplayerGamesPlayed
         {
             get { return mSingleplayerGamesPlayed; }
@@ -100,6 +113,9 @@ namespace App
             }
         }
 
+        public bool ShowMmrChangeDialog;
+        public Guid LastMatchID { get; private set; }
+
         public MainMenuUI.Tab MainMenuTab = MainMenuUI.Tab.Versus;
         public GameFoundPacket GameInfo;
 
@@ -108,6 +124,7 @@ namespace App
         public event Action<int> OnMultiplayerWinsChange;
         public event Action<int> OnMultiplayerLossesChange;
         public event Action<int> OnMultiplayerGamesPlayedChange;
+        public event Action<int> OnMultiplayerMmrChange;
 
         public event Action<int> OnSingleplayerGameCountChange;
 
@@ -123,6 +140,7 @@ namespace App
         private int mMultiplayerWins;
         private int mMultiplayerLosses;
         private int mMultiplayerGamesPlayed;
+        private int mMultiplayerMmr;
 
         private int mSingleplayerGamesPlayed;
 
@@ -141,6 +159,7 @@ namespace App
                     new ObservableInt(ProfileKey.MultiplayerLosses),
                     new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
                     new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
+                    new ObservableInt(ProfileKey.MatchmakingRating),
                 };
                 RetriveProfile(profile);
             };
@@ -188,6 +207,9 @@ namespace App
         {
             Assert.IsTrue(mState == State.PlayingMultiplayer);
             mState = State.Idle;
+
+            ShowMmrChangeDialog = true;
+            LastMatchID = GameInfo.GameServerDetails.MatchID;
         }
 
         public void OnLoggedIn(string username, string password)
@@ -278,6 +300,11 @@ namespace App
                 MultiplayerGamesPlayed = multiplayerGamesPlayedProp.Value;
                 multiplayerGamesPlayedProp.OnDirty += property =>
                     MultiplayerGamesPlayed = multiplayerGamesPlayedProp.Value;
+
+                var multiplayerMmrProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.MatchmakingRating);
+                MultiplayerMmr = multiplayerMmrProp.Value;
+                multiplayerMmrProp.OnDirty += property => MultiplayerMmr = multiplayerMmrProp.Value;
 
                 var singleplayerGamesPlayedProp =
                     profile.GetProperty<ObservableInt>(ProfileKey.SingleplayerGamesPlayed);

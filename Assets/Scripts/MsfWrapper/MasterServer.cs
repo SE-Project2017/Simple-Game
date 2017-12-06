@@ -15,6 +15,7 @@ namespace MsfWrapper
                 new ObservableInt(ProfileKey.MultiplayerLosses),
                 new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
                 new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
+                new ObservableInt(ProfileKey.MatchmakingRating),
             };
         }
     }

@@ -1,4 +1,6 @@
-﻿using Barebones.Networking;
+﻿using System;
+
+using Barebones.Networking;
 
 namespace Multiplayer.Packets
 {
@@ -6,13 +8,13 @@ namespace Multiplayer.Packets
     {
         public GameServerDetailsPacket GameServerDetails;
         public ServerController.PlayerType PlayerType;
-        public PlayerToken Token;
+        public Guid Token;
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
             GameServerDetails.ToBinaryWriter(writer);
             writer.Write((int) PlayerType);
-            Token.ToBinaryWriter(writer);
+            writer.Write(Token.ToByteArray());
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -20,7 +22,7 @@ namespace Multiplayer.Packets
             GameServerDetails = new GameServerDetailsPacket();
             GameServerDetails.FromBinaryReader(reader);
             PlayerType = (ServerController.PlayerType) reader.ReadInt32();
-            Token.FromBinaryReader(reader);
+            Token = new Guid(reader.ReadBytes(16));
         }
     }
 }

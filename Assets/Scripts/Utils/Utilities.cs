@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using App;
 
@@ -10,8 +12,8 @@ namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 139;
-        public const string VersionName = "0.2-alpha.2.139";
+        public const int VersionCode = 147;
+        public const string VersionName = "0.2-alpha.2.147";
 
         public const string BuildType =
 #if DEVELOPMENT_BUILD
@@ -25,6 +27,33 @@ namespace Utils
             yield return ScreenTransition.Instance.StartCoroutine(ScreenTransition.Instance
                 .PlayFadeOut());
             SceneManager.LoadScene(sceneName);
+        }
+
+        public static int MmrChange(int winnerMmr, int loserMmr)
+        {
+            return (int) Math.Round(40 / (1 + Math.Exp(0.0022 * (winnerMmr - loserMmr))));
+        }
+
+        public static int MmrLoss(int mmr, int mmrChange)
+        {
+            if (mmr >= 600)
+            {
+                return mmrChange;
+            }
+            if (mmr <= 0)
+            {
+                return 0;
+            }
+            return (int) Math.Round(mmrChange *
+                (1 / (1 + Math.Exp(-0.01 * mmr + 3)) - 0.047425873) / 0.905148254);
+        }
+
+        public static Guid RandomGuid()
+        {
+            var bytes = new byte[16];
+            var provider = new RNGCryptoServiceProvider();
+            provider.GetBytes(bytes);
+            return new Guid(bytes);
         }
 
         public static void Fill<T>(this T[] array, int begin, int end, T value)

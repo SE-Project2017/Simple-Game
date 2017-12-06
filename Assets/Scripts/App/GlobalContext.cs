@@ -12,6 +12,8 @@ namespace App
         public GameObject AlertDialogPrefab;
         public GameObject AlertDialogButtonPrefab;
 
+        public GameObject GameResultDialogPrefab;
+
         public readonly int[] LevelGravity = new int[2000];
         public readonly int[] LevelEntryDelay = new int[2000];
         public readonly int[] LevelClearEntryDelay = new int[2000];

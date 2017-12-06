@@ -63,6 +63,12 @@ namespace UI
                 mPlayerInfoButton.interactable = false;
                 mPlayerInfoButton.GetComponentInChildren<Text>().text = "Offline";
             }
+
+            if (mController.ShowMmrChangeDialog)
+            {
+                mController.ShowMmrChangeDialog = false;
+                GameResultDialog.Show(mController.LastMatchID);
+            }
         }
 
         public void OnDisable()

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using App;
 
 using Barebones.MasterServer;
+using Barebones.Networking;
 
 using MsfWrapper;
 
@@ -21,8 +22,8 @@ namespace Multiplayer
     {
         public const float MaxConnectTime = 12;
 
-        public PlayerToken PlayerAToken { get; private set; }
-        public PlayerToken PlayerBToken { get; private set; }
+        public Guid PlayerAToken { get; private set; }
+        public Guid PlayerBToken { get; private set; }
 
         public readonly List<NetworkPlayer.PlayerEvent[]> PlayerAEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
@@ -41,6 +42,8 @@ namespace Multiplayer
         private NetworkPlayer mPlayerA;
         private NetworkPlayer mPlayerB;
 
+        private Guid mMatchID;
+
         private readonly GameInfo mGameInfo = new GameInfo
         {
             GeneratorSeed = MersenneTwister.NewSeed(),
@@ -50,10 +53,14 @@ namespace Multiplayer
 
         public IEnumerator Start()
         {
-            PlayerAToken = PlayerToken.FromBase64(MsfContext.Args.PlayerAToken);
-            PlayerBToken = PlayerToken.FromBase64(MsfContext.Args.PlayerBToken);
+            PlayerAToken = new Guid(MsfContext.Args.PlayerAToken);
+            PlayerBToken = new Guid(MsfContext.Args.PlayerBToken);
+
             mPlayerAName = MsfContext.Args.PlayerAName;
             mPlayerBName = MsfContext.Args.PlayerBName;
+
+            mMatchID = new Guid(MsfContext.Args.MatchID);
+
             while (!MsfContext.Connection.IsConnected)
             {
                 yield return null;
@@ -66,7 +73,7 @@ namespace Multiplayer
                 {
                     Address = MsfContext.Args.MachineAddress,
                     Port = MsfContext.Args.AssignedPort,
-                    SpawnID = MsfContext.Args.SpawnId
+                    MatchID = mMatchID,
                 });
             StartCoroutine(WaitForConnection());
         }
@@ -208,10 +215,19 @@ namespace Multiplayer
             ObservableServerProfile playerBProfile = null;
             OpenServerProfile(mPlayerAName, profile => playerAProfile = profile);
             OpenServerProfile(mPlayerBName, profile => playerBProfile = profile);
+
             while (playerAProfile == null || playerBProfile == null)
             {
                 yield return null;
             }
+
+            var playerAMmr =
+                playerAProfile.GetProperty<ObservableInt>(ProfileKey.MatchmakingRating);
+            var playerBMmr =
+                playerBProfile.GetProperty<ObservableInt>(ProfileKey.MatchmakingRating);
+            int mmrChange;
+            int playerAMmrChange = 0;
+            int playerBMmrChange = 0;
             switch (result)
             {
                 case GameResult.NotStarted:
@@ -229,6 +245,9 @@ namespace Multiplayer
                         .Add(1);
                     playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerWins).Add(1);
                     playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerLosses).Add(1);
+                    mmrChange = Utilities.MmrChange(playerAMmr.Value, playerBMmr.Value);
+                    playerAMmrChange = mmrChange;
+                    playerBMmrChange = -Utilities.MmrLoss(playerBMmr.Value, mmrChange);
                     break;
                 case GameResult.PlayerBWon:
                     playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerGamesPlayed)
@@ -237,12 +256,48 @@ namespace Multiplayer
                         .Add(1);
                     playerAProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerLosses).Add(1);
                     playerBProfile.GetProperty<ObservableInt>(ProfileKey.MultiplayerWins).Add(1);
+                    mmrChange = Utilities.MmrChange(playerBMmr.Value, playerAMmr.Value);
+                    playerAMmrChange = -Utilities.MmrLoss(playerAMmr.Value, mmrChange);
+                    playerBMmrChange = mmrChange;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("result", result, null);
             }
-            MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameEnded,
-                new GameEndedPacket {SpawnID = MsfContext.Args.SpawnId});
+            playerAMmr.Add(playerAMmrChange);
+            playerBMmr.Add(playerBMmrChange);
+
+            bool succeeded = false;
+            while (!succeeded)
+            {
+                bool finished = false;
+                MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameEnded,
+                    new GameEndedPacket
+                    {
+                        SpawnID = MsfContext.Args.SpawnId,
+                        MatchID = mMatchID,
+                        PlayerAMmr = playerAMmr.Value,
+                        PlayerBMmr = playerBMmr.Value,
+                        PlayerAMmrChange = playerAMmrChange,
+                        PlayerBMmrChange = playerBMmrChange,
+                        PlayerAName = playerAProfile.GetProperty<ObservableString>(ProfileKey.Name)
+                            .Value,
+                        PlayerBName = playerBProfile.GetProperty<ObservableString>(ProfileKey.Name)
+                            .Value,
+                        Result = result,
+                    },
+                    (status, response) =>
+                    {
+                        if (status == ResponseStatus.Success)
+                        {
+                            succeeded = true;
+                        }
+                        finished = true;
+                    });
+                while (!finished)
+                {
+                    yield return null;
+                }
+            }
         }
 
         private IEnumerator StopServer()
@@ -257,9 +312,11 @@ namespace Multiplayer
         {
             var profile = new ObservableServerProfile(username)
             {
+                new ObservableString(ProfileKey.Name),
                 new ObservableInt(ProfileKey.MultiplayerWins),
                 new ObservableInt(ProfileKey.MultiplayerLosses),
                 new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
+                new ObservableInt(ProfileKey.MatchmakingRating),
             };
             MsfContext.Server.Profiles.FillProfileValues(profile, (successful, error) =>
             {

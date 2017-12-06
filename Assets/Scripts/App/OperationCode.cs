@@ -8,6 +8,7 @@
         GameFound,
         GameServerSpawned,
         GameEnded,
+        ClientQueryGameResult,
 
         UploadSingleplayerResult,
     }

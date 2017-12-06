@@ -1,13 +1,11 @@
-﻿using System;
-
-using Barebones.Networking;
+﻿using Barebones.Networking;
 
 namespace Multiplayer.Packets
 {
-    public class GameEndedPacket : SerializablePacket
+    public class ClientGameResultPacket : SerializablePacket
     {
-        public int SpawnID;
-        public Guid MatchID;
+        public string PlayerAName;
+        public string PlayerBName;
 
         public int PlayerAMmr;
         public int PlayerBMmr;
@@ -15,15 +13,13 @@ namespace Multiplayer.Packets
         public int PlayerAMmrChange;
         public int PlayerBMmrChange;
 
-        public string PlayerAName;
-        public string PlayerBName;
-
+        public ServerController.PlayerType PlayerType;
         public ServerController.GameResult Result;
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(SpawnID);
-            writer.Write(MatchID.ToByteArray());
+            writer.Write(PlayerAName);
+            writer.Write(PlayerBName);
 
             writer.Write(PlayerAMmr);
             writer.Write(PlayerBMmr);
@@ -31,16 +27,14 @@ namespace Multiplayer.Packets
             writer.Write(PlayerAMmrChange);
             writer.Write(PlayerBMmrChange);
 
-            writer.Write(PlayerAName);
-            writer.Write(PlayerBName);
-
+            writer.Write((int) PlayerType);
             writer.Write((int) Result);
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            SpawnID = reader.ReadInt32();
-            MatchID = new Guid(reader.ReadBytes(16));
+            PlayerAName = reader.ReadString();
+            PlayerBName = reader.ReadString();
 
             PlayerAMmr = reader.ReadInt32();
             PlayerBMmr = reader.ReadInt32();
@@ -48,10 +42,8 @@ namespace Multiplayer.Packets
             PlayerAMmrChange = reader.ReadInt32();
             PlayerBMmrChange = reader.ReadInt32();
 
-            PlayerAName = reader.ReadString();
-            PlayerBName = reader.ReadString();
-
-            Result = (ServerController.GameResult) reader.ReadInt32();
+            PlayerType = (ServerController.PlayerType) reader.ReadInt32();
+            Result = (ServerController.GameResult)reader.ReadInt32();
         }
     }
 }

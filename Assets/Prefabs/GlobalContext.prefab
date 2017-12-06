@@ -66,3 +66,5 @@ MonoBehaviour:
     type: 2}
   AlertDialogButtonPrefab: {fileID: 1297919979695842, guid: 20e1be38027ab534eaaa41bb283fa8fc,
     type: 2}
+  GameResultDialogPrefab: {fileID: 1137769623554350, guid: c8d80c5dcf724d6469016340682b0f64,
+    type: 2}
