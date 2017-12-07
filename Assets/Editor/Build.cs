@@ -3,8 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 
 using UnityEditor;
-
-using Utils;
+using UnityEditor.SceneManagement;
 
 namespace Editor
 {
@@ -49,73 +48,82 @@ namespace Editor
         [MenuItem("Build/Build Debug", false, 100)]
         public static void BuildDebug()
         {
-            ApplySettings();
+            Configure();
             InternalBuildDebugWindows();
             InternalBuildDebugLinux();
             InternalBuildDebugAndroid();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Debug Windows", false, 110)]
         public static void BuildDebugWindows()
         {
-            ApplySettings();
+            Configure();
             InternalBuildDebugWindows();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Debug Linux", false, 120)]
         public static void BuildDebugLinux()
         {
-            ApplySettings();
+            Configure();
             InternalBuildDebugLinux();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Debug Android", false, 130)]
         public static void BuildDebugAndroid()
         {
-            ApplySettings();
+            Configure();
             InternalBuildDebugAndroid();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Release", false, 200)]
         public static void BuildRelease()
         {
-            ApplySettings();
+            Configure();
             InternalBuildReleaseWindows();
             InternalBuildReleaseLinux();
             InternalBuildReleaseAndroid();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Release Windows", false, 210)]
         public static void BuildReleaseWindows()
         {
-            ApplySettings();
+            Configure();
             InternalBuildReleaseWindows();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Release Linux", false, 220)]
         public static void BuildReleaseLinux()
         {
-            ApplySettings();
+            Configure();
             InternalBuildReleaseLinux();
+            CleanUp();
         }
 
         [MenuItem("Build/Build Release Android", false, 230)]
         public static void BuildReleaseAndroid()
         {
-            ApplySettings();
+            Configure();
             InternalBuildReleaseAndroid();
+            CleanUp();
         }
 
         [MenuItem("Build/Build All", false, 400)]
         public static void BuildAll()
         {
-            ApplySettings();
+            Configure();
             InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
             InternalBuildDebugAndroid();
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
+            CleanUp();
         }
 
         [MenuItem("Build/Enable Local Server", false, 500)]
@@ -123,15 +131,17 @@ namespace Editor
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
                 "LOCAL_SERVER");
+            EditorSceneManager.SaveOpenScenes();
         }
 
         [MenuItem("Build/Disable Local Server", false, 510)]
         public static void DisableLocalServer()
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "");
+            EditorSceneManager.SaveOpenScenes();
         }
 
-        private static void ApplySettings()
+        private static void Configure()
         {
             var version = BumpVersion();
             PlayerSettings.Android.bundleVersionCode = version.VersionCode;
@@ -142,6 +152,16 @@ namespace Editor
             PlayerSettings.runInBackground = true;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
             PlayerSettings.bundleVersion = version.VersionName;
+            EditorSceneManager.SaveOpenScenes();
+        }
+
+        private static void CleanUp()
+        {
+            PlayerSettings.Android.keystoreName = string.Empty;
+            PlayerSettings.Android.keystorePass = string.Empty;
+            PlayerSettings.Android.keyaliasName = string.Empty;
+            PlayerSettings.Android.keyaliasPass = string.Empty;
+            EditorSceneManager.SaveOpenScenes();
         }
 
         private static VersionNumber BumpVersion()
