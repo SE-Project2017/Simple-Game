@@ -67,8 +67,14 @@ namespace Singleplayer
         public void Start()
         {
             mGameGrid.OnGameEnd += EndGame;
-            mGameGrid.OnLineCleared += blocks => LevelAdvance(blocks.Data.GetLength(0));
-            mGameGrid.OnTetrominoLocked += () => LevelAdvance(0);
+            mGameGrid.OnTetrominoLocked += linesCleared =>
+            {
+                LevelAdvance(0);
+                if (linesCleared != 0)
+                {
+                    LevelAdvance(linesCleared);
+                }
+            };
 
             mInputController.ButtonDown += button => mEvents.Add(new GameGrid.GameButtonEvent
             {
@@ -114,7 +120,14 @@ namespace Singleplayer
             {
                 return;
             }
-            Level += mContext.LevelAdvance[linesCleared];
+            if (linesCleared == 0)
+            {
+                ++Level;
+            }
+            else
+            {
+                Level += mContext.LevelAdvance[linesCleared];
+            }
             if (Level >= mMaxLevel)
             {
                 Level = mMaxLevel;

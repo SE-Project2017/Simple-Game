@@ -20,7 +20,7 @@ namespace App
         public readonly int[] LevelDasDelay = new int[2000];
         public readonly int[] LevelLockDelay = new int[2000];
         public readonly int[] LevelClearDelay = new int[2000];
-        public readonly int[] LevelAdvance = {1, 1, 2, 4, 6};
+        public readonly int[] LevelAdvance = {0, 1, 2, 4, 6};
 
         public GlobalContext()
         {

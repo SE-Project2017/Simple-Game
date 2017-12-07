@@ -22,10 +22,10 @@ namespace App
         public event Action<Tetromino> OnHoldTetrominoChanged;
         public event Action<GameItem> OnTargetItemActivated;
         public event Action<bool> OnHoldEnableStateChanged;
+        public event Action<int> OnTetrominoLocked;
         public event Action<int, int, Block.Data> OnPlayClearEffect;
         public event Action OnGameEnd;
         public event Action OnGameItemCreated;
-        public event Action OnTetrominoLocked;
         public event Action OnPlayFlipAnimation;
         public event Action OnPlayUpsideDownAnimation;
         public event Action OnNextTetrominosChanged;
@@ -917,7 +917,8 @@ namespace App
                 newlyLockedCells[row, col] = true;
             }
             DestroyActiveTetromino();
-            if (!TryLineClear(newlyLockedCells))
+            int linesCleared = TryLineClear(newlyLockedCells);
+            if (linesCleared == 0)
             {
                 StartNewTetromino();
             }
@@ -928,7 +929,7 @@ namespace App
             }
             if (OnTetrominoLocked != null)
             {
-                OnTetrominoLocked.Invoke();
+                OnTetrominoLocked.Invoke(linesCleared);
             }
         }
 
@@ -1608,7 +1609,7 @@ namespace App
             PlaceTetromino();
         }
 
-        private bool TryLineClear(bool[,] newlyLockedCells)
+        private int TryLineClear(bool[,] newlyLockedCells)
         {
             mClearingLines.Clear();
             for (int i = 0; i < mGrid.GetLength(0); ++i)
@@ -1629,7 +1630,7 @@ namespace App
             }
             if (!mClearingLines.Any())
             {
-                return false;
+                return 0;
             }
             mTetrominoState = TetrominoState.Clearing;
             mClearingFrames = mClearDelay;
@@ -1704,7 +1705,7 @@ namespace App
                     DestroyBlock(row, col);
                 }
             }
-            return true;
+            return mClearingLines.Count;
         }
 
         private void ActivateClearTopHalf()

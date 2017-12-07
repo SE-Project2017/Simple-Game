@@ -55,27 +55,24 @@ namespace Multiplayer
             }
         }
 
-        private int LocalLevel
+        private int LocalLevel2
         {
-            get { return mLocalLevel; }
+            get { return mLocalLevel2; }
             set
             {
-                mLocalLevel = value;
-                mLocalGameGrid.SetLevel(value);
-                LevelText.text = value.ToString();
+                mLocalLevel2 = value;
+                mLocalGameGrid.SetLevel(value / 2);
+                LevelText.text = (value / 2).ToString();
             }
         }
 
-        private int RemoteLevel
+        private int RemoteLevel2
         {
-            get
-            {
-                return mRemoteLevel;
-            }
+            get { return mRemoteLevel2; }
             set
             {
-                mRemoteLevel = value;
-                mRemoteGameGrid.SetLevel(value);
+                mRemoteLevel2 = value;
+                mRemoteGameGrid.SetLevel(value / 2);
             }
         }
 
@@ -95,8 +92,8 @@ namespace Multiplayer
 
         private int mLocalItemCharge;
         private int mRemoteItemCharge;
-        private int mLocalLevel;
-        private int mRemoteLevel;
+        private int mLocalLevel2;
+        private int mRemoteLevel2;
 
         private bool mIsLocalPlaying;
         private bool mIsRemotePlaying;
@@ -110,14 +107,20 @@ namespace Multiplayer
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
 
-        private readonly Dictionary<int, GameItem> mLocalPendingItems =
-            new Dictionary<int, GameItem>();
-
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mRemotePendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
 
+        private readonly Dictionary<int, GameItem> mLocalPendingItems =
+            new Dictionary<int, GameItem>();
+
         private readonly Dictionary<int, GameItem> mRemotePendingItems =
             new Dictionary<int, GameItem>();
+
+        private readonly Dictionary<int, int> mLocalPendingLevelAdvances =
+            new Dictionary<int, int>();
+
+        private readonly Dictionary<int, int> mRemotePendingLevelAdvances =
+            new Dictionary<int, int>();
 
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
@@ -163,7 +166,6 @@ namespace Multiplayer
                     AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
                         blocks);
                 }
-                LocalLevelAdvance(blocks.Data.GetLength(0));
             };
             mRemoteGameGrid.OnLineCleared += blocks =>
             {
@@ -173,26 +175,39 @@ namespace Multiplayer
                     AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
                         blocks);
                 }
-                RemoteLevelAdvance(blocks.Data.GetLength(0));
             };
 
-            mLocalGameGrid.OnTetrominoLocked += () =>
+            mLocalGameGrid.OnTetrominoLocked += linesCleared =>
             {
                 LocalItemCharge += ItemChargeRate;
                 if (LocalItemCharge >= MaxItemCharge)
                 {
                     mLocalGameGrid.GenerateNextItem();
                 }
-                LocalLevelAdvance(0);
+
+                int advance = 1;
+                if (linesCleared >= 1)
+                {
+                    advance += mContext.LevelAdvance[linesCleared];
+                }
+                LocalLevelAdvance(advance);
+                mRemotePendingLevelAdvances[mLocalFrameCount + InteractionDelay] = advance;
             };
-            mRemoteGameGrid.OnTetrominoLocked += () =>
+            mRemoteGameGrid.OnTetrominoLocked += linesCleared =>
             {
                 mRemoteItemCharge += ItemChargeRate;
                 if (mRemoteItemCharge >= MaxItemCharge)
                 {
                     mRemoteGameGrid.GenerateNextItem();
                 }
-                RemoteLevelAdvance(0);
+
+                int advance = 1;
+                if (linesCleared >= 1)
+                {
+                    advance += mContext.LevelAdvance[linesCleared];
+                }
+                RemoteLevelAdvance(advance);
+                mLocalPendingLevelAdvances[mRemoteFrameCount + InteractionDelay] = advance;
             };
 
             mLocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
@@ -233,11 +248,19 @@ namespace Multiplayer
                     OnLocalGameEnd();
                     return;
                 }
+
                 if (mLocalPendingBlocks.ContainsKey(frameCount))
                 {
                     mLocalGameGrid.AddBlocks(mLocalPendingBlocks[frameCount]);
                     mLocalPendingBlocks.Remove(frameCount);
                 }
+
+                if (mLocalPendingLevelAdvances.ContainsKey(frameCount))
+                {
+                    LocalLevelAdvance(mLocalPendingLevelAdvances[frameCount]);
+                    mLocalPendingLevelAdvances.Remove(frameCount);
+                }
+
                 ActivateItem(mLocalPendingItems, frameCount, mLocalGameGrid);
                 UpdateFrame(playerEvents, mLocalGameGrid);
             }
@@ -260,11 +283,19 @@ namespace Multiplayer
                     OnRemoteGameEnd();
                     return;
                 }
+
                 if (mRemotePendingBlocks.ContainsKey(frameCount))
                 {
                     mRemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
                     mRemotePendingBlocks.Remove(frameCount);
                 }
+
+                if (mRemotePendingLevelAdvances.ContainsKey(frameCount))
+                {
+                    RemoteLevelAdvance(mRemotePendingLevelAdvances[frameCount]);
+                    mRemotePendingLevelAdvances.Remove(frameCount);
+                }
+
                 ActivateItem(mRemotePendingItems, frameCount, mRemoteGameGrid);
                 UpdateFrame(playerEvents, mRemoteGameGrid);
             }
@@ -364,8 +395,8 @@ namespace Multiplayer
             LocalItemCharge = 0;
             mRemoteItemCharge = 0;
 
-            LocalLevel = 0;
-            RemoteLevel = 0;
+            LocalLevel2 = 0;
+            RemoteLevel2 = 0;
 
             WinText.SetActive(false);
             LoseText.SetActive(false);
@@ -415,29 +446,21 @@ namespace Multiplayer
             }
         }
 
-        private void LocalLevelAdvance(int linesCleared)
+        private void LocalLevelAdvance(int advance)
         {
-            if (LocalLevel % 100 == 99 && linesCleared == 0)
+            LocalLevel2 += advance;
+            if (LocalLevel2 > MaxLevel)
             {
-                return;
-            }
-            LocalLevel += mContext.LevelAdvance[linesCleared];
-            if (LocalLevel > MaxLevel)
-            {
-                LocalLevel = MaxLevel;
+                LocalLevel2 = MaxLevel;
             }
         }
 
-        private void RemoteLevelAdvance(int linesCleared)
+        private void RemoteLevelAdvance(int advance)
         {
-            if (RemoteLevel % 100 == 99 && linesCleared == 0)
+            RemoteLevel2 += advance;
+            if (RemoteLevel2 > MaxLevel)
             {
-                return;
-            }
-            RemoteLevel += mContext.LevelAdvance[linesCleared];
-            if (RemoteLevel > MaxLevel)
-            {
-                RemoteLevel = MaxLevel;
+                RemoteLevel2 = MaxLevel;
             }
         }
 
