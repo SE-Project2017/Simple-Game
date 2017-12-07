@@ -46,7 +46,7 @@ namespace Multiplayer
 
         private readonly GameInfo mGameInfo = new GameInfo
         {
-            GeneratorSeed = MersenneTwister.NewSeed(),
+            GeneratorSeeds = NewGeneratorSeeds(),
             PlayerASeed = MersenneTwister.NewSeed(),
             PlayerBSeed = MersenneTwister.NewSeed(),
         };
@@ -331,6 +331,16 @@ namespace Multiplayer
             });
         }
 
+        private static ulong[] NewGeneratorSeeds()
+        {
+            var result = new List<ulong>();
+            for (int i = 0; i < MultiplayerGameController.MaxGameCount; ++i)
+            {
+                result.AddRange(MersenneTwister.NewSeed());
+            }
+            return result.ToArray();
+        }
+
         public struct PlayerInfo
         {
             public PlayerType Type;
@@ -339,7 +349,7 @@ namespace Multiplayer
 
         public struct GameInfo
         {
-            public ulong[] GeneratorSeed;
+            public ulong[] GeneratorSeeds; // Length = MaxGameCount * Seed.Length
             public ulong[] PlayerASeed;
             public ulong[] PlayerBSeed;
         }

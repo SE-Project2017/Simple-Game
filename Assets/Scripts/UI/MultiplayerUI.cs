@@ -8,7 +8,7 @@ namespace UI
     public class MultiplayerUI : MonoBehaviour
     {
         [SerializeField]
-        private Text mRttText;
+        private Text mRttText = null;
 
         private NetworkManager mNetworkManager;
 

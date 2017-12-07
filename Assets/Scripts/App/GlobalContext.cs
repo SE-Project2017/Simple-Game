@@ -22,6 +22,11 @@ namespace App
         public readonly int[] LevelClearDelay = new int[2000];
         public readonly int[] LevelAdvance = {0, 1, 2, 4, 6};
 
+        public const int MaxGrade = 31;
+
+        private readonly int[] mGradePointDecayRates = new int[MaxGrade + 1];
+        private readonly int[,] mGradePointAwards = new int[5, MaxGrade + 1];
+
         public GlobalContext()
         {
             LevelGravity.Fill(0, 30, 1024);
@@ -82,6 +87,32 @@ namespace App
             LevelClearDelay.Fill(600, 700, 16);
             LevelClearDelay.Fill(700, 800, 12);
             LevelClearDelay.Fill(800, LevelClearDelay.Length, 6);
+
+            mGradePointDecayRates.Fill(0, 1, 125);
+            mGradePointDecayRates.Fill(1, 3, 80);
+            mGradePointDecayRates.Fill(3, 4, 50);
+            mGradePointDecayRates.Fill(4, 7, 45);
+            mGradePointDecayRates.Fill(7, 12, 40);
+            mGradePointDecayRates.Fill(12, 15, 30);
+            mGradePointDecayRates.Fill(15, 20, 20);
+            mGradePointDecayRates.Fill(20, 30, 15);
+            mGradePointDecayRates.Fill(30, mGradePointDecayRates.Length, 10);
+
+            mGradePointAwards.Fill(1, 0, 5, 10, 1);
+            mGradePointAwards.Fill(1, 5, 10, 5, 1);
+            mGradePointAwards.Fill(1, 10, mGradePointAwards.GetLength(1), 2, 1);
+            mGradePointAwards.Fill(2, 0, 3, 20, 1);
+            mGradePointAwards.Fill(2, 3, 6, 15, 1);
+            mGradePointAwards.Fill(2, 6, 10, 10, 1);
+            mGradePointAwards.Fill(2, 10, mGradePointAwards.GetLength(1), 12, 1);
+            mGradePointAwards.Fill(3, 0, 1, 40, 1);
+            mGradePointAwards.Fill(3, 1, 4, 30, 1);
+            mGradePointAwards.Fill(3, 4, 7, 20, 1);
+            mGradePointAwards.Fill(3, 7, 10, 15, 1);
+            mGradePointAwards.Fill(3, 10, mGradePointAwards.GetLength(1), 13, 1);
+            mGradePointAwards.Fill(4, 0, 1, 50, 1);
+            mGradePointAwards.Fill(4, 1, 5, 40, 1);
+            mGradePointAwards.Fill(4, 5, mGradePointAwards.GetLength(1), 30, 1);
         }
     }
 }

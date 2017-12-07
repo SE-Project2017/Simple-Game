@@ -11,6 +11,8 @@ namespace App
 {
     public class GameGrid : MonoBehaviour
     {
+        public TetrominoState CurrentTetrominoState { get { return mTetrominoState; } }
+
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
         public GameObject ItemClearEffectPrefab;
@@ -1675,23 +1677,24 @@ namespace App
                     }
                 }
             }
-            if (OnLineCleared != null)
+
+            var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
+            var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
+            for (int i = 0; i < mClearingLines.Count; ++i)
             {
-                var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
-                var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
-                for (int i = 0; i < mClearingLines.Count; ++i)
+                int row = mClearingLines[i];
+                for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
-                    int row = mClearingLines[i];
-                    for (int col = 0; col < mGrid.GetLength(1); ++col)
+                    properties[i, col] = mGrid[row, col].Properties;
+                    valid[i, col] = !newlyLockedCells[row, col];
+                    if (OnPlayClearEffect != null)
                     {
-                        properties[i, col] = mGrid[row, col].Properties;
-                        valid[i, col] = !newlyLockedCells[row, col];
-                        if (OnPlayClearEffect != null)
-                        {
-                            OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
-                        }
+                        OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
                     }
                 }
+            }
+            if (OnLineCleared != null)
+            {
                 OnLineCleared.Invoke(new ClearingBlocks
                 {
                     Data = properties,
@@ -1970,20 +1973,20 @@ namespace App
             }
         }
 
-        private enum GameState
-        {
-            Idle,
-            Running,
-            Ended,
-        }
-
-        private enum TetrominoState
+        public enum TetrominoState
         {
             Idle,
             Dropping,
             Locking,
             Clearing,
             AcitvatingItem,
+        }
+
+        private enum GameState
+        {
+            Idle,
+            Running,
+            Ended,
         }
 
         private enum DasState

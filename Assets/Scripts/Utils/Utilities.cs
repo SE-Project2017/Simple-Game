@@ -12,8 +12,8 @@ namespace Utils
 {
     public static class Utilities
     {
-        public const int VersionCode = 157;
-        public const string VersionName = "0.2-alpha.4.157";
+        public const int VersionCode = 161;
+        public const string VersionName = "0.2-alpha.4.161";
 
         public const string BuildType =
 #if DEVELOPMENT_BUILD
@@ -61,6 +61,29 @@ namespace Utils
             for (int i = begin; i != end; ++i)
             {
                 array[i] = value;
+            }
+        }
+
+        public static void Fill<T>(this T[] array, T value)
+        {
+            array.Fill(0, array.Length, value);
+        }
+
+        public static void Fill<T>(this T[,] array, int pos, int begin, int end, T value, int axis)
+        {
+            if (axis == 0)
+            {
+                for (int i = begin; i != end; ++i)
+                {
+                    array[i, pos] = value;
+                }
+            }
+            else
+            {
+                for (int i = begin; i != end; ++i)
+                {
+                    array[pos, i] = value;
+                }
             }
         }
 

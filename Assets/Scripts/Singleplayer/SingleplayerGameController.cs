@@ -55,8 +55,11 @@ namespace Singleplayer
         }
 
         private int mLevel;
+        private int mCombo;
 
         private int mMaxLevel = 500;
+
+        private const int MaxCombo = 10;
 
         public void Awake()
         {
@@ -73,6 +76,19 @@ namespace Singleplayer
                 if (linesCleared != 0)
                 {
                     LevelAdvance(linesCleared);
+                }
+
+                if (linesCleared == 0)
+                {
+                    mCombo = 1;
+                }
+                else
+                {
+                    mCombo += 2 * linesCleared - 2;
+                    if (mCombo > MaxCombo)
+                    {
+                        mCombo = MaxCombo;
+                    }
                 }
             };
 
@@ -98,9 +114,18 @@ namespace Singleplayer
             mEvents.Clear();
         }
 
+#if UNITY_EDITOR
+        public void OnGUI()
+        {
+            GUI.Label(new Rect(0, 0, 100, 20), string.Format("Combo: {0}", mCombo));
+        }
+#endif
+
         private void ResetState()
         {
             Level = 0;
+            mCombo = 1;
+            mEvents.Clear();
             mGameUI.ResetState();
         }
 

@@ -45,6 +45,8 @@ namespace Multiplayer
         public readonly List<NetworkPlayer.PlayerEvent[]> RemotePlayerEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
 
+        public const int MaxGameCount = 3;
+
         private int LocalItemCharge
         {
             get { return mLocalItemCharge; }
@@ -55,24 +57,24 @@ namespace Multiplayer
             }
         }
 
-        private int LocalLevel2
+        private int LocalLevel
         {
-            get { return mLocalLevel2; }
+            get { return mLocalLevel; }
             set
             {
-                mLocalLevel2 = value;
-                mLocalGameGrid.SetLevel(value / 2);
-                LevelText.text = (value / 2).ToString();
+                mLocalLevel = value;
+                mLocalGameGrid.SetLevel(value);
+                LevelText.text = value.ToString();
             }
         }
 
-        private int RemoteLevel2
+        private int RemoteLevel
         {
-            get { return mRemoteLevel2; }
+            get { return mRemoteLevel; }
             set
             {
-                mRemoteLevel2 = value;
-                mRemoteGameGrid.SetLevel(value / 2);
+                mRemoteLevel = value;
+                mRemoteGameGrid.SetLevel(value);
             }
         }
 
@@ -92,8 +94,8 @@ namespace Multiplayer
 
         private int mLocalItemCharge;
         private int mRemoteItemCharge;
-        private int mLocalLevel2;
-        private int mRemoteLevel2;
+        private int mLocalLevel;
+        private int mRemoteLevel;
 
         private bool mIsLocalPlaying;
         private bool mIsRemotePlaying;
@@ -103,6 +105,11 @@ namespace Multiplayer
         private int mLocalEndFrame;
         private int mRemoteEndFrame;
         private int mGameEndFrame = NetworkPlayer.MaxGameDuration;
+
+        private State mState = State.Connecting;
+        private NetworkManager mNetworkManager;
+
+        private readonly ulong[][] mGeneratorSeeds = new ulong[MaxGameCount][];
 
         private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
             new Dictionary<int, GameGrid.ClearingBlocks>();
@@ -116,14 +123,11 @@ namespace Multiplayer
         private readonly Dictionary<int, GameItem> mRemotePendingItems =
             new Dictionary<int, GameItem>();
 
-        private readonly Dictionary<int, int> mLocalPendingLevelAdvances =
+/*        private readonly Dictionary<int, int> mLocalPendingLevelAdvances =
             new Dictionary<int, int>();
 
         private readonly Dictionary<int, int> mRemotePendingLevelAdvances =
-            new Dictionary<int, int>();
-
-        private State mState = State.Connecting;
-        private NetworkManager mNetworkManager;
+            new Dictionary<int, int>();*/
 
         private const int InteractionDelay = 40;
 
@@ -131,7 +135,6 @@ namespace Multiplayer
         private const int ItemChargeRate = 2;
 
         private const int TimeBetweenGame = 120;
-        private const int MaxGameCount = 3;
         private const int GameCountToWin = (MaxGameCount + 1) / 2;
 
         private const int MaxLevel = 999;
@@ -191,7 +194,7 @@ namespace Multiplayer
                     advance += mContext.LevelAdvance[linesCleared];
                 }
                 LocalLevelAdvance(advance);
-                mRemotePendingLevelAdvances[mLocalFrameCount + InteractionDelay] = advance;
+//                mRemotePendingLevelAdvances[mLocalFrameCount + InteractionDelay] = advance;
             };
             mRemoteGameGrid.OnTetrominoLocked += linesCleared =>
             {
@@ -207,7 +210,7 @@ namespace Multiplayer
                     advance += mContext.LevelAdvance[linesCleared];
                 }
                 RemoteLevelAdvance(advance);
-                mLocalPendingLevelAdvances[mRemoteFrameCount + InteractionDelay] = advance;
+//                mLocalPendingLevelAdvances[mRemoteFrameCount + InteractionDelay] = advance;
             };
 
             mLocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
@@ -255,11 +258,11 @@ namespace Multiplayer
                     mLocalPendingBlocks.Remove(frameCount);
                 }
 
-                if (mLocalPendingLevelAdvances.ContainsKey(frameCount))
+/*                if (mLocalPendingLevelAdvances.ContainsKey(frameCount))
                 {
                     LocalLevelAdvance(mLocalPendingLevelAdvances[frameCount]);
                     mLocalPendingLevelAdvances.Remove(frameCount);
-                }
+                }*/
 
                 ActivateItem(mLocalPendingItems, frameCount, mLocalGameGrid);
                 UpdateFrame(playerEvents, mLocalGameGrid);
@@ -267,6 +270,7 @@ namespace Multiplayer
             else if (frameCount == mGameEndFrame + TimeBetweenGame)
             {
                 ResetState();
+                mLocalGameGrid.SeedGenerator(mGeneratorSeeds[mGameCount]);
                 mLocalGameGrid.StartGame();
                 mIsLocalPlaying = true;
             }
@@ -290,17 +294,18 @@ namespace Multiplayer
                     mRemotePendingBlocks.Remove(frameCount);
                 }
 
-                if (mRemotePendingLevelAdvances.ContainsKey(frameCount))
-                {
-                    RemoteLevelAdvance(mRemotePendingLevelAdvances[frameCount]);
-                    mRemotePendingLevelAdvances.Remove(frameCount);
-                }
+                /*        if (mRemotePendingLevelAdvances.ContainsKey(frameCount))
+                        {
+                            RemoteLevelAdvance(mRemotePendingLevelAdvances[frameCount]);
+                            mRemotePendingLevelAdvances.Remove(frameCount);
+                        }*/
 
                 ActivateItem(mRemotePendingItems, frameCount, mRemoteGameGrid);
                 UpdateFrame(playerEvents, mRemoteGameGrid);
             }
             else if (frameCount == mGameEndFrame + TimeBetweenGame)
             {
+                mRemoteGameGrid.SeedGenerator(mGeneratorSeeds[mGameCount]);
                 mRemoteGameGrid.StartGame();
                 mIsRemotePlaying = true;
             }
@@ -311,8 +316,19 @@ namespace Multiplayer
             Assert.IsTrue(mState == State.Waiting);
             mState = State.Playing;
 
-            mLocalGameGrid.SeedGenerator(info.GeneratorSeed);
-            mRemoteGameGrid.SeedGenerator(info.GeneratorSeed);
+            Assert.IsTrue(info.GeneratorSeeds.Length % MaxGameCount == 0);
+            int seedLength = info.GeneratorSeeds.Length / MaxGameCount;
+            for (int i = 0; i < MaxGameCount; ++i)
+            {
+                mGeneratorSeeds[i] = new ulong[seedLength];
+                for (int j = 0; j < seedLength; ++j)
+                {
+                    mGeneratorSeeds[i][j] = info.GeneratorSeeds[i * seedLength + j];
+                }
+            }
+
+            mLocalGameGrid.SeedGenerator(mGeneratorSeeds[0]);
+            mRemoteGameGrid.SeedGenerator(mGeneratorSeeds[0]);
 
             switch (LocalPlayerType)
             {
@@ -395,8 +411,8 @@ namespace Multiplayer
             LocalItemCharge = 0;
             mRemoteItemCharge = 0;
 
-            LocalLevel2 = 0;
-            RemoteLevel2 = 0;
+            LocalLevel = 0;
+            RemoteLevel = 0;
 
             WinText.SetActive(false);
             LoseText.SetActive(false);
@@ -448,19 +464,19 @@ namespace Multiplayer
 
         private void LocalLevelAdvance(int advance)
         {
-            LocalLevel2 += advance;
-            if (LocalLevel2 > MaxLevel)
+            LocalLevel += advance;
+            if (LocalLevel > MaxLevel)
             {
-                LocalLevel2 = MaxLevel;
+                LocalLevel = MaxLevel;
             }
         }
 
         private void RemoteLevelAdvance(int advance)
         {
-            RemoteLevel2 += advance;
-            if (RemoteLevel2 > MaxLevel)
+            RemoteLevel += advance;
+            if (RemoteLevel > MaxLevel)
             {
-                RemoteLevel2 = MaxLevel;
+                RemoteLevel = MaxLevel;
             }
         }
 
