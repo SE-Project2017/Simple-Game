@@ -56,10 +56,11 @@ namespace Singleplayer
 
         private int mLevel;
         private int mCombo;
+        private int mGradePoints;
+        private int mGrade;
+        private int mGradePointDecayFrames;
 
         private int mMaxLevel = 500;
-
-        private const int MaxCombo = 10;
 
         public void Awake()
         {
@@ -85,9 +86,23 @@ namespace Singleplayer
                 else
                 {
                     mCombo += 2 * linesCleared - 2;
-                    if (mCombo > MaxCombo)
+                    if (mCombo > GlobalContext.MaxCombo)
                     {
-                        mCombo = MaxCombo;
+                        mCombo = GlobalContext.MaxCombo;
+                    }
+                }
+
+                if (linesCleared != 0)
+                {
+                    mGradePoints += mContext.GradePointAward(linesCleared, mGrade, mCombo, mLevel);
+                    if (mGradePoints >= 100)
+                    {
+                        ++mGrade;
+                        mGradePoints = 0;
+                        if (mGrade > GlobalContext.MaxGrade)
+                        {
+                            mGrade = GlobalContext.MaxGrade;
+                        }
                     }
                 }
             };
@@ -112,12 +127,30 @@ namespace Singleplayer
         {
             mGameGrid.UpdateFrame(mEvents.ToArray());
             mEvents.Clear();
+
+            if (mCombo == 1 &&
+                (mGameGrid.CurrentTetrominoState == GameGrid.TetrominoState.Dropping ||
+                    mGameGrid.CurrentTetrominoState == GameGrid.TetrominoState.Locking)
+            )
+            {
+                --mGradePointDecayFrames;
+                if (mGradePointDecayFrames == 0)
+                {
+                    if (mGradePoints > 0)
+                    {
+                        --mGradePoints;
+                    }
+                    mGradePointDecayFrames = mContext.GradePointDecayRate(mGrade);
+                }
+            }
         }
 
 #if UNITY_EDITOR
         public void OnGUI()
         {
-            GUI.Label(new Rect(0, 0, 100, 20), string.Format("Combo: {0}", mCombo));
+            GUI.Label(new Rect(0, 0, 100, 60),
+                string.Format("Combo: {0}\nGrade Points: {1}\nGrade: {2}", mCombo, mGradePoints,
+                    mGrade));
         }
 #endif
 
@@ -125,6 +158,9 @@ namespace Singleplayer
         {
             Level = 0;
             mCombo = 1;
+            mGradePoints = 0;
+            mGrade = 0;
+            mGradePointDecayFrames = mContext.GradePointDecayRate(mGrade);
             mEvents.Clear();
             mGameUI.ResetState();
         }

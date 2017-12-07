@@ -23,9 +23,11 @@ namespace App
         public readonly int[] LevelAdvance = {0, 1, 2, 4, 6};
 
         public const int MaxGrade = 31;
+        public const int MaxCombo = 10;
 
         private readonly int[] mGradePointDecayRates = new int[MaxGrade + 1];
         private readonly int[,] mGradePointAwards = new int[5, MaxGrade + 1];
+        private readonly int[,] mComboMultiplier = new int[5, MaxCombo + 1];
 
         public GlobalContext()
         {
@@ -113,6 +115,44 @@ namespace App
             mGradePointAwards.Fill(4, 0, 1, 50, 1);
             mGradePointAwards.Fill(4, 1, 5, 40, 1);
             mGradePointAwards.Fill(4, 5, mGradePointAwards.GetLength(1), 30, 1);
+
+            mComboMultiplier.Fill(1, 1, mComboMultiplier.GetLength(1), 10, 1);
+            mComboMultiplier.Fill(2, 1, 2, 10, 1);
+            mComboMultiplier.Fill(2, 2, 4, 12, 1);
+            mComboMultiplier.Fill(2, 4, 8, 14, 1);
+            mComboMultiplier.Fill(2, 8, 10, 15, 1);
+            mComboMultiplier.Fill(2, 10, mComboMultiplier.GetLength(1), 20, 1);
+            mComboMultiplier[3, 1] = 10;
+            mComboMultiplier[3, 2] = 14;
+            mComboMultiplier[3, 3] = 15;
+            mComboMultiplier[3, 4] = 16;
+            mComboMultiplier[3, 5] = 17;
+            mComboMultiplier[3, 6] = 18;
+            mComboMultiplier[3, 7] = 19;
+            mComboMultiplier[3, 8] = 20;
+            mComboMultiplier[3, 9] = 21;
+            mComboMultiplier[3, 10] = 25;
+            mComboMultiplier[4, 1] = 10;
+            mComboMultiplier[4, 2] = 15;
+            mComboMultiplier[4, 3] = 18;
+            mComboMultiplier[4, 4] = 20;
+            mComboMultiplier[4, 5] = 22;
+            mComboMultiplier[4, 6] = 23;
+            mComboMultiplier[4, 7] = 24;
+            mComboMultiplier[4, 8] = 25;
+            mComboMultiplier[4, 9] = 26;
+            mComboMultiplier[4, 10] = 30;
+        }
+
+        public int GradePointDecayRate(int grade)
+        {
+            return mGradePointDecayRates[grade];
+        }
+
+        public int GradePointAward(int linesCleared, int grade, int combo, int level)
+        {
+            return (mGradePointAwards[linesCleared, grade] * mComboMultiplier[linesCleared, combo] +
+                9) / 10 * (level / 250 + 1);
         }
     }
 }
