@@ -71,6 +71,11 @@ namespace UI
                     new ClientQueryGameResultPacket {MatchID = mMatchID}),
                 (status, response) =>
                 {
+                    if (!gameObject)
+                    {
+                        return;
+                    }
+
                     if (status != ResponseStatus.Success)
                     {
                         mLoadingText.text = "Error";
