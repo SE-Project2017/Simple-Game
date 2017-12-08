@@ -1,8 +1,6 @@
-﻿using Multiplayer;
+﻿using UnityEngine;
 
-using UnityEngine;
-
-namespace UI
+namespace Multiplayer
 {
     public class MultiplayerGameEndUI : MonoBehaviour
     {

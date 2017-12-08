@@ -28,6 +28,9 @@ namespace App
         private readonly int[] mGradePointDecayRates = new int[MaxGrade + 1];
         private readonly int[,] mGradePointAwards = new int[5, MaxGrade + 1];
         private readonly int[,] mComboMultiplier = new int[5, MaxCombo + 1];
+        private readonly int[] mGradeBoost = new int[MaxGrade + 1];
+
+        private readonly string[] mDisplayGradeText = new string[18];
 
         public GlobalContext()
         {
@@ -142,6 +145,34 @@ namespace App
             mComboMultiplier[4, 8] = 25;
             mComboMultiplier[4, 9] = 26;
             mComboMultiplier[4, 10] = 30;
+
+            mGradeBoost[0] = 0;
+            mGradeBoost[1] = 1;
+            mGradeBoost[2] = 2;
+            mGradeBoost[3] = 3;
+            mGradeBoost[4] = 4;
+            mGradeBoost.Fill(5, 7, 5);
+            mGradeBoost.Fill(7, 9, 6);
+            mGradeBoost.Fill(9, 12, 7);
+            mGradeBoost.Fill(12, 15, 8);
+            mGradeBoost.Fill(15, 18, 9);
+            mGradeBoost.Fill(18, 19, 10);
+            mGradeBoost.Fill(19, 20, 11);
+            mGradeBoost.Fill(20, 23, 12);
+            mGradeBoost.Fill(23, 25, 13);
+            mGradeBoost.Fill(25, 27, 14);
+            mGradeBoost.Fill(27, 29, 15);
+            mGradeBoost.Fill(29, 31, 16);
+            mGradeBoost.Fill(31, mGradeBoost.Length, 17);
+
+            for (int i = 0; i < 9; ++i)
+            {
+                mDisplayGradeText[i] = (9 - i).ToString();
+            }
+            for (int i = 9; i < 18; ++i)
+            {
+                mDisplayGradeText[i] = "S" + (i - 8);
+            }
         }
 
         public int GradePointDecayRate(int grade)
@@ -153,6 +184,16 @@ namespace App
         {
             return (mGradePointAwards[linesCleared, grade] * mComboMultiplier[linesCleared, combo] +
                 9) / 10 * (level / 250 + 1);
+        }
+
+        public int GradeBoost(int grade)
+        {
+            return mGradeBoost[grade];
+        }
+
+        public string DisplayGradeText(int displayGrade)
+        {
+            return mDisplayGradeText[displayGrade];
         }
     }
 }

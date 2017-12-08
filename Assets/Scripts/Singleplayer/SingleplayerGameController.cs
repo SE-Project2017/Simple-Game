@@ -34,6 +34,9 @@ namespace Singleplayer
         [SerializeField]
         private InputController mInputController = null;
 
+        [SerializeField]
+        private SingleplayerUI mSingleplayerUI = null;
+
         private GlobalContext mContext;
         private ClientController mController;
 
@@ -70,7 +73,7 @@ namespace Singleplayer
 
         public void Start()
         {
-            mGameGrid.OnGameEnd += EndGame;
+            mGameGrid.OnGameEnd += OnGameEnd;
             mGameGrid.OnTetrominoLocked += linesCleared =>
             {
                 LevelAdvance(0);
@@ -165,14 +168,16 @@ namespace Singleplayer
             mGameUI.ResetState();
         }
 
-        private void EndGame()
+        private void OnGameEnd()
         {
             if (!mController.IsOfflineMode)
             {
                 StartCoroutine(UploadGameResult());
             }
-            mController.OnSingleplayerGameEnd();
-            StartCoroutine(Utilities.FadeOutLoadScene("MainMenu"));
+
+            int displayGrade = 0;
+            displayGrade += mContext.GradeBoost(mGrade);
+            mSingleplayerUI.DisplayGameEndUI(displayGrade);
         }
 
         private void LevelAdvance(int linesCleared)
@@ -192,7 +197,7 @@ namespace Singleplayer
             if (Level >= mMaxLevel)
             {
                 Level = mMaxLevel;
-                EndGame();
+                OnGameEnd();
             }
         }
 
