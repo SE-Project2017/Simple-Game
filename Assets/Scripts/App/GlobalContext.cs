@@ -22,15 +22,15 @@ namespace App
         public readonly int[] LevelClearDelay = new int[2000];
         public readonly int[] LevelAdvance = {0, 1, 2, 4, 6};
 
-        public const int MaxGrade = 31;
+        public const int MaxInternalGrade = 31;
         public const int MaxCombo = 10;
 
-        private readonly int[] mGradePointDecayRates = new int[MaxGrade + 1];
-        private readonly int[,] mGradePointAwards = new int[5, MaxGrade + 1];
-        private readonly int[,] mComboMultiplier = new int[5, MaxCombo + 1];
-        private readonly int[] mGradeBoost = new int[MaxGrade + 1];
+        private readonly int[] mInternalGradePointDecayRates = new int[MaxInternalGrade + 1];
+        private readonly int[,] mInternalGradePointAwards = new int[5, MaxInternalGrade + 1];
+        private readonly int[,] mInternalGradePointComboMultiplier = new int[5, MaxCombo + 1];
+        private readonly int[] mInternalGradeBoost = new int[MaxInternalGrade + 1];
 
-        private readonly string[] mDisplayGradeText = new string[18];
+        private readonly string[] mGradeText = new string[18];
 
         public GlobalContext()
         {
@@ -93,107 +93,111 @@ namespace App
             LevelClearDelay.Fill(700, 800, 12);
             LevelClearDelay.Fill(800, LevelClearDelay.Length, 6);
 
-            mGradePointDecayRates.Fill(0, 1, 125);
-            mGradePointDecayRates.Fill(1, 3, 80);
-            mGradePointDecayRates.Fill(3, 4, 50);
-            mGradePointDecayRates.Fill(4, 7, 45);
-            mGradePointDecayRates.Fill(7, 12, 40);
-            mGradePointDecayRates.Fill(12, 15, 30);
-            mGradePointDecayRates.Fill(15, 20, 20);
-            mGradePointDecayRates.Fill(20, 30, 15);
-            mGradePointDecayRates.Fill(30, mGradePointDecayRates.Length, 10);
+            mInternalGradePointDecayRates.Fill(0, 1, 125);
+            mInternalGradePointDecayRates.Fill(1, 3, 80);
+            mInternalGradePointDecayRates.Fill(3, 4, 50);
+            mInternalGradePointDecayRates.Fill(4, 7, 45);
+            mInternalGradePointDecayRates.Fill(7, 12, 40);
+            mInternalGradePointDecayRates.Fill(12, 15, 30);
+            mInternalGradePointDecayRates.Fill(15, 20, 20);
+            mInternalGradePointDecayRates.Fill(20, 30, 15);
+            mInternalGradePointDecayRates.Fill(30, mInternalGradePointDecayRates.Length, 10);
 
-            mGradePointAwards.Fill(1, 0, 5, 10, 1);
-            mGradePointAwards.Fill(1, 5, 10, 5, 1);
-            mGradePointAwards.Fill(1, 10, mGradePointAwards.GetLength(1), 2, 1);
-            mGradePointAwards.Fill(2, 0, 3, 20, 1);
-            mGradePointAwards.Fill(2, 3, 6, 15, 1);
-            mGradePointAwards.Fill(2, 6, 10, 10, 1);
-            mGradePointAwards.Fill(2, 10, mGradePointAwards.GetLength(1), 12, 1);
-            mGradePointAwards.Fill(3, 0, 1, 40, 1);
-            mGradePointAwards.Fill(3, 1, 4, 30, 1);
-            mGradePointAwards.Fill(3, 4, 7, 20, 1);
-            mGradePointAwards.Fill(3, 7, 10, 15, 1);
-            mGradePointAwards.Fill(3, 10, mGradePointAwards.GetLength(1), 13, 1);
-            mGradePointAwards.Fill(4, 0, 1, 50, 1);
-            mGradePointAwards.Fill(4, 1, 5, 40, 1);
-            mGradePointAwards.Fill(4, 5, mGradePointAwards.GetLength(1), 30, 1);
+            mInternalGradePointAwards.Fill(1, 0, 5, 10, 1);
+            mInternalGradePointAwards.Fill(1, 5, 10, 5, 1);
+            mInternalGradePointAwards.Fill(1, 10, mInternalGradePointAwards.GetLength(1), 2, 1);
+            mInternalGradePointAwards.Fill(2, 0, 3, 20, 1);
+            mInternalGradePointAwards.Fill(2, 3, 6, 15, 1);
+            mInternalGradePointAwards.Fill(2, 6, 10, 10, 1);
+            mInternalGradePointAwards.Fill(2, 10, mInternalGradePointAwards.GetLength(1), 12, 1);
+            mInternalGradePointAwards.Fill(3, 0, 1, 40, 1);
+            mInternalGradePointAwards.Fill(3, 1, 4, 30, 1);
+            mInternalGradePointAwards.Fill(3, 4, 7, 20, 1);
+            mInternalGradePointAwards.Fill(3, 7, 10, 15, 1);
+            mInternalGradePointAwards.Fill(3, 10, mInternalGradePointAwards.GetLength(1), 13, 1);
+            mInternalGradePointAwards.Fill(4, 0, 1, 50, 1);
+            mInternalGradePointAwards.Fill(4, 1, 5, 40, 1);
+            mInternalGradePointAwards.Fill(4, 5, mInternalGradePointAwards.GetLength(1), 30, 1);
 
-            mComboMultiplier.Fill(1, 1, mComboMultiplier.GetLength(1), 10, 1);
-            mComboMultiplier.Fill(2, 1, 2, 10, 1);
-            mComboMultiplier.Fill(2, 2, 4, 12, 1);
-            mComboMultiplier.Fill(2, 4, 8, 14, 1);
-            mComboMultiplier.Fill(2, 8, 10, 15, 1);
-            mComboMultiplier.Fill(2, 10, mComboMultiplier.GetLength(1), 20, 1);
-            mComboMultiplier[3, 1] = 10;
-            mComboMultiplier[3, 2] = 14;
-            mComboMultiplier[3, 3] = 15;
-            mComboMultiplier[3, 4] = 16;
-            mComboMultiplier[3, 5] = 17;
-            mComboMultiplier[3, 6] = 18;
-            mComboMultiplier[3, 7] = 19;
-            mComboMultiplier[3, 8] = 20;
-            mComboMultiplier[3, 9] = 21;
-            mComboMultiplier[3, 10] = 25;
-            mComboMultiplier[4, 1] = 10;
-            mComboMultiplier[4, 2] = 15;
-            mComboMultiplier[4, 3] = 18;
-            mComboMultiplier[4, 4] = 20;
-            mComboMultiplier[4, 5] = 22;
-            mComboMultiplier[4, 6] = 23;
-            mComboMultiplier[4, 7] = 24;
-            mComboMultiplier[4, 8] = 25;
-            mComboMultiplier[4, 9] = 26;
-            mComboMultiplier[4, 10] = 30;
+            mInternalGradePointComboMultiplier.Fill(1, 1,
+                mInternalGradePointComboMultiplier.GetLength(1), 10, 1);
+            mInternalGradePointComboMultiplier.Fill(2, 1, 2, 10, 1);
+            mInternalGradePointComboMultiplier.Fill(2, 2, 4, 12, 1);
+            mInternalGradePointComboMultiplier.Fill(2, 4, 8, 14, 1);
+            mInternalGradePointComboMultiplier.Fill(2, 8, 10, 15, 1);
+            mInternalGradePointComboMultiplier.Fill(2, 10,
+                mInternalGradePointComboMultiplier.GetLength(1), 20, 1);
+            mInternalGradePointComboMultiplier[3, 1] = 10;
+            mInternalGradePointComboMultiplier[3, 2] = 14;
+            mInternalGradePointComboMultiplier[3, 3] = 15;
+            mInternalGradePointComboMultiplier[3, 4] = 16;
+            mInternalGradePointComboMultiplier[3, 5] = 17;
+            mInternalGradePointComboMultiplier[3, 6] = 18;
+            mInternalGradePointComboMultiplier[3, 7] = 19;
+            mInternalGradePointComboMultiplier[3, 8] = 20;
+            mInternalGradePointComboMultiplier[3, 9] = 21;
+            mInternalGradePointComboMultiplier[3, 10] = 25;
+            mInternalGradePointComboMultiplier[4, 1] = 10;
+            mInternalGradePointComboMultiplier[4, 2] = 15;
+            mInternalGradePointComboMultiplier[4, 3] = 18;
+            mInternalGradePointComboMultiplier[4, 4] = 20;
+            mInternalGradePointComboMultiplier[4, 5] = 22;
+            mInternalGradePointComboMultiplier[4, 6] = 23;
+            mInternalGradePointComboMultiplier[4, 7] = 24;
+            mInternalGradePointComboMultiplier[4, 8] = 25;
+            mInternalGradePointComboMultiplier[4, 9] = 26;
+            mInternalGradePointComboMultiplier[4, 10] = 30;
 
-            mGradeBoost[0] = 0;
-            mGradeBoost[1] = 1;
-            mGradeBoost[2] = 2;
-            mGradeBoost[3] = 3;
-            mGradeBoost[4] = 4;
-            mGradeBoost.Fill(5, 7, 5);
-            mGradeBoost.Fill(7, 9, 6);
-            mGradeBoost.Fill(9, 12, 7);
-            mGradeBoost.Fill(12, 15, 8);
-            mGradeBoost.Fill(15, 18, 9);
-            mGradeBoost.Fill(18, 19, 10);
-            mGradeBoost.Fill(19, 20, 11);
-            mGradeBoost.Fill(20, 23, 12);
-            mGradeBoost.Fill(23, 25, 13);
-            mGradeBoost.Fill(25, 27, 14);
-            mGradeBoost.Fill(27, 29, 15);
-            mGradeBoost.Fill(29, 31, 16);
-            mGradeBoost.Fill(31, mGradeBoost.Length, 17);
+            mInternalGradeBoost[0] = 0;
+            mInternalGradeBoost[1] = 1;
+            mInternalGradeBoost[2] = 2;
+            mInternalGradeBoost[3] = 3;
+            mInternalGradeBoost[4] = 4;
+            mInternalGradeBoost.Fill(5, 7, 5);
+            mInternalGradeBoost.Fill(7, 9, 6);
+            mInternalGradeBoost.Fill(9, 12, 7);
+            mInternalGradeBoost.Fill(12, 15, 8);
+            mInternalGradeBoost.Fill(15, 18, 9);
+            mInternalGradeBoost.Fill(18, 19, 10);
+            mInternalGradeBoost.Fill(19, 20, 11);
+            mInternalGradeBoost.Fill(20, 23, 12);
+            mInternalGradeBoost.Fill(23, 25, 13);
+            mInternalGradeBoost.Fill(25, 27, 14);
+            mInternalGradeBoost.Fill(27, 29, 15);
+            mInternalGradeBoost.Fill(29, 31, 16);
+            mInternalGradeBoost.Fill(31, mInternalGradeBoost.Length, 17);
 
             for (int i = 0; i < 9; ++i)
             {
-                mDisplayGradeText[i] = (9 - i).ToString();
+                mGradeText[i] = (9 - i).ToString();
             }
             for (int i = 9; i < 18; ++i)
             {
-                mDisplayGradeText[i] = "S" + (i - 8);
+                mGradeText[i] = "S" + (i - 8);
             }
         }
 
-        public int GradePointDecayRate(int grade)
+        public int InternalGradePointDecayRate(int internalGrade)
         {
-            return mGradePointDecayRates[grade];
+            return mInternalGradePointDecayRates[internalGrade];
         }
 
-        public int GradePointAward(int linesCleared, int grade, int combo, int level)
+        public int InternalGradePointAward(int linesCleared, int internalGrade, int combo,
+            int level)
         {
-            return (mGradePointAwards[linesCleared, grade] * mComboMultiplier[linesCleared, combo] +
-                9) / 10 * (level / 250 + 1);
+            return (mInternalGradePointAwards[linesCleared, internalGrade] *
+                    mInternalGradePointComboMultiplier[linesCleared, combo] + 9) / 10 *
+                (level / 250 + 1);
         }
 
-        public int GradeBoost(int grade)
+        public int InternalGradeBoost(int internalGrade)
         {
-            return mGradeBoost[grade];
+            return mInternalGradeBoost[internalGrade];
         }
 
-        public string DisplayGradeText(int displayGrade)
+        public string GradeText(int grade)
         {
-            return mDisplayGradeText[displayGrade];
+            return mGradeText[grade];
         }
     }
 }

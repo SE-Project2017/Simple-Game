@@ -4,16 +4,16 @@ namespace Singleplayer.Packets
 {
     public class SingleplayerResultPacket : SerializablePacket
     {
-        public int Placeholder;
+        public int Grade;
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(Placeholder);
+            writer.Write(Grade);
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            Placeholder = reader.ReadInt32();
+            Grade = reader.ReadInt32();
         }
     }
 }

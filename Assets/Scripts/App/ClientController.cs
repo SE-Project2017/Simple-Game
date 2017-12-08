@@ -87,15 +87,28 @@ namespace App
             }
         }
 
+        public int SingleplayerBestGrade
+        {
+            get { return mSingleplayerBestGrade; }
+            private set
+            {
+                mSingleplayerBestGrade = value;
+                if (OnSingleplayerBestGradeChange != null)
+                {
+                    OnSingleplayerBestGradeChange.Invoke(value);
+                }
+            }
+        }
+
         public int SingleplayerGamesPlayed
         {
             get { return mSingleplayerGamesPlayed; }
             private set
             {
                 mSingleplayerGamesPlayed = value;
-                if (OnSingleplayerGameCountChange != null)
+                if (OnSingleplayerGamesPlayedChange != null)
                 {
-                    OnSingleplayerGameCountChange.Invoke(value);
+                    OnSingleplayerGamesPlayedChange.Invoke(value);
                 }
             }
         }
@@ -126,7 +139,8 @@ namespace App
         public event Action<int> OnMultiplayerGamesPlayedChange;
         public event Action<int> OnMultiplayerMmrChange;
 
-        public event Action<int> OnSingleplayerGameCountChange;
+        public event Action<int> OnSingleplayerBestGradeChange;
+        public event Action<int> OnSingleplayerGamesPlayedChange;
 
         public event Action OnSearchStarted;
         public event Action OnSearchStopped;
@@ -142,6 +156,7 @@ namespace App
         private int mMultiplayerGamesPlayed;
         private int mMultiplayerMmr;
 
+        private int mSingleplayerBestGrade;
         private int mSingleplayerGamesPlayed;
 
         private bool mIsOfflineMode;
@@ -160,6 +175,7 @@ namespace App
                     new ObservableInt(ProfileKey.MultiplayerGamesPlayed),
                     new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
                     new ObservableInt(ProfileKey.MatchmakingRating),
+                    new ObservableInt(ProfileKey.SingleplayerBestGrade),
                 };
                 RetriveProfile(profile);
             };
@@ -311,6 +327,12 @@ namespace App
                 SingleplayerGamesPlayed = singleplayerGamesPlayedProp.Value;
                 singleplayerGamesPlayedProp.OnDirty += property =>
                     SingleplayerGamesPlayed = singleplayerGamesPlayedProp.Value;
+
+                var singleplayerBestGradeProp =
+                    profile.GetProperty<ObservableInt>(ProfileKey.SingleplayerBestGrade);
+                SingleplayerBestGrade = singleplayerBestGradeProp.Value;
+                singleplayerBestGradeProp.OnDirty += property =>
+                    SingleplayerBestGrade = singleplayerBestGradeProp.Value;
             });
         }
 

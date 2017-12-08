@@ -24,9 +24,9 @@ namespace Singleplayer
             mController = ClientController.Instance;
         }
 
-        public void DisplayGameEndUI(int displayGrade)
+        public void DisplayGameEndUI(int grade)
         {
-            mGradeText.text = mContext.DisplayGradeText(displayGrade);
+            mGradeText.text = mContext.GradeText(grade);
             mGameEndUI.SetActive(true);
         }
 

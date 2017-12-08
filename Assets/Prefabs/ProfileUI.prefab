@@ -11,6 +11,23 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 1481641822155280}
   m_IsPrefabParent: 1
+--- !u!1 &1007059898961596
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 224725038332580098}
+  - component: {fileID: 222541806846787094}
+  - component: {fileID: 114529009613867480}
+  m_Layer: 5
+  m_Name: GamesPlayedText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &1074114378677858
 GameObject:
   m_ObjectHideFlags: 1
@@ -38,7 +55,7 @@ GameObject:
   - component: {fileID: 222505159347702126}
   - component: {fileID: 114756224223667938}
   m_Layer: 5
-  m_Name: GamesPlayedText
+  m_Name: BestGradeText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -347,7 +364,8 @@ MonoBehaviour:
   mMultiplayerWinsText: {fileID: 114790084546645900}
   mMultiplayerLossesText: {fileID: 114109076973599094}
   mMultiplayerWinRateText: {fileID: 114932775023923866}
-  mSingleplayerGamesPlayedText: {fileID: 114756224223667938}
+  mSingleplayerBestGradeText: {fileID: 114756224223667938}
+  mSingleplayerGamesPlayedText: {fileID: 114529009613867480}
 --- !u!114 &114437721748700608
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -381,6 +399,39 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Singleplayer
+--- !u!114 &114529009613867480
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1007059898961596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 884dd0efa6d18c64da3a4ec45265a07a, type: 3}
+    m_FontSize: 14
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 'Games Played: 0'
 --- !u!114 &114581419244166508
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -657,7 +708,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Games Played: 0'
+  m_Text: 'Best Grade: S9'
 --- !u!114 &114790084546645900
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -862,6 +913,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1511802920689500}
+--- !u!222 &222541806846787094
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1007059898961596}
 --- !u!222 &222562902363450884
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -905,16 +962,16 @@ RectTransform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1178266846915548}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.000015258789, y: 41.999985, z: 0}
-  m_LocalScale: {x: 1.0000017, y: 1.0000017, z: 1.0000017}
+  m_LocalPosition: {x: 0, y: -7.848557, z: 0}
+  m_LocalScale: {x: 0.99999803, y: 0.99999803, z: 0.99999803}
   m_Children: []
   m_Father: {fileID: 224974763258664878}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000015258789, y: 41.999985}
-  m_SizeDelta: {x: 230, y: 30}
+  m_AnchoredPosition: {x: 0, y: -7.8485565}
+  m_SizeDelta: {x: 230, y: 15.697074}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224265023493040186
 RectTransform:
@@ -1101,6 +1158,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000015258789, y: 10.000015}
   m_SizeDelta: {x: 230, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &224725038332580098
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1007059898961596}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.000015258789, y: 41.999985, z: 0}
+  m_LocalScale: {x: 1.0000017, y: 1.0000017, z: 1.0000017}
+  m_Children: []
+  m_Father: {fileID: 224974763258664878}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.000015258789, y: 41.999985}
+  m_SizeDelta: {x: 230, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224869457038226300
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1137,6 +1212,7 @@ RectTransform:
   m_Children:
   - {fileID: 224589176095038664}
   - {fileID: 224237902977003242}
+  - {fileID: 224725038332580098}
   m_Father: {fileID: 224490895277825784}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -59,9 +59,9 @@ namespace Singleplayer
 
         private int mLevel;
         private int mCombo;
-        private int mGradePoints;
-        private int mGrade;
-        private int mGradePointDecayFrames;
+        private int mInternalGradePoints;
+        private int mInternalGrade;
+        private int mInternalGradePointDecayFrames;
 
         private int mMaxLevel = 500;
 
@@ -97,14 +97,16 @@ namespace Singleplayer
 
                 if (linesCleared != 0)
                 {
-                    mGradePoints += mContext.GradePointAward(linesCleared, mGrade, mCombo, mLevel);
-                    if (mGradePoints >= 100)
+                    mInternalGradePoints +=
+                        mContext.InternalGradePointAward(linesCleared, mInternalGrade, mCombo,
+                            mLevel);
+                    if (mInternalGradePoints >= 100)
                     {
-                        ++mGrade;
-                        mGradePoints = 0;
-                        if (mGrade > GlobalContext.MaxGrade)
+                        ++mInternalGrade;
+                        mInternalGradePoints = 0;
+                        if (mInternalGrade > GlobalContext.MaxInternalGrade)
                         {
-                            mGrade = GlobalContext.MaxGrade;
+                            mInternalGrade = GlobalContext.MaxInternalGrade;
                         }
                     }
                 }
@@ -136,14 +138,15 @@ namespace Singleplayer
                     mGameGrid.CurrentTetrominoState == GameGrid.TetrominoState.Locking)
             )
             {
-                --mGradePointDecayFrames;
-                if (mGradePointDecayFrames == 0)
+                --mInternalGradePointDecayFrames;
+                if (mInternalGradePointDecayFrames == 0)
                 {
-                    if (mGradePoints > 0)
+                    if (mInternalGradePoints > 0)
                     {
-                        --mGradePoints;
+                        --mInternalGradePoints;
                     }
-                    mGradePointDecayFrames = mContext.GradePointDecayRate(mGrade);
+                    mInternalGradePointDecayFrames =
+                        mContext.InternalGradePointDecayRate(mInternalGrade);
                 }
             }
         }
@@ -152,8 +155,9 @@ namespace Singleplayer
         public void OnGUI()
         {
             GUI.Label(new Rect(0, 0, 100, 60),
-                string.Format("Combo: {0}\nGrade Points: {1}\nGrade: {2}", mCombo, mGradePoints,
-                    mGrade));
+                string.Format("Combo: {0}\nGrade Points: {1}\nGrade: {2}", mCombo,
+                    mInternalGradePoints,
+                    mInternalGrade));
         }
 #endif
 
@@ -161,23 +165,23 @@ namespace Singleplayer
         {
             Level = 0;
             mCombo = 1;
-            mGradePoints = 0;
-            mGrade = 0;
-            mGradePointDecayFrames = mContext.GradePointDecayRate(mGrade);
+            mInternalGradePoints = 0;
+            mInternalGrade = 0;
+            mInternalGradePointDecayFrames = mContext.InternalGradePointDecayRate(mInternalGrade);
             mEvents.Clear();
             mGameUI.ResetState();
         }
 
         private void OnGameEnd()
         {
+            int grade = 0;
+            grade += mContext.InternalGradeBoost(mInternalGrade);
+            mSingleplayerUI.DisplayGameEndUI(grade);
+
             if (!mController.IsOfflineMode)
             {
-                StartCoroutine(UploadGameResult());
+                StartCoroutine(UploadGameResult(grade));
             }
-
-            int displayGrade = 0;
-            displayGrade += mContext.GradeBoost(mGrade);
-            mSingleplayerUI.DisplayGameEndUI(displayGrade);
         }
 
         private void LevelAdvance(int linesCleared)
@@ -201,7 +205,7 @@ namespace Singleplayer
             }
         }
 
-        private IEnumerator UploadGameResult()
+        private IEnumerator UploadGameResult(int grade)
         {
             while (!MsfContext.Connection.IsConnected)
             {
@@ -209,7 +213,7 @@ namespace Singleplayer
             }
 
             MsfContext.Connection.Peer.SendMessage((short) OperationCode.UploadSingleplayerResult,
-                new SingleplayerResultPacket());
+                new SingleplayerResultPacket {Grade = grade});
         }
 
         private static GameGrid.GameButtonEvent.ButtonType ButtonToType(

@@ -26,12 +26,17 @@ namespace UI
         private Text mMultiplayerWinRateText = null;
 
         [SerializeField]
+        private Text mSingleplayerBestGradeText = null;
+
+        [SerializeField]
         private Text mSingleplayerGamesPlayedText = null;
 
+        private GlobalContext mContext;
         private ClientController mController;
 
         public void Awake()
         {
+            mContext = GlobalContext.Instance;
             mController = ClientController.Instance;
         }
 
@@ -42,18 +47,21 @@ namespace UI
             mController.OnMultiplayerGamesPlayedChange += OnMultiplayerGamesPlayedChange;
             mController.OnMultiplayerWinsChange += OnMultiplayerWinsChange;
             mController.OnMultiplayerLossesChange += OnMultiplayerLossesChange;
-            mController.OnSingleplayerGameCountChange += OnSingleplayerGamesPlayedChange;
+            mController.OnSingleplayerBestGradeChange += OnSingleplayerBestGradeChange;
+            mController.OnSingleplayerGamesPlayedChange += OnSingleplayerGamesPlayedChange;
             OnNameChange(null);
             OnMultiplayerMmrChange(0);
             OnMultiplayerGamesPlayedChange(0);
             OnMultiplayerWinsChange(0);
             OnMultiplayerLossesChange(0);
+            OnSingleplayerBestGradeChange(0);
             OnSingleplayerGamesPlayedChange(0);
         }
 
         public void OnDisable()
         {
-            mController.OnSingleplayerGameCountChange -= OnSingleplayerGamesPlayedChange;
+            mController.OnSingleplayerGamesPlayedChange -= OnSingleplayerGamesPlayedChange;
+            mController.OnSingleplayerBestGradeChange -= OnSingleplayerBestGradeChange;
             mController.OnMultiplayerLossesChange -= OnMultiplayerLossesChange;
             mController.OnMultiplayerWinsChange -= OnMultiplayerWinsChange;
             mController.OnMultiplayerGamesPlayedChange -= OnMultiplayerGamesPlayedChange;
@@ -93,6 +101,12 @@ namespace UI
         {
             mMultiplayerLossesText.text =
                 string.Format("Losses: {0}", mController.MultiplayerLosses);
+        }
+
+        private void OnSingleplayerBestGradeChange(int value)
+        {
+            mSingleplayerBestGradeText.text = string.Format("Best Grade: {0}",
+                mContext.GradeText(mController.SingleplayerBestGrade));
         }
 
         private void OnSingleplayerGamesPlayedChange(int value)

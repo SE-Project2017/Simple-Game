@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 
 using App;
 
@@ -52,12 +53,17 @@ namespace MsfWrapper.Modules.Profile
             var profile = new ObservableServerProfile(username)
             {
                 new ObservableInt(ProfileKey.SingleplayerGamesPlayed),
+                new ObservableInt(ProfileKey.SingleplayerBestGrade),
             };
             MsfContext.Server.Profiles.FillProfileValues(profile, (successful, error) =>
             {
                 if (successful)
                 {
                     profile.GetProperty<ObservableInt>(ProfileKey.SingleplayerGamesPlayed).Add(1);
+
+                    var bestGrade =
+                        profile.GetProperty<ObservableInt>(ProfileKey.SingleplayerBestGrade);
+                    bestGrade.Set(Math.Max(bestGrade.Value, packet.Grade));
                 }
                 else
                 {
