@@ -34,13 +34,13 @@ namespace App
 
         public enum Button
         {
-            Up,
-            Down,
-            Left,
-            Right,
             RotateLeft,
             RotateRight,
+            Left,
+            Right,
             Hold,
+            Up,
+            Down,
         }
     }
 }
