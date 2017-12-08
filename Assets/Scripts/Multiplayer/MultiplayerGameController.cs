@@ -123,12 +123,6 @@ namespace Multiplayer
         private readonly Dictionary<int, GameItem> mRemotePendingItems =
             new Dictionary<int, GameItem>();
 
-/*        private readonly Dictionary<int, int> mLocalPendingLevelAdvances =
-            new Dictionary<int, int>();
-
-        private readonly Dictionary<int, int> mRemotePendingLevelAdvances =
-            new Dictionary<int, int>();*/
-
         private const int InteractionDelay = 40;
 
         private const int MaxItemCharge = 20;
@@ -187,14 +181,12 @@ namespace Multiplayer
                 {
                     mLocalGameGrid.GenerateNextItem();
                 }
-
-                int advance = 1;
+                
+                LocalLevelAdvance(0);
                 if (linesCleared >= 1)
                 {
-                    advance += mContext.LevelAdvance[linesCleared];
+                    LocalLevelAdvance(linesCleared);
                 }
-                LocalLevelAdvance(advance);
-//                mRemotePendingLevelAdvances[mLocalFrameCount + InteractionDelay] = advance;
             };
             mRemoteGameGrid.OnTetrominoLocked += linesCleared =>
             {
@@ -204,13 +196,11 @@ namespace Multiplayer
                     mRemoteGameGrid.GenerateNextItem();
                 }
 
-                int advance = 1;
+                RemoteLevelAdvance(0);
                 if (linesCleared >= 1)
                 {
-                    advance += mContext.LevelAdvance[linesCleared];
+                    RemoteLevelAdvance(linesCleared);
                 }
-                RemoteLevelAdvance(advance);
-//                mLocalPendingLevelAdvances[mRemoteFrameCount + InteractionDelay] = advance;
             };
 
             mLocalGameGrid.OnGameItemCreated += () => LocalItemCharge = 0;
@@ -258,12 +248,6 @@ namespace Multiplayer
                     mLocalPendingBlocks.Remove(frameCount);
                 }
 
-/*                if (mLocalPendingLevelAdvances.ContainsKey(frameCount))
-                {
-                    LocalLevelAdvance(mLocalPendingLevelAdvances[frameCount]);
-                    mLocalPendingLevelAdvances.Remove(frameCount);
-                }*/
-
                 ActivateItem(mLocalPendingItems, frameCount, mLocalGameGrid);
                 UpdateFrame(playerEvents, mLocalGameGrid);
             }
@@ -293,12 +277,6 @@ namespace Multiplayer
                     mRemoteGameGrid.AddBlocks(mRemotePendingBlocks[frameCount]);
                     mRemotePendingBlocks.Remove(frameCount);
                 }
-
-                /*        if (mRemotePendingLevelAdvances.ContainsKey(frameCount))
-                        {
-                            RemoteLevelAdvance(mRemotePendingLevelAdvances[frameCount]);
-                            mRemotePendingLevelAdvances.Remove(frameCount);
-                        }*/
 
                 ActivateItem(mRemotePendingItems, frameCount, mRemoteGameGrid);
                 UpdateFrame(playerEvents, mRemoteGameGrid);
@@ -462,18 +440,40 @@ namespace Multiplayer
             }
         }
 
-        private void LocalLevelAdvance(int advance)
+        private void LocalLevelAdvance(int linesCleared)
         {
-            LocalLevel += advance;
+            if (LocalLevel % 100 == 99 && linesCleared == 0)
+            {
+                return;
+            }
+            if (linesCleared == 0)
+            {
+                ++LocalLevel;
+            }
+            else
+            {
+                LocalLevel += mContext.LevelAdvance[linesCleared];
+            }
             if (LocalLevel > MaxLevel)
             {
                 LocalLevel = MaxLevel;
             }
         }
 
-        private void RemoteLevelAdvance(int advance)
+        private void RemoteLevelAdvance(int linesCleared)
         {
-            RemoteLevel += advance;
+            if (RemoteLevel % 100 == 99 && linesCleared == 0)
+            {
+                return;
+            }
+            if (linesCleared == 0)
+            {
+                ++RemoteLevel;
+            }
+            else
+            {
+                RemoteLevel += mContext.LevelAdvance[linesCleared];
+            }
             if (RemoteLevel > MaxLevel)
             {
                 RemoteLevel = MaxLevel;
