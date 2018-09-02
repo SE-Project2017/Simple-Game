@@ -11,7 +11,7 @@ namespace App
 {
     public class GameGrid : MonoBehaviour
     {
-        public TetrominoState CurrentTetrominoState { get { return mTetrominoState; } }
+        public TetrominoState CurrentTetrominoState { get; private set; }
 
         public GameObject[] TetrominoPrefabs;
         public GameObject BlockPrefab;
@@ -48,7 +48,6 @@ namespace App
         private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
 
         private GameState mState;
-        private TetrominoState mTetrominoState;
         private DasState mDasState;
         private int mIdleFrames;
         private int mLockingFrames;
@@ -162,7 +161,7 @@ namespace App
                 HandleButtonEvent(buttonEvent);
             }
             UpdateDasFrame();
-            switch (mTetrominoState)
+            switch (CurrentTetrominoState)
             {
                 case TetrominoState.Idle:
                     TetrominoIdleFrame();
@@ -182,7 +181,7 @@ namespace App
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            if (mTetrominoState != TetrominoState.AcitvatingItem && mPendingAddBlocks.Count > 0)
+            if (CurrentTetrominoState != TetrominoState.AcitvatingItem && mPendingAddBlocks.Count > 0)
             {
                 var blocks = mPendingAddBlocks.Dequeue();
                 AddBlocks(blocks);
@@ -199,7 +198,7 @@ namespace App
 
         public void AddBlocks(ClearingBlocks blocks)
         {
-            if (mTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingAddBlocks.Enqueue(blocks);
                 return;
@@ -266,22 +265,22 @@ namespace App
 
         public void TargetedShotgun()
         {
-            if (mTetrominoState == TetrominoState.Clearing ||
-                mTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.Clearing ||
+                CurrentTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.Shotgun);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.Shotgun;
-            mTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.AcitvatingItem;
             mActivatingItemFrames = ShotgunActivationDuration;
         }
 
         public void TargetedMirrorBlock()
         {
-            if (mTetrominoState == TetrominoState.Clearing ||
-                mTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.Clearing ||
+                CurrentTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.MirrorBlock);
                 return;
@@ -304,15 +303,15 @@ namespace App
 
         public void TargetedLaser()
         {
-            if (mTetrominoState == TetrominoState.Clearing ||
-                mTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.Clearing ||
+                CurrentTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.Laser);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.Laser;
-            mTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.AcitvatingItem;
             mActivatingItemFrames = LaserActivationDuration;
             mLaserTargetCol = mRandom.Range(0, mGrid.GetLength(1) - 1);
             var obj = Instantiate(LaserPrefab, transform);
@@ -329,15 +328,15 @@ namespace App
 
         public void TargetedUpsideDown()
         {
-            if (mTetrominoState == TetrominoState.Clearing ||
-                mTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.Clearing ||
+                CurrentTetrominoState == TetrominoState.AcitvatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.UpsideDown);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.UpsideDown;
-            mTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.AcitvatingItem;
             mActivatingItemFrames = UpsideDownActivationDuration;
             if (OnPlayUpsideDownAnimation != null)
             {
@@ -383,7 +382,7 @@ namespace App
             mPendingAddBlocks.Clear();
 
             mState = GameState.Idle;
-            mTetrominoState = TetrominoState.Idle;
+            CurrentTetrominoState = TetrominoState.Idle;
             mDasState = DasState.Idle;
 
             mIdleFrames = 0;
@@ -428,7 +427,7 @@ namespace App
         private void ExecuteMirrorBlock()
         {
             mActivatingItem = GameItem.MirrorBlock;
-            mTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.AcitvatingItem;
             mActivatingItemFrames = MirrorBlockActivationDuration;
             FlipMaskAnimator.SetTrigger("Play");
             if (OnPlayFlipAnimation != null)
@@ -449,7 +448,7 @@ namespace App
                     OnNextTetrominosChanged.Invoke();
                 }
 
-                mTetrominoState = TetrominoState.Dropping;
+                CurrentTetrominoState = TetrominoState.Dropping;
                 if (mHoldPressed)
                 {
                     TryHoldTetromino();
@@ -599,7 +598,7 @@ namespace App
             }
             else
             {
-                mTetrominoState = TetrominoState.AcitvatingItem;
+                CurrentTetrominoState = TetrominoState.AcitvatingItem;
             }
         }
 
@@ -896,7 +895,7 @@ namespace App
 
         private void StartLocking()
         {
-            mTetrominoState = TetrominoState.Locking;
+            CurrentTetrominoState = TetrominoState.Locking;
             mLockingFrames = mLockDelay;
         }
 
@@ -1154,8 +1153,8 @@ namespace App
 
         private void TryMoveHorizontally(int cols)
         {
-            if (mTetrominoState != TetrominoState.Dropping &&
-                mTetrominoState != TetrominoState.Locking)
+            if (CurrentTetrominoState != TetrominoState.Dropping &&
+                CurrentTetrominoState != TetrominoState.Locking)
             {
                 return;
             }
@@ -1196,14 +1195,14 @@ namespace App
                     OnRightDown();
                     break;
                 case GameButtonEvent.ButtonType.Up:
-                    if (mTetrominoState == TetrominoState.Dropping)
+                    if (CurrentTetrominoState == TetrominoState.Dropping)
                     {
                         SonicDrop();
                     }
                     break;
                 case GameButtonEvent.ButtonType.Down:
                     mDownPressed = true;
-                    if (mTetrominoState == TetrominoState.Locking)
+                    if (CurrentTetrominoState == TetrominoState.Locking)
                     {
                         LockTetromino();
                     }
@@ -1273,8 +1272,8 @@ namespace App
 
         private void TryRotateLeft()
         {
-            if (mTetrominoState != TetrominoState.Dropping &&
-                mTetrominoState != TetrominoState.Locking)
+            if (CurrentTetrominoState != TetrominoState.Dropping &&
+                CurrentTetrominoState != TetrominoState.Locking)
             {
                 return;
             }
@@ -1292,8 +1291,8 @@ namespace App
 
         private void TryRotateRight()
         {
-            if (mTetrominoState != TetrominoState.Dropping &&
-                mTetrominoState != TetrominoState.Locking)
+            if (CurrentTetrominoState != TetrominoState.Dropping &&
+                CurrentTetrominoState != TetrominoState.Locking)
             {
                 return;
             }
@@ -1320,7 +1319,7 @@ namespace App
             {
                 if (TryFloorKick())
                 {
-                    if (mTetrominoState == TetrominoState.Dropping)
+                    if (CurrentTetrominoState == TetrominoState.Dropping)
                     {
                         StartLocking();
                     }
@@ -1559,7 +1558,7 @@ namespace App
 
         private void StartNewTetromino()
         {
-            mTetrominoState = TetrominoState.Idle;
+            CurrentTetrominoState = TetrominoState.Idle;
             mIdleFrames = mEntryDelay;
             if (mPendingTargetedItems.Count > 0)
             {
@@ -1597,7 +1596,7 @@ namespace App
 
         private void TryUnlockTetromino()
         {
-            if (mTetrominoState != TetrominoState.Locking)
+            if (CurrentTetrominoState != TetrominoState.Locking)
             {
                 return;
             }
@@ -1605,7 +1604,7 @@ namespace App
             PlaceTetromino();
             if (CheckTetromino())
             {
-                mTetrominoState = TetrominoState.Dropping;
+                CurrentTetrominoState = TetrominoState.Dropping;
             }
             --mRow;
             PlaceTetromino();
@@ -1634,7 +1633,7 @@ namespace App
             {
                 return 0;
             }
-            mTetrominoState = TetrominoState.Clearing;
+            CurrentTetrominoState = TetrominoState.Clearing;
             mClearingFrames = mClearDelay;
             foreach (int row in mClearingLines)
             {
@@ -1767,8 +1766,8 @@ namespace App
 
         private void TryHoldTetromino()
         {
-            if (!mHoldEnabled || (mTetrominoState != TetrominoState.Dropping &&
-                mTetrominoState != TetrominoState.Locking))
+            if (!mHoldEnabled || (CurrentTetrominoState != TetrominoState.Dropping &&
+                CurrentTetrominoState != TetrominoState.Locking))
             {
                 return;
             }
@@ -1791,7 +1790,7 @@ namespace App
                 DestroyActiveTetromino();
                 SpawnTetromino(hold);
             }
-            mTetrominoState = TetrominoState.Dropping;
+            CurrentTetrominoState = TetrominoState.Dropping;
             if (OnHoldTetrominoChanged != null)
             {
                 OnHoldTetrominoChanged.Invoke(mHoldTetromino);
