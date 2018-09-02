@@ -8,7 +8,7 @@ Work in progress.
 
 # Requirements
 
-- Unity 2017.2.0f3 or later
+- Unity 2018.2.6f1 or later
 - Master Server Framework
 - CN Controls
 
