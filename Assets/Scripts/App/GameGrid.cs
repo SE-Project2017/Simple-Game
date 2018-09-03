@@ -32,20 +32,28 @@ namespace App
         public event Action OnPlayUpsideDownAnimation;
         public event Action OnNextTetrominosChanged;
 
+        [SerializeField]
         private int mGravity;
+
         private int mEntryDelay;
         private int mClearEntryDelay;
         private int mDasDelay;
         private int mLockDelay;
         private int mClearDelay;
 
-        private readonly Block[,] mGrid = new Block[20, 10];
-        private readonly Block[,] mUpsideDownGrid = new Block[20, 10];
+        private readonly Block[,] mGrid = new Block[22, 10];
+        private readonly Block[,] mUpsideDownGrid = new Block[22, 10];
         private readonly Animator[] mItemClearEffects = new Animator[20];
         private readonly List<int> mClearingLines = new List<int>();
-        private readonly List<Tetromino> mNextTetrominos = new List<Tetromino>();
-        private readonly Queue<GameItem> mPendingTargetedItems = new Queue<GameItem>();
-        private readonly Queue<ClearingBlocks> mPendingAddBlocks = new Queue<ClearingBlocks>();
+
+        private readonly List<Tetromino>
+            mNextTetrominos = new List<Tetromino>();
+
+        private readonly Queue<GameItem> mPendingTargetedItems =
+            new Queue<GameItem>();
+
+        private readonly Queue<ClearingBlocks> mPendingAddBlocks =
+            new Queue<ClearingBlocks>();
 
         private GameState mState;
         private DasState mDasState;
@@ -82,8 +90,24 @@ namespace App
 
         private GlobalContext mContext;
 
-        private readonly int[] mSpawnRows = {0, 1, 0, 0, 0, 0, 0};
-        private readonly int[] mSpawnCols = {6, 4, 4, 4, 4, 4, 4};
+        private static readonly Vector2Int[] SpawnPos =
+        {
+            new Vector2Int(4, 19),
+            new Vector2Int(4, 18),
+            new Vector2Int(4, 18),
+            new Vector2Int(4, 18),
+            new Vector2Int(4, 18),
+            new Vector2Int(4, 18),
+            new Vector2Int(4, 18),
+        };
+
+        // table[tetromino, from, to, test]
+        // 0: original
+        // 1: rotate right
+        // 2: rotate 180
+        // 3: rotate left
+        private static readonly Vector2Int[,,,] WallKickTable =
+            new Vector2Int[7, 4, 4, 5];
 
         private const int FullGravity = 65536;
         private const int ClearItemActivationDuration = 60;
@@ -93,16 +117,137 @@ namespace App
         private const int UpsideDownActivationDuration = 100;
         private const int XRayDuration = 300;
 
+        static GameGrid()
+        {
+            int index = (int) Tetromino.I;
+
+            WallKickTable[index, 0, 1, 0] = new Vector2Int(1, 0);
+            WallKickTable[index, 0, 1, 1] = new Vector2Int(-1, 0);
+            WallKickTable[index, 0, 1, 2] = new Vector2Int(2, 0);
+            WallKickTable[index, 0, 1, 3] = new Vector2Int(2, 2);
+            WallKickTable[index, 0, 1, 4] = new Vector2Int(-1, -1);
+
+            WallKickTable[index, 1, 2, 0] = new Vector2Int(0, -1);
+            WallKickTable[index, 1, 2, 1] = new Vector2Int(-1, -1);
+            WallKickTable[index, 1, 2, 2] = new Vector2Int(2, -1);
+            WallKickTable[index, 1, 2, 3] = new Vector2Int(-1, 1);
+            WallKickTable[index, 1, 2, 4] = new Vector2Int(2, -2);
+
+            WallKickTable[index, 2, 3, 0] = new Vector2Int(-1, 0);
+            WallKickTable[index, 2, 3, 1] = new Vector2Int(1, 0);
+            WallKickTable[index, 2, 3, 2] = new Vector2Int(-2, 0);
+            WallKickTable[index, 2, 3, 3] = new Vector2Int(1, 1);
+            WallKickTable[index, 2, 3, 4] = new Vector2Int(-2, -1);
+
+            WallKickTable[index, 3, 0, 0] = new Vector2Int(0, 1);
+            WallKickTable[index, 3, 0, 1] = new Vector2Int(-2, 1);
+            WallKickTable[index, 3, 0, 2] = new Vector2Int(1, 1);
+            WallKickTable[index, 3, 0, 3] = new Vector2Int(-2, 2);
+            WallKickTable[index, 3, 0, 4] = new Vector2Int(1, -1);
+
+            WallKickTable[index, 0, 3, 0] = new Vector2Int(0, -1);
+            WallKickTable[index, 0, 3, 1] = new Vector2Int(2, -1);
+            WallKickTable[index, 0, 3, 2] = new Vector2Int(-1, -1);
+            WallKickTable[index, 0, 3, 3] = new Vector2Int(-1, 1);
+            WallKickTable[index, 0, 3, 4] = new Vector2Int(2, -2);
+
+            WallKickTable[index, 3, 2, 0] = new Vector2Int(1, 0);
+            WallKickTable[index, 3, 2, 1] = new Vector2Int(2, 0);
+            WallKickTable[index, 3, 2, 2] = new Vector2Int(-1, 0);
+            WallKickTable[index, 3, 2, 3] = new Vector2Int(2, 2);
+            WallKickTable[index, 3, 2, 4] = new Vector2Int(-1, -1);
+
+            WallKickTable[index, 2, 1, 0] = new Vector2Int(0, 1);
+            WallKickTable[index, 2, 1, 1] = new Vector2Int(-2, 1);
+            WallKickTable[index, 2, 1, 2] = new Vector2Int(1, 1);
+            WallKickTable[index, 2, 1, 3] = new Vector2Int(-2, 2);
+            WallKickTable[index, 2, 1, 4] = new Vector2Int(1, 0);
+
+            WallKickTable[index, 1, 0, 0] = new Vector2Int(-1, 0);
+            WallKickTable[index, 1, 0, 1] = new Vector2Int(1, 0);
+            WallKickTable[index, 1, 0, 2] = new Vector2Int(-2, 0);
+            WallKickTable[index, 1, 0, 3] = new Vector2Int(1, 1);
+            WallKickTable[index, 1, 0, 4] = new Vector2Int(-2, -2);
+
+            var offsets = new Vector2Int[7, 4, 5];
+
+            foreach (Tetromino tetromino in new[]
+            {
+                Tetromino.J, Tetromino.L, Tetromino.S, Tetromino.T, Tetromino.Z
+            })
+            {
+                index = (int) tetromino;
+
+                offsets[index, 0, 0] = new Vector2Int(0, 0);
+                offsets[index, 0, 1] = new Vector2Int(0, 0);
+                offsets[index, 0, 2] = new Vector2Int(0, 0);
+                offsets[index, 0, 3] = new Vector2Int(0, 0);
+                offsets[index, 0, 4] = new Vector2Int(0, 0);
+
+                offsets[index, 1, 0] = new Vector2Int(0, 0);
+                offsets[index, 1, 1] = new Vector2Int(1, 0);
+                offsets[index, 1, 2] = new Vector2Int(1, -1);
+                offsets[index, 1, 3] = new Vector2Int(0, 2);
+                offsets[index, 1, 4] = new Vector2Int(1, 2);
+
+                offsets[index, 2, 0] = new Vector2Int(0, 0);
+                offsets[index, 2, 1] = new Vector2Int(0, 0);
+                offsets[index, 2, 2] = new Vector2Int(0, 0);
+                offsets[index, 2, 3] = new Vector2Int(0, 0);
+                offsets[index, 2, 4] = new Vector2Int(0, 0);
+
+                offsets[index, 3, 0] = new Vector2Int(0, 0);
+                offsets[index, 3, 1] = new Vector2Int(-1, 0);
+                offsets[index, 3, 2] = new Vector2Int(-1, -1);
+                offsets[index, 3, 3] = new Vector2Int(0, 2);
+                offsets[index, 3, 4] = new Vector2Int(-1, 2);
+            }
+
+            index = (int) Tetromino.O;
+
+            for (int i = 0; i < 5; ++i)
+            {
+                offsets[index, 0, i] = new Vector2Int(0, 0);
+                offsets[index, 1, i] = new Vector2Int(0, -1);
+                offsets[index, 2, i] = new Vector2Int(-1, -1);
+                offsets[index, 3, i] = new Vector2Int(-1, 0);
+            }
+
+            foreach (Tetromino tetromino in new[]
+            {
+                Tetromino.J, Tetromino.L, Tetromino.S, Tetromino.T, Tetromino.Z,
+                Tetromino.O
+            })
+            {
+                index = (int) tetromino;
+                for (int from = 0; from < 4; ++from)
+                {
+                    foreach (int to in new[]
+                        {(from - 1 + 4) % 4, (from + 1) % 4})
+                    {
+                        for (int test = 0; test < 5; ++test)
+                        {
+                            WallKickTable[index, from, to, test] =
+                                offsets[index, from, test] -
+                                offsets[index, to, test];
+                        }
+                    }
+                }
+            }
+        }
+
         public void Awake()
         {
             mContext = GlobalContext.Instance;
 
             for (int row = 0; row < mItemClearEffects.Length; ++row)
             {
-                mItemClearEffects[row] = Instantiate(ItemClearEffectPrefab, transform)
-                    .GetComponent<Animator>();
+                mItemClearEffects[row] =
+                    Instantiate(ItemClearEffectPrefab, transform)
+                       .GetComponent<Animator>();
                 mItemClearEffects[row].transform.SetLayer(gameObject.layer);
-                mItemClearEffects[row].transform.localPosition = new Vector3(0, RowToY(row), -1);
+                mItemClearEffects[row].transform.localPosition =
+                    new Vector3(0, RowToY(row), -1);
             }
             ResetState();
         }
@@ -175,13 +320,14 @@ namespace App
                 case TetrominoState.Clearing:
                     LineClearFrame();
                     break;
-                case TetrominoState.AcitvatingItem:
+                case TetrominoState.ActivatingItem:
                     ActivatingItemFrame();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            if (CurrentTetrominoState != TetrominoState.AcitvatingItem && mPendingAddBlocks.Count > 0)
+            if (CurrentTetrominoState != TetrominoState.ActivatingItem &&
+                mPendingAddBlocks.Count > 0)
             {
                 var blocks = mPendingAddBlocks.Dequeue();
                 AddBlocks(blocks);
@@ -198,7 +344,7 @@ namespace App
 
         public void AddBlocks(ClearingBlocks blocks)
         {
-            if (CurrentTetrominoState == TetrominoState.AcitvatingItem)
+            if (CurrentTetrominoState == TetrominoState.ActivatingItem)
             {
                 mPendingAddBlocks.Enqueue(blocks);
                 return;
@@ -207,7 +353,9 @@ namespace App
             var valid = blocks.Valid;
             bool endGame = false;
             int lines = properties.GetLength(0);
-            for (int row = 0; row < lines; ++row)
+            for (int row = mGrid.GetLength(0) - 1;
+                 row > mGrid.GetLength(0) - 1 - lines;
+                 --row)
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
@@ -218,18 +366,20 @@ namespace App
                     }
                 }
             }
-            MoveBlockRows(lines, mGrid.GetLength(0), lines, true);
+            MoveBlockRows(0, mGrid.GetLength(0) - lines, lines, true);
             for (int i = 0; i < lines; ++i)
             {
-                int row = mGrid.GetLength(0) - lines + i;
+                int row = lines - 1 - i;
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
                     if (valid[i, col])
                     {
-                        mGrid[row, col] = Instantiate(BlockPrefab).GetComponent<Block>();
+                        mGrid[row, col] = Instantiate(BlockPrefab)
+                           .GetComponent<Block>();
                         mGrid[row, col].transform.SetLayer(gameObject.layer);
                         mGrid[row, col].transform.parent = transform;
-                        mGrid[row, col].transform.localPosition = RowColToPosition(row, col);
+                        mGrid[row, col].transform.localPosition =
+                            RowColToPosition(row, col);
                         mGrid[row, col].Properties = properties[i, col];
                         mGrid[row, col].Color = properties[i, col].Type.Color();
                     }
@@ -239,7 +389,7 @@ namespace App
             {
                 while (!CheckTetromino())
                 {
-                    --mRow;
+                    ++mRow;
                     PlaceTetromino();
                 }
             }
@@ -247,10 +397,11 @@ namespace App
             {
                 PlaceGhost();
             }
-            mClearingLines.RemoveAll(row => row < lines);
+            mClearingLines.RemoveAll(
+                row => mGrid.GetLength(0) - 1 - lines < row);
             for (int i = 0; i < mClearingLines.Count; ++i)
             {
-                mClearingLines[i] = mClearingLines[i] - lines;
+                mClearingLines[i] = mClearingLines[i] + lines;
             }
             if (endGame)
             {
@@ -260,27 +411,29 @@ namespace App
 
         public void GenerateNextItem()
         {
-            mNextGameItem = (GameItem) mRandom.Range(0, Enum.GetNames(typeof(GameItem)).Length - 1);
+            mNextGameItem = (GameItem) mRandom.Range(
+                0,
+                Enum.GetNames(typeof(GameItem)).Length - 1);
         }
 
         public void TargetedShotgun()
         {
             if (CurrentTetrominoState == TetrominoState.Clearing ||
-                CurrentTetrominoState == TetrominoState.AcitvatingItem)
+                CurrentTetrominoState == TetrominoState.ActivatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.Shotgun);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.Shotgun;
-            CurrentTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = ShotgunActivationDuration;
         }
 
         public void TargetedMirrorBlock()
         {
             if (CurrentTetrominoState == TetrominoState.Clearing ||
-                CurrentTetrominoState == TetrominoState.AcitvatingItem)
+                CurrentTetrominoState == TetrominoState.ActivatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.MirrorBlock);
                 return;
@@ -304,14 +457,14 @@ namespace App
         public void TargetedLaser()
         {
             if (CurrentTetrominoState == TetrominoState.Clearing ||
-                CurrentTetrominoState == TetrominoState.AcitvatingItem)
+                CurrentTetrominoState == TetrominoState.ActivatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.Laser);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.Laser;
-            CurrentTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = LaserActivationDuration;
             mLaserTargetCol = mRandom.Range(0, mGrid.GetLength(1) - 1);
             var obj = Instantiate(LaserPrefab, transform);
@@ -329,14 +482,14 @@ namespace App
         public void TargetedUpsideDown()
         {
             if (CurrentTetrominoState == TetrominoState.Clearing ||
-                CurrentTetrominoState == TetrominoState.AcitvatingItem)
+                CurrentTetrominoState == TetrominoState.ActivatingItem)
             {
                 mPendingTargetedItems.Enqueue(GameItem.UpsideDown);
                 return;
             }
             DestroyActiveTetromino();
             mActivatingItem = GameItem.UpsideDown;
-            CurrentTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = UpsideDownActivationDuration;
             if (OnPlayUpsideDownAnimation != null)
             {
@@ -427,7 +580,7 @@ namespace App
         private void ExecuteMirrorBlock()
         {
             mActivatingItem = GameItem.MirrorBlock;
-            CurrentTetrominoState = TetrominoState.AcitvatingItem;
+            CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = MirrorBlockActivationDuration;
             FlipMaskAnimator.SetTrigger("Play");
             if (OnPlayFlipAnimation != null)
@@ -481,12 +634,15 @@ namespace App
         private void SpawnTetromino(Tetromino tetromino)
         {
             mActiveTetromino = tetromino;
-            mRow = mSpawnRows[(int) mActiveTetromino] - 4;
-            mCol = mSpawnCols[(int) mActiveTetromino];
+            var spawnPos = SpawnPos[(int) mActiveTetromino];
+            mRow = spawnPos.y + 4;
+            mCol = spawnPos.x;
             mRotation = 0;
-            mActiveObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
+            mActiveObject =
+                Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             mActiveObject.transform.SetLayer(gameObject.layer);
-            foreach (var block in mActiveObject.GetComponentsInChildren<Block>())
+            foreach (var block in mActiveObject.GetComponentsInChildren<Block>()
+            )
             {
                 if (mNextGameItem == GameItem.None)
                 {
@@ -496,19 +652,23 @@ namespace App
             }
             mActiveObject.transform.parent = transform;
             PlaceTetromino();
-            mRow = mSpawnRows[(int) mActiveTetromino];
-            mCol = mSpawnCols[(int) mActiveTetromino];
-            mGhostObject = Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
+            mRow = spawnPos.y;
+            mCol = spawnPos.x;
+            mGhostObject =
+                Instantiate(TetrominoPrefabs[(int) mActiveTetromino]);
             mGhostObject.transform.SetLayer(gameObject.layer);
             foreach (var block in mGhostObject.GetComponentsInChildren<Block>())
             {
-                var color = mNextGameItem == GameItem.None ? block.Type.Color() : block.Color;
+                var color = mNextGameItem == GameItem.None
+                    ? block.Type.Color()
+                    : block.Color;
                 color.a = 0.5f;
                 block.Color = color;
                 block.Item = mNextGameItem;
             }
             mGhostObject.transform.parent = transform;
-            mGhostObject.transform.rotation = Quaternion.AngleAxis(mRotation, Vector3.forward);
+            mGhostObject.transform.rotation =
+                Quaternion.AngleAxis(mRotation, Vector3.forward);
             PlaceTetromino();
             if (!CheckTetromino())
             {
@@ -532,11 +692,11 @@ namespace App
         {
             while (mAccumulatedGravity >= FullGravity)
             {
-                ++mRow;
+                --mRow;
                 PlaceTetromino();
                 if (!CheckTetromino())
                 {
-                    --mRow;
+                    ++mRow;
                     PlaceTetromino();
                     StartLocking();
                     return;
@@ -572,19 +732,21 @@ namespace App
             var rowsToMove = new int[mGrid.GetLength(0)];
             foreach (int row in mClearingLines)
             {
-                for (int i = 0; i < row; ++i)
+                for (int i = row + 1; i < mGrid.GetLength(0); ++i)
                 {
                     ++rowsToMove[i];
                 }
             }
-            for (int row = mGrid.GetLength(0) - 1; row >= 0; --row)
+            for (int row = 0; row < mGrid.GetLength(0); ++row)
             {
                 if (rowsToMove[row] > 0)
                 {
-                    MoveBlockRow(row, row + rowsToMove[row]);
+                    MoveBlockRow(row, row - rowsToMove[row]);
                 }
             }
-            for (int row = 0; row < rowsToMove[0]; ++row)
+            for (int row = mGrid.GetLength(0) - rowsToMove.Last();
+                 row < mGrid.GetLength(0);
+                 ++row)
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
                 {
@@ -598,7 +760,7 @@ namespace App
             }
             else
             {
-                CurrentTetrominoState = TetrominoState.AcitvatingItem;
+                CurrentTetrominoState = TetrominoState.ActivatingItem;
             }
         }
 
@@ -652,16 +814,16 @@ namespace App
             }
             if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
             {
-                int count = (20 - mItemClearingHighestRow + 1) / 2;
+                int count = (mItemClearingHighestRow + 2) / 2;
                 for (int i = 0; i < count; ++i)
                 {
-                    int row = mItemClearingHighestRow + i;
+                    int row = mItemClearingHighestRow - i;
                     int col = 9 - (mActivatingItemFrames - 20) + 10 - i / 2;
                     if (0 <= col && col < mGrid.GetLength(1))
                     {
                         DestroyBlock(row, col);
                     }
-                    if (col == 0)
+                    if (col == 0 && row < mItemClearEffects.Length)
                     {
                         mItemClearEffects[row].SetTrigger("Play");
                     }
@@ -675,12 +837,12 @@ namespace App
             {
                 mItemClearingHighestRow = HighestNonEmptyRow();
             }
-            int count = (20 - mItemClearingHighestRow + 1) / 2;
+            int count = (mItemClearingHighestRow + 2) / 2;
             if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
             {
                 for (int i = 0; i < count; ++i)
                 {
-                    int row = mGrid.GetLength(0) - 1 - i;
+                    int row = i;
                     int col = 9 - (mActivatingItemFrames - 20) + 10 - i / 2;
                     if (0 <= col && col < mGrid.GetLength(1))
                     {
@@ -704,19 +866,19 @@ namespace App
             {
                 mItemClearingHighestRow = HighestNonEmptyRow();
             }
-            int rowBegin = (mItemClearingHighestRow + 1) / 2 * 2;
-            int count = (mGrid.GetLength(0) - rowBegin) / 2;
+            int rowBegin = (mItemClearingHighestRow + 1) / 2 * 2 - 1;
+            int count = (rowBegin + 1) / 2;
             if (20 <= mActivatingItemFrames && mActivatingItemFrames < 40)
             {
                 for (int i = 0; i < count; ++i)
                 {
-                    int row = rowBegin + i * 2;
+                    int row = rowBegin - i * 2;
                     int col = 9 - (mActivatingItemFrames - 20) + 10 - i;
                     if (0 <= col && col < mGrid.GetLength(1))
                     {
                         DestroyBlock(row, col);
                     }
-                    if (col == 0)
+                    if (col == 0 && row < mItemClearEffects.Length)
                     {
                         mItemClearEffects[row].SetTrigger("Play");
                     }
@@ -724,10 +886,9 @@ namespace App
             }
             else if (mActivatingItemFrames == 1)
             {
-                for (int row = mGrid.GetLength(0) - 3; row >= 0; --row)
+                for (int row = 2; row < mGrid.GetLength(0); ++row)
                 {
-                    int move = (mGrid.GetLength(0) - row) / 2;
-                    MoveBlockRow(row, row + move);
+                    MoveBlockRow(row, row - row / 2);
                 }
             }
         }
@@ -762,7 +923,8 @@ namespace App
                         DestroyBlock(row, col);
                         if (OnPlayClearEffect != null)
                         {
-                            OnPlayClearEffect.Invoke(row, col, block.Properties);
+                            OnPlayClearEffect.Invoke(row, col,
+                                                     block.Properties);
                         }
                     }
                     ++index;
@@ -810,7 +972,9 @@ namespace App
                         if (mGrid[row, col] != null)
                         {
                             var color = mGrid[row, col].Color;
-                            color.a = ((mColorBlockFrames / 3 + row - i) % 10 + 10) % 10 / 10.0f;
+                            color.a =
+                                ((mColorBlockFrames / 3 - row - i) % 10 + 10) %
+                                10 / 10.0f;
                             mGrid[row, col].Color = color;
                         }
                     }
@@ -851,10 +1015,12 @@ namespace App
 
         private void LaserFrame()
         {
-            if (10 <= mActivatingItemFrames && mActivatingItemFrames < 20)
+            if (10 <= mActivatingItemFrames && mActivatingItemFrames < 21)
             {
-                int rowBegin = (19 - mActivatingItemFrames) * 2;
+                int rowBegin = (mActivatingItemFrames - 10) * 2;
                 int rowEnd = rowBegin + 2;
+                Assert.IsTrue(mActivatingItemFrames != 20 ||
+                              rowEnd == mGrid.GetLength(0));
                 for (int row = rowBegin; row < rowEnd; ++row)
                 {
                     DestroyBlock(row, mLaserTargetCol);
@@ -865,29 +1031,37 @@ namespace App
 
         private void UpsideDownFrame()
         {
-            if (1 < mActivatingItemFrames && mActivatingItemFrames <= 40)
+            if (1 < mActivatingItemFrames && mActivatingItemFrames <= 44)
             {
-                if (Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
-                    mUpsideDownGrid[0, col] == null))
+                if (Enumerable.Range(0, mGrid.GetLength(1))
+                              .All(col => mUpsideDownGrid[
+                                              mGrid.GetLength(0) - 1, col] ==
+                                          null))
                 {
                     for (int col = 0; col < mGrid.GetLength(1); ++col)
                     {
-                        mUpsideDownGrid[0, col] = mGrid[0, col];
-                        mGrid[0, col] = null;
+                        mUpsideDownGrid[mGrid.GetLength(0) - 1, col] =
+                            mGrid[mGrid.GetLength(0) - 1, col];
+                        mGrid[mGrid.GetLength(0) - 1, col] = null;
                     }
-                    MoveBlockRows(1, mGrid.GetLength(0), 1, true);
+                    MoveBlockRows(0, mGrid.GetLength(0) - 1, 1, true);
                 }
-                if (Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
-                    mUpsideDownGrid[mGrid.GetLength(0) - 1, col] == null))
+                if (Enumerable.Range(0, mGrid.GetLength(1))
+                              .All(col => mUpsideDownGrid[0, col] == null))
                 {
-                    MoveBlockRows(0, mGrid.GetLength(0), 1, false, mUpsideDownGrid);
+                    MoveBlockRows(0, mGrid.GetLength(0), 1, false,
+                                  mUpsideDownGrid);
                 }
             }
             else if (mActivatingItemFrames == 1)
             {
-                Assert.IsTrue(Enumerable.Range(0, mGrid.GetLength(0)).All(row =>
-                    Enumerable.Range(0, mGrid.GetLength(1)).All(col =>
-                        mGrid[row, col] == null)));
+                Assert.IsTrue(
+                    Enumerable
+                       .Range(0, mGrid.GetLength(0))
+                       .All(row =>
+                                Enumerable
+                                   .Range(0, mGrid.GetLength(1))
+                                   .All(col => mGrid[row, col] == null)));
                 Array.Copy(mUpsideDownGrid, mGrid, mGrid.Length);
                 Array.Clear(mUpsideDownGrid, 0, mGrid.Length);
             }
@@ -902,18 +1076,16 @@ namespace App
         private void LockTetromino()
         {
             var children = mActiveObject.transform.Cast<Transform>().ToList();
-            var newlyLockedCells = new bool[mGrid.GetLength(0), mGrid.GetLength(1)];
+            var newlyLockedCells =
+                new bool[mGrid.GetLength(0), mGrid.GetLength(1)];
             foreach (var child in children)
             {
                 var position = child.transform.position - transform.position;
                 child.transform.parent = transform;
                 int row = YToRow(position.y);
                 int col = XToCol(position.x);
-                if (row < 0 || mGrid.GetLength(0) <= row || col < 0 || mGrid.GetLength(1) <= col)
-                {
-                    EndGame();
-                    return;
-                }
+                Assert.IsTrue(0 <= row && row < mGrid.GetLength(0) &&
+                              0 <= col && col < mGrid.GetLength(1));
                 mGrid[row, col] = child.GetComponent<Block>();
                 newlyLockedCells[row, col] = true;
             }
@@ -973,12 +1145,9 @@ namespace App
 
         private bool CheckBlock(int row, int col)
         {
-            if (row < 0 && 0 <= col && col < mGrid.GetLength(1))
-            {
-                return true;
-            }
-            return 0 <= row && row < mGrid.GetLength(0) && 0 <= col && col < mGrid.GetLength(1) &&
-                mGrid[row, col] == null;
+            return 0 <= row && row < mGrid.GetLength(0) &&
+                   0 <= col && col < mGrid.GetLength(1) &&
+                   mGrid[row, col] == null;
         }
 
         private void PlaceTetromino()
@@ -994,10 +1163,10 @@ namespace App
         {
             for (int i = 0; i < mGrid.GetLength(0); ++i)
             {
-                PlaceTetromino(mGhostObject, mRow + i, mCol);
+                PlaceTetromino(mGhostObject, mRow - i, mCol);
                 if (!CheckTetromino(mGhostObject))
                 {
-                    PlaceTetromino(mGhostObject, mRow + i - 1, mCol);
+                    PlaceTetromino(mGhostObject, mRow - i + 1, mCol);
                     break;
                 }
             }
@@ -1005,65 +1174,19 @@ namespace App
 
         private void RotateRight()
         {
-            switch (mActiveTetromino)
+            switch (mRotation)
             {
-                case Tetromino.I:
-                    if (mRotation == 0)
-                    {
-                        mRotation = 90;
-                        --mRow;
-                        --mCol;
-                    }
-                    else
-                    {
-                        ++mRow;
-                        ++mCol;
-                        mRotation = 0;
-                    }
+                case 0:
+                    mRotation = 270;
                     break;
-                case Tetromino.O:
+                case 270:
+                    mRotation = 180;
                     break;
-                case Tetromino.T:
-                case Tetromino.J:
-                case Tetromino.L:
-                    switch (mRotation)
-                    {
-                        case 0:
-                            mRotation = 270;
-                            break;
-
-                        case 270:
-                            ++mRow;
-                            mRotation = 180;
-                            break;
-
-                        case 180:
-                            --mRow;
-                            mRotation = 90;
-                            break;
-
-                        case 90:
-                            mRotation = 0;
-                            break;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
+                case 180:
+                    mRotation = 90;
                     break;
-                case Tetromino.S:
-                    if (mRotation == 0)
-                    {
-                        --mCol;
-                        mRotation = 90;
-                    }
-                    else
-                    {
-                        ++mCol;
-                        mRotation = 0;
-                    }
-                    break;
-                case Tetromino.Z:
-                    mRotation = mRotation == 0 ? 90 : 0;
+                case 90:
+                    mRotation = 0;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -1079,65 +1202,19 @@ namespace App
 
         private void RotateLeft()
         {
-            switch (mActiveTetromino)
+            switch (mRotation)
             {
-                case Tetromino.I:
-                    if (mRotation == 0)
-                    {
-                        mRotation = 90;
-                        --mRow;
-                        --mCol;
-                    }
-                    else
-                    {
-                        ++mRow;
-                        ++mCol;
-                        mRotation = 0;
-                    }
+                case 0:
+                    mRotation = 90;
                     break;
-                case Tetromino.O:
+                case 90:
+                    mRotation = 180;
                     break;
-                case Tetromino.T:
-                case Tetromino.J:
-                case Tetromino.L:
-                    switch (mRotation)
-                    {
-                        case 0:
-                            mRotation = 90;
-                            break;
-
-                        case 90:
-                            ++mRow;
-                            mRotation = 180;
-                            break;
-
-                        case 180:
-                            --mRow;
-                            mRotation = 270;
-                            break;
-
-                        case 270:
-                            mRotation = 0;
-                            break;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
+                case 180:
+                    mRotation = 270;
                     break;
-                case Tetromino.S:
-                    if (mRotation == 0)
-                    {
-                        --mCol;
-                        mRotation = 90;
-                    }
-                    else
-                    {
-                        ++mCol;
-                        mRotation = 0;
-                    }
-                    break;
-                case Tetromino.Z:
-                    mRotation = mRotation == 0 ? 90 : 0;
+                case 270:
+                    mRotation = 0;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -1195,7 +1272,8 @@ namespace App
                     OnRightDown();
                     break;
                 case GameButtonEvent.ButtonType.Up:
-                    if (CurrentTetrominoState == TetrominoState.Dropping)
+                    if (CurrentTetrominoState == TetrominoState.Dropping ||
+                        CurrentTetrominoState == TetrominoState.Locking)
                     {
                         SonicDrop();
                     }
@@ -1257,15 +1335,16 @@ namespace App
 
         private void SonicDrop()
         {
-            for (int i = 0; i < mGrid.GetLength(0); ++i)
+            while (true)
             {
-                ++mRow;
+                --mRow;
                 PlaceTetromino();
                 if (!CheckTetromino())
                 {
-                    --mRow;
+                    ++mRow;
                     PlaceTetromino();
-                    StartLocking();
+                    LockTetromino();
+                    break;
                 }
             }
         }
@@ -1277,13 +1356,15 @@ namespace App
             {
                 return;
             }
+            int from = RotationToWallKickState(mRotation);
             RotateLeft();
-            if (CheckTetromino())
+            int to = RotationToWallKickState(mRotation);
+            if (TryWallKick(from, to))
             {
-                return;
-            }
-            if (TryWallKickAndFloorKick())
-            {
+                if (CurrentTetrominoState == TetrominoState.Locking)
+                {
+                    mLockingFrames = mLockDelay;
+                }
                 return;
             }
             RotateRight();
@@ -1296,176 +1377,34 @@ namespace App
             {
                 return;
             }
+            int from = RotationToWallKickState(mRotation);
             RotateRight();
-            if (CheckTetromino())
+            int to = RotationToWallKickState(mRotation);
+            if (TryWallKick(from, to))
             {
-                return;
-            }
-            if (TryWallKickAndFloorKick())
-            {
+                if (CurrentTetrominoState == TetrominoState.Locking)
+                {
+                    mLockingFrames = mLockDelay;
+                }
                 return;
             }
             RotateLeft();
         }
 
-        private bool TryWallKickAndFloorKick()
+        private bool TryWallKick(int from, int to)
         {
-            if (TryWallKick())
+            for (int i = 0; i < 5; ++i)
             {
-                return true;
-            }
-            if ((mActiveTetromino == Tetromino.I && mRotation == 90) ||
-                (mActiveTetromino == Tetromino.T && mRotation == 180))
-            {
-                if (TryFloorKick())
-                {
-                    if (CurrentTetrominoState == TetrominoState.Dropping)
-                    {
-                        StartLocking();
-                    }
-                    mLockingFrames = 1;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool TryWallKick()
-        {
-            if (WallKickEnabled())
-            {
-                ++mCol;
+                var offset = WallKickTable[(int) mActiveTetromino, from, to, i];
+                mCol += offset.x;
+                mRow += offset.y;
                 PlaceTetromino();
                 if (CheckTetromino())
                 {
                     return true;
                 }
-                mCol -= 2;
-                PlaceTetromino();
-                if (!CheckTetromino())
-                {
-                    ++mCol;
-                    PlaceTetromino();
-                    return false;
-                }
-                return true;
-            }
-            if (mActiveTetromino == Tetromino.I && mRotation == 0)
-            {
-                foreach (int col in new[] {1, 2, -1})
-                {
-                    mCol += col;
-                    PlaceTetromino();
-                    if (CheckTetromino())
-                    {
-                        return true;
-                    }
-                    mCol -= col;
-                    PlaceTetromino();
-                }
-            }
-            return false;
-        }
-
-        private bool WallKickEnabled()
-        {
-            switch (mActiveTetromino)
-            {
-                case Tetromino.I:
-                case Tetromino.O:
-                    return false;
-                case Tetromino.T:
-                    switch (mRotation)
-                    {
-                        case 90:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow, mCol + 1);
-
-                        case 270:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow, mCol - 1);
-
-                        case 0:
-                        case 180:
-                            return true;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                case Tetromino.J:
-                    switch (mRotation)
-                    {
-                        case 90:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow - 1, mCol + 1);
-
-                        case 270:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow + 1, mCol - 1);
-
-                        case 0:
-                        case 180:
-                            return true;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                case Tetromino.L:
-                    switch (mRotation)
-                    {
-                        case 90:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow + 1, mCol + 1);
-
-                        case 270:
-                            return (CheckBlock(mRow - 1, mCol) && CheckBlock(mRow, mCol) &&
-                                CheckBlock(mRow + 1, mCol)) || !CheckBlock(mRow - 1, mCol - 1);
-
-                        case 0:
-                        case 180:
-                            return true;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                case Tetromino.S:
-                case Tetromino.Z:
-                    return true;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private bool TryFloorKick()
-        {
-            if (mActiveTetromino == Tetromino.I)
-            {
-                bool enable = new[] {-2, -1, 0, 1}.Any(col => !CheckBlock(mRow + 2, mCol + col));
-                if (!enable)
-                {
-                    return false;
-                }
-                for (int row = -1; row >= -2; --row)
-                {
-                    mRow += row;
-                    PlaceTetromino();
-                    if (CheckTetromino())
-                    {
-                        return true;
-                    }
-                    mRow -= row;
-                    PlaceTetromino();
-                }
-            }
-            else if (mActiveTetromino == Tetromino.T)
-            {
-                --mRow;
-                PlaceTetromino();
-                if (CheckTetromino())
-                {
-                    return true;
-                }
-                ++mRow;
+                mCol -= offset.x;
+                mRow -= offset.y;
                 PlaceTetromino();
             }
             return false;
@@ -1600,20 +1539,20 @@ namespace App
             {
                 return;
             }
-            ++mRow;
+            --mRow;
             PlaceTetromino();
             if (CheckTetromino())
             {
                 CurrentTetrominoState = TetrominoState.Dropping;
             }
-            --mRow;
+            ++mRow;
             PlaceTetromino();
         }
 
         private int TryLineClear(bool[,] newlyLockedCells)
         {
             mClearingLines.Clear();
-            for (int i = 0; i < mGrid.GetLength(0); ++i)
+            for (int i = mGrid.GetLength(0) - 1; i >= 0; --i)
             {
                 bool full = true;
                 for (int j = 0; j < mGrid.GetLength(1); ++j)
@@ -1662,7 +1601,8 @@ namespace App
                         case GameItem.UpsideDown:
                             if (OnTargetItemActivated != null)
                             {
-                                OnTargetItemActivated.Invoke(mGrid[row, col].Item);
+                                OnTargetItemActivated.Invoke(mGrid[row, col]
+                                                                .Item);
                             }
                             break;
                         case GameItem.None:
@@ -1677,7 +1617,8 @@ namespace App
                 }
             }
 
-            var properties = new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
+            var properties =
+                new Block.Data[mClearingLines.Count, mGrid.GetLength(1)];
             var valid = new bool[mClearingLines.Count, mGrid.GetLength(1)];
             for (int i = 0; i < mClearingLines.Count; ++i)
             {
@@ -1688,7 +1629,8 @@ namespace App
                     valid[i, col] = !newlyLockedCells[row, col];
                     if (OnPlayClearEffect != null)
                     {
-                        OnPlayClearEffect.Invoke(row, col, mGrid[row, col].Properties);
+                        OnPlayClearEffect.Invoke(row, col,
+                                                 mGrid[row, col].Properties);
                     }
                 }
             }
@@ -1730,8 +1672,12 @@ namespace App
 
         private int HighestNonEmptyRow()
         {
-            var rowsNotEmpty = Enumerable.Range(0, mGrid.GetLength(0)).Where(row =>
-                Enumerable.Range(0, mGrid.GetLength(1)).Any(col => mGrid[row, col] != null));
+            var rowsNotEmpty =
+                Enumerable.Range(0, mGrid.GetLength(0))
+                          .Reverse()
+                          .Where(row => Enumerable
+                                       .Range(0, mGrid.GetLength(1))
+                                       .Any(col => mGrid[row, col] != null));
             try
             {
                 return rowsNotEmpty.First();
@@ -1766,8 +1712,9 @@ namespace App
 
         private void TryHoldTetromino()
         {
-            if (!mHoldEnabled || (CurrentTetrominoState != TetrominoState.Dropping &&
-                CurrentTetrominoState != TetrominoState.Locking))
+            if (!mHoldEnabled ||
+                (CurrentTetrominoState != TetrominoState.Dropping &&
+                 CurrentTetrominoState != TetrominoState.Locking))
             {
                 return;
             }
@@ -1825,7 +1772,8 @@ namespace App
             }
         }
 
-        private void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up)
+        private void MoveBlockRows(int rowBegin, int rowEnd, int distance,
+                                   bool up)
         {
             MoveBlockRows(rowBegin, rowEnd, distance, up, mGrid);
         }
@@ -1835,21 +1783,22 @@ namespace App
             MoveBlockRow(from, to, mGrid);
         }
 
-        private static void MoveBlockRows(int rowBegin, int rowEnd, int distance, bool up,
-            Block[,] grid)
+        private static void MoveBlockRows(int rowBegin, int rowEnd,
+                                          int distance, bool up,
+                                          Block[,] grid)
         {
             if (up)
-            {
-                for (int row = rowBegin; row < rowEnd; ++row)
-                {
-                    MoveBlockRow(row, row - distance, grid);
-                }
-            }
-            else
             {
                 for (int row = rowEnd - 1; row >= rowBegin; --row)
                 {
                     MoveBlockRow(row, row + distance, grid);
+                }
+            }
+            else
+            {
+                for (int row = rowBegin; row < rowEnd; ++row)
+                {
+                    MoveBlockRow(row, row - distance, grid);
                 }
             }
         }
@@ -1862,7 +1811,8 @@ namespace App
                 {
                     continue;
                 }
-                grid[from, col].transform.localPosition = RowColToPosition(to, col);
+                grid[from, col].transform.localPosition =
+                    RowColToPosition(to, col);
                 grid[to, col] = grid[from, col];
                 grid[from, col] = null;
             }
@@ -1880,7 +1830,7 @@ namespace App
 
         private static float RowToY(int row)
         {
-            return 9.5f - row;
+            return row - 9.5f;
         }
 
         private static float ColToX(int col)
@@ -1895,7 +1845,24 @@ namespace App
 
         private static int YToRow(float y)
         {
-            return Convert.ToInt32(9.5f - y);
+            return Convert.ToInt32(y + 9.5f);
+        }
+
+        private static int RotationToWallKickState(int rotation)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    return 0;
+                case 90:
+                    return 3;
+                case 180:
+                    return 2;
+                case 270:
+                    return 1;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         public struct GameButtonEvent
@@ -1963,7 +1930,8 @@ namespace App
                         else
                         {
                             newData[row, col] = other.Data[row - oldRows, col];
-                            newValid[row, col] = other.Valid[row - oldRows, col];
+                            newValid[row, col] =
+                                other.Valid[row - oldRows, col];
                         }
                     }
                 }
@@ -1978,7 +1946,7 @@ namespace App
             Dropping,
             Locking,
             Clearing,
-            AcitvatingItem,
+            ActivatingItem,
         }
 
         private enum GameState

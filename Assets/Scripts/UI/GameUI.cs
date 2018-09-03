@@ -79,7 +79,7 @@ namespace UI
                 for (int col = 0; col < 10; ++col)
                 {
                     float x = (col / 10.0f + 0.05f) * width - width / 2;
-                    float y = -(row / 20.0f + 0.025f) * height + height / 2;
+                    float y = (row / 20.0f - 0.925f) * height + height / 2;
                     var obj = Instantiate(mClearParticlePrefab, mClearParticleParent.transform);
                     obj.transform.localPosition = new Vector3(x, y);
                     mClearParticles[row, col] = obj.GetComponent<ParticleSystem>();
