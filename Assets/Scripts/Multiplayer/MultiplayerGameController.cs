@@ -53,7 +53,8 @@ namespace Multiplayer
             set
             {
                 mLocalItemCharge = value;
-                ItemProgress.fillAmount = (float) LocalItemCharge / MaxItemCharge;
+                ItemProgress.fillAmount =
+                    (float) LocalItemCharge / MaxItemCharge;
             }
         }
 
@@ -88,6 +89,7 @@ namespace Multiplayer
         private GameUI mLocalGameUI = null;
 
         private GlobalContext mContext;
+        private AudioManager mAudioManager;
 
         private int mLocalFrameCount;
         private int mRemoteFrameCount;
@@ -111,11 +113,13 @@ namespace Multiplayer
 
         private readonly ulong[][] mGeneratorSeeds = new ulong[MaxGameCount][];
 
-        private readonly Dictionary<int, GameGrid.ClearingBlocks> mLocalPendingBlocks =
-            new Dictionary<int, GameGrid.ClearingBlocks>();
+        private readonly Dictionary<int, GameGrid.ClearingBlocks>
+            mLocalPendingBlocks =
+                new Dictionary<int, GameGrid.ClearingBlocks>();
 
-        private readonly Dictionary<int, GameGrid.ClearingBlocks> mRemotePendingBlocks =
-            new Dictionary<int, GameGrid.ClearingBlocks>();
+        private readonly Dictionary<int, GameGrid.ClearingBlocks>
+            mRemotePendingBlocks =
+                new Dictionary<int, GameGrid.ClearingBlocks>();
 
         private readonly Dictionary<int, GameItem> mLocalPendingItems =
             new Dictionary<int, GameItem>();
@@ -136,6 +140,7 @@ namespace Multiplayer
         public void Awake()
         {
             mContext = GlobalContext.Instance;
+            mAudioManager = AudioManager.Instance;
         }
 
         public void Start()
@@ -146,8 +151,10 @@ namespace Multiplayer
 
             ConnectingAnimator.gameObject.SetActive(true);
 
-            mNetworkManager.networkAddress = controller.GameInfo.GameServerDetails.Address;
-            mNetworkManager.networkPort = controller.GameInfo.GameServerDetails.Port;
+            mNetworkManager.networkAddress =
+                controller.GameInfo.GameServerDetails.Address;
+            mNetworkManager.networkPort =
+                controller.GameInfo.GameServerDetails.Port;
             mNetworkManager.StartClient();
 
             StartCoroutine(CheckConnection());
@@ -159,18 +166,22 @@ namespace Multiplayer
             {
                 if (blocks.Data.GetLength(0) >= 2)
                 {
-                    Assert.IsTrue(mLocalFrameCount + InteractionDelay > mRemoteFrameCount);
-                    AddPendingBlocks(mRemotePendingBlocks, mLocalFrameCount + InteractionDelay,
-                        blocks);
+                    Assert.IsTrue(mLocalFrameCount + InteractionDelay >
+                                  mRemoteFrameCount);
+                    AddPendingBlocks(mRemotePendingBlocks,
+                                     mLocalFrameCount + InteractionDelay,
+                                     blocks);
                 }
             };
             mRemoteGameGrid.OnLineCleared += blocks =>
             {
                 if (blocks.Data.GetLength(0) >= 2)
                 {
-                    Assert.IsTrue(mRemoteFrameCount + InteractionDelay > mLocalFrameCount);
-                    AddPendingBlocks(mLocalPendingBlocks, mRemoteFrameCount + InteractionDelay,
-                        blocks);
+                    Assert.IsTrue(mRemoteFrameCount + InteractionDelay >
+                                  mLocalFrameCount);
+                    AddPendingBlocks(mLocalPendingBlocks,
+                                     mRemoteFrameCount + InteractionDelay,
+                                     blocks);
                 }
             };
 
@@ -181,7 +192,7 @@ namespace Multiplayer
                 {
                     mLocalGameGrid.GenerateNextItem();
                 }
-                
+
                 LocalLevelAdvance(0);
                 if (linesCleared >= 1)
                 {
@@ -207,16 +218,31 @@ namespace Multiplayer
             mRemoteGameGrid.OnGameItemCreated += () => mRemoteItemCharge = 0;
 
             mLocalGameGrid.OnTargetItemActivated += item =>
-                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay, item);
+                mRemotePendingItems.Add(mLocalFrameCount + InteractionDelay,
+                                        item);
             mRemoteGameGrid.OnTargetItemActivated += item =>
-                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay, item);
+                mLocalPendingItems.Add(mRemoteFrameCount + InteractionDelay,
+                                       item);
 
-            mLocalGameGrid.OnPlayFlipAnimation += () => LocalAreaAnimator.SetTrigger("PlayFlip");
+            mLocalGameGrid.OnPlayFlipAnimation += () =>
+                LocalAreaAnimator.SetTrigger("PlayFlip");
             mLocalGameGrid.OnPlayUpsideDownAnimation += () =>
                 LocalAreaAnimator.SetTrigger("PlayLocalUpsideDown");
-            mRemoteGameGrid.OnPlayFlipAnimation += () => RemoteAreaAnimator.SetTrigger("PlayFlip");
+            mRemoteGameGrid.OnPlayFlipAnimation += () =>
+                RemoteAreaAnimator.SetTrigger("PlayFlip");
             mRemoteGameGrid.OnPlayUpsideDownAnimation += () =>
                 RemoteAreaAnimator.SetTrigger("PlayRemoteUpsideDown");
+
+            mLocalGameGrid.OnPlayLockSound += mAudioManager.PlayLockSound;
+            mLocalGameGrid.OnPlayLandSound += mAudioManager.PlayLandSound;
+            mLocalGameGrid.OnPlayPreHoldSound += mAudioManager.PlayPreHoldSound;
+            mLocalGameGrid.OnPlayPreRotateSound +=
+                mAudioManager.PlayPreRotateSound;
+            mLocalGameGrid.OnPlayTetrominoSound += () =>
+            {
+                mAudioManager.PlayTetrominoSound(
+                    mLocalGameGrid.GetNextTetromino(0));
+            };
 
             ResetState();
 
@@ -226,7 +252,8 @@ namespace Multiplayer
             }
         }
 
-        public void OnLocalUpdateFrame(int frameCount, NetworkPlayer.PlayerEvent[] playerEvents)
+        public void OnLocalUpdateFrame(int frameCount,
+                                       NetworkPlayer.PlayerEvent[] playerEvents)
         {
             if (mState != State.Playing)
             {
@@ -260,7 +287,9 @@ namespace Multiplayer
             }
         }
 
-        public void OnRemoteUpdateFrame(int frameCount, NetworkPlayer.PlayerEvent[] playerEvents)
+        public void OnRemoteUpdateFrame(int frameCount,
+                                        NetworkPlayer.PlayerEvent[]
+                                            playerEvents)
         {
             mRemoteFrameCount = frameCount;
             RemotePlayerEvents.Add(playerEvents);
@@ -301,7 +330,8 @@ namespace Multiplayer
                 mGeneratorSeeds[i] = new ulong[seedLength];
                 for (int j = 0; j < seedLength; ++j)
                 {
-                    mGeneratorSeeds[i][j] = info.GeneratorSeeds[i * seedLength + j];
+                    mGeneratorSeeds[i][j] =
+                        info.GeneratorSeeds[i * seedLength + j];
                 }
             }
 
@@ -328,6 +358,8 @@ namespace Multiplayer
             mIsRemotePlaying = true;
 
             ConnectingAnimator.SetBool("Connected", true);
+
+            mAudioManager.PlayMultiplayerMusic();
         }
 
         public void OnLocalPlayerWin()
@@ -363,25 +395,25 @@ namespace Multiplayer
         public void OnDisconnected()
         {
             new AlertDialog.Builder()
-                .SetMessage("You have been disconnected from the server.")
-                .SetNeutralButton("OK", GotoScoreScreen)
-                .Show();
+               .SetMessage("You have been disconnected from the server.")
+               .SetNeutralButton("OK", GotoScoreScreen)
+               .Show();
         }
 
         public void OnOtherPlayerDisconnected()
         {
             new AlertDialog.Builder()
-                .SetMessage("A player has been disconnected.")
-                .SetNeutralButton("OK", GotoScoreScreen)
-                .Show();
+               .SetMessage("A player has been disconnected.")
+               .SetNeutralButton("OK", GotoScoreScreen)
+               .Show();
         }
 
         public void OnDataOutOfSync()
         {
             new AlertDialog.Builder()
-                .SetMessage("Data out of sync.")
-                .SetNeutralButton("OK", GotoScoreScreen)
-                .Show();
+               .SetMessage("Data out of sync.")
+               .SetNeutralButton("OK", GotoScoreScreen)
+               .Show();
         }
 
         private void ResetState()
@@ -428,11 +460,14 @@ namespace Multiplayer
             WinText.SetActive(false);
             LoseText.SetActive(false);
             DrawText.SetActive(false);
+
+            mAudioManager.StopBackgroundMusic();
         }
 
         private IEnumerator CheckConnection()
         {
-            yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
+            yield return new WaitForSecondsRealtime(
+                ServerController.MaxConnectTime);
             if (mState == State.Connecting)
             {
                 mNetworkManager.StopClient();
@@ -510,30 +545,36 @@ namespace Multiplayer
                 mGameCount == MaxGameCount)
             {
                 if (mLocalWinCount == GameCountToWin ||
-                    (mGameCount == MaxGameCount && mLocalWinCount > mRemoteWinCount))
+                    (mGameCount == MaxGameCount &&
+                     mLocalWinCount > mRemoteWinCount))
                 {
                     switch (LocalPlayerType)
                     {
                         case ServerController.PlayerType.PlayerA:
-                            LocalPlayer.OnLocalGameEnd(ServerController.GameResult.PlayerAWon);
+                            LocalPlayer.OnLocalGameEnd(
+                                ServerController.GameResult.PlayerAWon);
                             break;
                         case ServerController.PlayerType.PlayerB:
-                            LocalPlayer.OnLocalGameEnd(ServerController.GameResult.PlayerBWon);
+                            LocalPlayer.OnLocalGameEnd(
+                                ServerController.GameResult.PlayerBWon);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
                 }
                 else if (mRemoteWinCount == GameCountToWin ||
-                    (mGameCount == MaxGameCount && mLocalWinCount < mRemoteWinCount))
+                         (mGameCount == MaxGameCount &&
+                          mLocalWinCount < mRemoteWinCount))
                 {
                     switch (LocalPlayerType)
                     {
                         case ServerController.PlayerType.PlayerA:
-                            LocalPlayer.OnLocalGameEnd(ServerController.GameResult.PlayerBWon);
+                            LocalPlayer.OnLocalGameEnd(
+                                ServerController.GameResult.PlayerBWon);
                             break;
                         case ServerController.PlayerType.PlayerB:
-                            LocalPlayer.OnLocalGameEnd(ServerController.GameResult.PlayerAWon);
+                            LocalPlayer.OnLocalGameEnd(
+                                ServerController.GameResult.PlayerAWon);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
@@ -541,13 +582,15 @@ namespace Multiplayer
                 }
                 else if (mGameCount == MaxGameCount)
                 {
-                    LocalPlayer.OnLocalGameEnd(ServerController.GameResult.Draw);
+                    LocalPlayer.OnLocalGameEnd(
+                        ServerController.GameResult.Draw);
                 }
                 mState = State.Ending;
             }
         }
 
-        private static void ActivateItem(IDictionary<int, GameItem> pendingItems, int frameCount,
+        private static void ActivateItem(
+            IDictionary<int, GameItem> pendingItems, int frameCount,
             GameGrid target)
         {
             if (pendingItems.ContainsKey(frameCount))
@@ -590,15 +633,18 @@ namespace Multiplayer
                     case NetworkPlayer.PlayerEvent.EventType.ButtonDown:
                         events.Add(new GameGrid.GameButtonEvent
                         {
-                            Type = GameGrid.GameButtonEvent.EventType.ButtonDown,
-                            Button = ButtonToType((InputController.Button) playerEvent.Data)
+                            Type = GameGrid
+                                  .GameButtonEvent.EventType.ButtonDown,
+                            Button = ButtonToType(
+                                (InputController.Button) playerEvent.Data)
                         });
                         break;
                     case NetworkPlayer.PlayerEvent.EventType.ButtonUp:
                         events.Add(new GameGrid.GameButtonEvent
                         {
                             Type = GameGrid.GameButtonEvent.EventType.ButtonUp,
-                            Button = ButtonToType((InputController.Button) playerEvent.Data)
+                            Button = ButtonToType(
+                                (InputController.Button) playerEvent.Data)
                         });
                         break;
                     default:
@@ -628,11 +674,13 @@ namespace Multiplayer
                 case InputController.Button.Hold:
                     return GameGrid.GameButtonEvent.ButtonType.Hold;
                 default:
-                    throw new ArgumentOutOfRangeException("button", button, null);
+                    throw new ArgumentOutOfRangeException(
+                        "button", button, null);
             }
         }
 
-        private static void AddPendingBlocks(IDictionary<int, GameGrid.ClearingBlocks> pending,
+        private static void AddPendingBlocks(
+            IDictionary<int, GameGrid.ClearingBlocks> pending,
             int frame, GameGrid.ClearingBlocks blocks)
         {
             var sliced = blocks.SliceAndReverse();

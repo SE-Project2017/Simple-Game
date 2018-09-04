@@ -31,6 +31,11 @@ namespace App
         public event Action OnPlayFlipAnimation;
         public event Action OnPlayUpsideDownAnimation;
         public event Action OnNextTetrominosChanged;
+        public event Action OnPlayLockSound;
+        public event Action OnPlayLandSound;
+        public event Action OnPlayTetrominoSound;
+        public event Action OnPlayPreHoldSound;
+        public event Action OnPlayPreRotateSound;
 
         [SerializeField]
         private int mGravity;
@@ -602,18 +607,6 @@ namespace App
                 }
 
                 CurrentTetrominoState = TetrominoState.Dropping;
-                if (mHoldPressed)
-                {
-                    TryHoldTetromino();
-                }
-                if (mRotateLeftPressed)
-                {
-                    TryRotateLeft();
-                }
-                if (mRotateRightPressed)
-                {
-                    TryRotateRight();
-                }
                 mMirrorExecuted = false;
                 if (mColorBlockTurns > 0)
                 {
@@ -670,6 +663,21 @@ namespace App
             mGhostObject.transform.rotation =
                 Quaternion.AngleAxis(mRotation, Vector3.forward);
             PlaceTetromino();
+            if (mHoldPressed)
+            {
+                if (TryHoldTetromino(true))
+                {
+                    return;
+                }
+            }
+            if (mRotateLeftPressed)
+            {
+                TryRotateLeft(true);
+            }
+            if (mRotateRightPressed)
+            {
+                TryRotateRight(true);
+            }
             if (!CheckTetromino())
             {
                 EndGame();
@@ -685,6 +693,10 @@ namespace App
                 {
                     OnGameItemCreated.Invoke();
                 }
+            }
+            if (OnPlayTetrominoSound != null)
+            {
+                OnPlayTetrominoSound.Invoke();
             }
         }
 
@@ -1071,6 +1083,10 @@ namespace App
         {
             CurrentTetrominoState = TetrominoState.Locking;
             mLockingFrames = mLockDelay;
+            if (OnPlayLandSound != null)
+            {
+                OnPlayLandSound.Invoke();
+            }
         }
 
         private void LockTetromino()
@@ -1103,6 +1119,10 @@ namespace App
             if (OnTetrominoLocked != null)
             {
                 OnTetrominoLocked.Invoke(linesCleared);
+            }
+            if (OnPlayLockSound != null)
+            {
+                OnPlayLockSound.Invoke();
             }
         }
 
@@ -1287,17 +1307,17 @@ namespace App
                     break;
                 case GameButtonEvent.ButtonType.RotateLeft:
                     mRotateLeftPressed = true;
-                    TryRotateLeft();
+                    TryRotateLeft(false);
                     TryUnlockTetromino();
                     break;
                 case GameButtonEvent.ButtonType.RotateRight:
                     mRotateRightPressed = true;
-                    TryRotateRight();
+                    TryRotateRight(false);
                     TryUnlockTetromino();
                     break;
                 case GameButtonEvent.ButtonType.Hold:
                     mHoldPressed = true;
-                    TryHoldTetromino();
+                    TryHoldTetromino(false);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
@@ -1349,10 +1369,10 @@ namespace App
             }
         }
 
-        private void TryRotateLeft()
+        private void TryRotateLeft(bool isPreRotate)
         {
             if (CurrentTetrominoState != TetrominoState.Dropping &&
-                CurrentTetrominoState != TetrominoState.Locking)
+                CurrentTetrominoState != TetrominoState.Locking && !isPreRotate)
             {
                 return;
             }
@@ -1363,17 +1383,21 @@ namespace App
             {
                 if (CurrentTetrominoState == TetrominoState.Locking)
                 {
-                    mLockingFrames = mLockDelay;
+                    StartLocking();
+                }
+                if (isPreRotate && OnPlayPreRotateSound != null)
+                {
+                    OnPlayPreRotateSound.Invoke();
                 }
                 return;
             }
             RotateRight();
         }
 
-        private void TryRotateRight()
+        private void TryRotateRight(bool isPreRotate)
         {
             if (CurrentTetrominoState != TetrominoState.Dropping &&
-                CurrentTetrominoState != TetrominoState.Locking)
+                CurrentTetrominoState != TetrominoState.Locking && !isPreRotate)
             {
                 return;
             }
@@ -1384,7 +1408,11 @@ namespace App
             {
                 if (CurrentTetrominoState == TetrominoState.Locking)
                 {
-                    mLockingFrames = mLockDelay;
+                    StartLocking();
+                }
+                if (isPreRotate && OnPlayPreRotateSound != null)
+                {
+                    OnPlayPreRotateSound.Invoke();
                 }
                 return;
             }
@@ -1710,13 +1738,18 @@ namespace App
             }
         }
 
-        private void TryHoldTetromino()
+        private bool TryHoldTetromino(bool isPreHold)
         {
             if (!mHoldEnabled ||
                 (CurrentTetrominoState != TetrominoState.Dropping &&
-                 CurrentTetrominoState != TetrominoState.Locking))
+                 CurrentTetrominoState != TetrominoState.Locking && !isPreHold))
             {
-                return;
+                return false;
+            }
+            mHoldEnabled = false;
+            if (OnHoldEnableStateChanged != null)
+            {
+                OnHoldEnableStateChanged.Invoke(mHoldEnabled);
             }
             if (mInitialHold)
             {
@@ -1742,11 +1775,11 @@ namespace App
             {
                 OnHoldTetrominoChanged.Invoke(mHoldTetromino);
             }
-            mHoldEnabled = false;
-            if (OnHoldEnableStateChanged != null)
+            if (isPreHold && OnPlayPreHoldSound != null)
             {
-                OnHoldEnableStateChanged.Invoke(mHoldEnabled);
+                OnPlayPreHoldSound.Invoke();
             }
+            return true;
         }
 
         private void DestroyBlock(int row, int col)

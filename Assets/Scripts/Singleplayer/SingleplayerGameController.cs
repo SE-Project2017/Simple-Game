@@ -39,6 +39,7 @@ namespace Singleplayer
 
         private GlobalContext mContext;
         private ClientController mController;
+        private AudioManager mAudioManager;
 
         private readonly List<GameGrid.GameButtonEvent> mEvents =
             new List<GameGrid.GameButtonEvent>();
@@ -69,6 +70,7 @@ namespace Singleplayer
         {
             mContext = GlobalContext.Instance;
             mController = ClientController.Instance;
+            mAudioManager = AudioManager.Instance;
         }
 
         public void Start()
@@ -98,7 +100,8 @@ namespace Singleplayer
                 if (linesCleared != 0)
                 {
                     mInternalGradePoints +=
-                        mContext.InternalGradePointAward(linesCleared, mInternalGrade, mCombo,
+                        mContext.InternalGradePointAward(
+                            linesCleared, mInternalGrade, mCombo,
                             mLevel);
                     if (mInternalGradePoints >= 100)
                     {
@@ -111,21 +114,34 @@ namespace Singleplayer
                     }
                 }
             };
+            mGameGrid.OnPlayLockSound += mAudioManager.PlayLockSound;
+            mGameGrid.OnPlayLandSound += mAudioManager.PlayLandSound;
+            mGameGrid.OnPlayPreHoldSound += mAudioManager.PlayPreHoldSound;
+            mGameGrid.OnPlayPreRotateSound += mAudioManager.PlayPreRotateSound;
+            mGameGrid.OnPlayTetrominoSound += () =>
+            {
+                mAudioManager.PlayTetrominoSound(
+                    mGameGrid.GetNextTetromino(0));
+            };
 
-            mInputController.ButtonDown += button => mEvents.Add(new GameGrid.GameButtonEvent
-            {
-                Button = ButtonToType(button),
-                Type = GameGrid.GameButtonEvent.EventType.ButtonDown,
-            });
-            mInputController.ButtonUp += button => mEvents.Add(new GameGrid.GameButtonEvent
-            {
-                Button = ButtonToType(button),
-                Type = GameGrid.GameButtonEvent.EventType.ButtonUp
-            });
+            mInputController.ButtonDown += button => mEvents.Add(
+                new GameGrid.GameButtonEvent
+                {
+                    Button = ButtonToType(button),
+                    Type = GameGrid.GameButtonEvent.EventType.ButtonDown,
+                });
+            mInputController.ButtonUp += button => mEvents.Add(
+                new GameGrid.GameButtonEvent
+                {
+                    Button = ButtonToType(button),
+                    Type = GameGrid.GameButtonEvent.EventType.ButtonUp
+                });
 
             ResetState();
             mGameGrid.SeedGenerator(MersenneTwister.NewSeed());
             mGameGrid.StartGame();
+
+            mAudioManager.PlaySingleplayerLevel1Music();
         }
 
         public void FixedUpdate()
@@ -134,8 +150,10 @@ namespace Singleplayer
             mEvents.Clear();
 
             if (mCombo == 1 &&
-                (mGameGrid.CurrentTetrominoState == GameGrid.TetrominoState.Dropping ||
-                    mGameGrid.CurrentTetrominoState == GameGrid.TetrominoState.Locking)
+                (mGameGrid.CurrentTetrominoState ==
+                 GameGrid.TetrominoState.Dropping ||
+                 mGameGrid.CurrentTetrominoState ==
+                 GameGrid.TetrominoState.Locking)
             )
             {
                 --mInternalGradePointDecayFrames;
@@ -155,9 +173,10 @@ namespace Singleplayer
         public void OnGUI()
         {
             GUI.Label(new Rect(0, 0, 100, 60),
-                string.Format("Combo: {0}\nGrade Points: {1}\nGrade: {2}", mCombo,
-                    mInternalGradePoints,
-                    mInternalGrade));
+                      string.Format("Combo: {0}\nGrade Points: {1}\nGrade: {2}",
+                                    mCombo,
+                                    mInternalGradePoints,
+                                    mInternalGrade));
         }
 #endif
 
@@ -167,7 +186,8 @@ namespace Singleplayer
             mCombo = 1;
             mInternalGradePoints = 0;
             mInternalGrade = 0;
-            mInternalGradePointDecayFrames = mContext.InternalGradePointDecayRate(mInternalGrade);
+            mInternalGradePointDecayFrames =
+                mContext.InternalGradePointDecayRate(mInternalGrade);
             mEvents.Clear();
             mGameUI.ResetState();
         }
@@ -182,11 +202,14 @@ namespace Singleplayer
             {
                 StartCoroutine(UploadGameResult(grade));
             }
+
+            mAudioManager.StopBackgroundMusic();
         }
 
         private void LevelAdvance(int linesCleared)
         {
-            if ((Level % 100 == 99 || Level == mMaxLevel - 1) && linesCleared == 0)
+            if ((Level % 100 == 99 || Level == mMaxLevel - 1) &&
+                linesCleared == 0)
             {
                 return;
             }
@@ -201,6 +224,7 @@ namespace Singleplayer
             if (Level >= mMaxLevel)
             {
                 Level = mMaxLevel;
+                mGameGrid.StopGame();
                 OnGameEnd();
             }
         }
@@ -212,7 +236,8 @@ namespace Singleplayer
                 yield return null;
             }
 
-            MsfContext.Connection.Peer.SendMessage((short) OperationCode.UploadSingleplayerResult,
+            MsfContext.Connection.Peer.SendMessage(
+                (short) OperationCode.UploadSingleplayerResult,
                 new SingleplayerResultPacket {Grade = grade});
         }
 
@@ -236,7 +261,8 @@ namespace Singleplayer
                 case InputController.Button.Hold:
                     return GameGrid.GameButtonEvent.ButtonType.Hold;
                 default:
-                    throw new ArgumentOutOfRangeException("button", button, null);
+                    throw new ArgumentOutOfRangeException(
+                        "button", button, null);
             }
         }
     }
