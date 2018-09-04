@@ -13,7 +13,8 @@ namespace Editor
         {
             get
             {
-                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYSTORE");
+                var value = Environment.GetEnvironmentVariable(
+                    "UNITY_ANDROID_KEYSTORE");
                 return value ?? PlayerSettings.Android.keystoreName;
             }
         }
@@ -22,7 +23,8 @@ namespace Editor
         {
             get
             {
-                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYSTORE_PASSWORD");
+                var value = Environment.GetEnvironmentVariable(
+                    "UNITY_ANDROID_KEYSTORE_PASSWORD");
                 return value ?? PlayerSettings.Android.keystorePass;
             }
         }
@@ -31,7 +33,8 @@ namespace Editor
         {
             get
             {
-                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYALIAS");
+                var value = Environment.GetEnvironmentVariable(
+                    "UNITY_ANDROID_KEYALIAS");
                 return value ?? PlayerSettings.Android.keyaliasName;
             }
         }
@@ -40,7 +43,8 @@ namespace Editor
         {
             get
             {
-                var value = Environment.GetEnvironmentVariable("UNITY_ANDROID_KEYALIAS_PASSWORD");
+                var value = Environment.GetEnvironmentVariable(
+                    "UNITY_ANDROID_KEYALIAS_PASSWORD");
                 return value ?? PlayerSettings.Android.keyaliasPass;
             }
         }
@@ -129,7 +133,8 @@ namespace Editor
         [MenuItem("Build/Enable Local Server", false, 500)]
         public static void EnableLocalServer()
         {
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(
+                BuildTargetGroup.Standalone,
                 "LOCAL_SERVER");
             EditorSceneManager.SaveOpenScenes();
         }
@@ -137,21 +142,38 @@ namespace Editor
         [MenuItem("Build/Disable Local Server", false, 510)]
         public static void DisableLocalServer()
         {
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "");
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(
+                BuildTargetGroup.Standalone, "");
             EditorSceneManager.SaveOpenScenes();
         }
 
-        private static void Configure()
+        public static void BuildSilently()
         {
-            var version = BumpVersion();
-            PlayerSettings.Android.bundleVersionCode = version.VersionCode;
+            Configure(false);
+            InternalBuildReleaseAndroid();
+            InternalBuildReleaseLinux();
+            InternalBuildReleaseWindows();
+            InternalBuildDebugAndroid();
+            InternalBuildDebugLinux();
+            InternalBuildDebugWindows();
+            CleanUp();
+        }
+
+        private static void Configure(bool bumpVersion = true)
+        {
+            if (bumpVersion)
+            {
+                var version = BumpVersion();
+                PlayerSettings.Android.bundleVersionCode = version.VersionCode;
+                PlayerSettings.bundleVersion = version.VersionName;
+            }
             PlayerSettings.Android.keystoreName = AndroidKeystorePath;
             PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
             PlayerSettings.Android.keyaliasName = AndroidKeyalias;
             PlayerSettings.Android.keyaliasPass = AndroidKeyaliasPassword;
             PlayerSettings.runInBackground = true;
-            PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.HiddenByDefault;
-            PlayerSettings.bundleVersion = version.VersionName;
+            PlayerSettings.displayResolutionDialog =
+                ResolutionDialogSetting.HiddenByDefault;
             EditorSceneManager.SaveOpenScenes();
         }
 
@@ -168,21 +190,24 @@ namespace Editor
         {
             const string path = "Assets/Scripts/Utils/Utilities.cs";
             var text = File.ReadAllText(path);
-            Regex regex = new Regex(@"^\s*public\s+const\s+int\s+VersionCode\s*=\s*(\d+);$",
+            Regex regex = new Regex(
+                @"^\s*public\s+const\s+int\s+VersionCode\s*=\s*(\d+);$",
                 RegexOptions.Multiline);
             var group = regex.Match(text).Groups[1];
             int versionCode = int.Parse(group.Value);
             ++versionCode;
             text = text.Remove(group.Index, group.Length);
             text = text.Insert(group.Index, versionCode.ToString());
-            regex = new Regex(@"^\s*public\s+const\s+string\s+VersionName\s*=\s*\"".*\.(\d+)\"";$",
+            regex = new Regex(
+                @"^\s*public\s+const\s+string\s+VersionName\s*=\s*\"".*\.(\d+)\"";$",
                 RegexOptions.Multiline);
             group = regex.Match(text).Groups[1];
             text = text.Remove(group.Index, group.Length);
             text = text.Insert(group.Index, versionCode.ToString());
             File.WriteAllText(path, text);
             AssetDatabase.Refresh();
-            regex = new Regex(@"^\s*public\s+const\s+string\s+VersionName\s*=\s*\""(.*)\"";$",
+            regex = new Regex(
+                @"^\s*public\s+const\s+string\s+VersionName\s*=\s*\""(.*)\"";$",
                 RegexOptions.Multiline);
             return new VersionNumber
             {
@@ -293,7 +318,8 @@ namespace Editor
                 BuildOptions.None);
         }
 
-        private static void BuildMasterServer(string path, BuildTarget target, BuildOptions options)
+        private static void BuildMasterServer(string path, BuildTarget target,
+                                              BuildOptions options)
         {
             PlayerSettings.productName = "TetrisMasterServer";
             string[] scenes =
@@ -304,7 +330,7 @@ namespace Editor
         }
 
         private static void BuildSpawnerServer(string path, BuildTarget target,
-            BuildOptions options)
+                                               BuildOptions options)
         {
             PlayerSettings.productName = "TetrisSpawnerServer";
             string[] scenes =
@@ -314,7 +340,8 @@ namespace Editor
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }
 
-        private static void BuildGameServer(string path, BuildTarget target, BuildOptions options)
+        private static void BuildGameServer(string path, BuildTarget target,
+                                            BuildOptions options)
         {
             PlayerSettings.productName = "TetrisGameServer";
             string[] scenes =
@@ -324,7 +351,8 @@ namespace Editor
             BuildPipeline.BuildPlayer(scenes, path, target, options);
         }
 
-        private static void BuildClient(string path, BuildTarget target, BuildOptions options)
+        private static void BuildClient(string path, BuildTarget target,
+                                        BuildOptions options)
         {
             PlayerSettings.productName = "Tetris";
             string[] scenes =
