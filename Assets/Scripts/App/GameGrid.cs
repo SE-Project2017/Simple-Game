@@ -95,6 +95,10 @@ namespace App
 
         private GlobalContext mContext;
 
+        // Limit rotation times once landed
+        private int mRotationsRemaining;
+        private bool mHasLanded;
+
         private static readonly Vector2Int[] SpawnPos =
         {
             new Vector2Int(4, 19),
@@ -121,6 +125,7 @@ namespace App
         private const int LaserActivationDuration = 30;
         private const int UpsideDownActivationDuration = 100;
         private const int XRayDuration = 300;
+        private const int MaxRotationsAfterLanding = 8;
 
         static GameGrid()
         {
@@ -579,6 +584,9 @@ namespace App
             mInitialHold = true;
             mMirrorExecuted = false;
 
+            mRotationsRemaining = MaxRotationsAfterLanding;
+            mHasLanded = false;
+
             SetLevel(0);
         }
 
@@ -702,6 +710,21 @@ namespace App
 
         private void TetrominoDroppingFrame()
         {
+            // If no remaining rotations then lock asap
+            if (mRotationsRemaining == 0)
+            {
+                --mRow;
+                PlaceTetromino();
+                bool check = CheckTetromino();
+                ++mRow;
+                PlaceTetromino();
+                if (!check)
+                {
+                    StartLocking();
+                    return;
+                }
+            }
+
             while (mAccumulatedGravity >= FullGravity)
             {
                 --mRow;
@@ -1083,6 +1106,11 @@ namespace App
         {
             CurrentTetrominoState = TetrominoState.Locking;
             mLockingFrames = mLockDelay;
+            if (mRotationsRemaining == 0)
+            {
+                mLockingFrames = 1;
+            }
+            mHasLanded = true;
             if (OnPlayLandSound != null)
             {
                 OnPlayLandSound.Invoke();
@@ -1111,11 +1139,16 @@ namespace App
             {
                 StartNewTetromino();
             }
+
             mHoldEnabled = true;
             if (OnHoldEnableStateChanged != null)
             {
                 OnHoldEnableStateChanged.Invoke(mHoldEnabled);
             }
+
+            mRotationsRemaining = MaxRotationsAfterLanding;
+            mHasLanded = false;
+
             if (OnTetrominoLocked != null)
             {
                 OnTetrominoLocked.Invoke(linesCleared);
@@ -1371,16 +1404,24 @@ namespace App
 
         private void TryRotateLeft(bool isPreRotate)
         {
-            if (CurrentTetrominoState != TetrominoState.Dropping &&
-                CurrentTetrominoState != TetrominoState.Locking && !isPreRotate)
+            bool stateCheck =
+                CurrentTetrominoState == TetrominoState.Dropping ||
+                CurrentTetrominoState == TetrominoState.Locking;
+            bool timesCheck = mRotationsRemaining != 0;
+            if ((!stateCheck || !timesCheck) && !isPreRotate)
             {
                 return;
             }
+
             int from = RotationToWallKickState(mRotation);
             RotateLeft();
             int to = RotationToWallKickState(mRotation);
             if (TryWallKick(from, to))
             {
+                if (mHasLanded)
+                {
+                    --mRotationsRemaining;
+                }
                 if (CurrentTetrominoState == TetrominoState.Locking)
                 {
                     StartLocking();
@@ -1396,16 +1437,24 @@ namespace App
 
         private void TryRotateRight(bool isPreRotate)
         {
-            if (CurrentTetrominoState != TetrominoState.Dropping &&
-                CurrentTetrominoState != TetrominoState.Locking && !isPreRotate)
+            bool stateCheck =
+                CurrentTetrominoState == TetrominoState.Dropping ||
+                CurrentTetrominoState == TetrominoState.Locking;
+            bool timesCheck = mRotationsRemaining != 0;
+            if ((!stateCheck || !timesCheck) && !isPreRotate)
             {
                 return;
             }
+
             int from = RotationToWallKickState(mRotation);
             RotateRight();
             int to = RotationToWallKickState(mRotation);
             if (TryWallKick(from, to))
             {
+                if (mHasLanded)
+                {
+                    --mRotationsRemaining;
+                }
                 if (CurrentTetrominoState == TetrominoState.Locking)
                 {
                     StartLocking();
