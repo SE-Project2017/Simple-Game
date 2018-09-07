@@ -49,6 +49,15 @@ namespace Singleplayer
             get { return mLevel; }
             set
             {
+                if (mLevel < 480 && value >= 480)
+                {
+                    mAudioManager.StopBackgroundMusic();
+                }
+                if (mLevel < 500 && value >= 500)
+                {
+                    mAudioManager.PlaySingleplayerLevel2Music();
+                }
+
                 mLevel = value;
                 mGameGrid.SetLevel(value);
                 mLevelText.text = value.ToString();
@@ -64,7 +73,7 @@ namespace Singleplayer
         private int mInternalGrade;
         private int mInternalGradePointDecayFrames;
 
-        private int mMaxLevel = 500;
+        private int mMaxLevel = 999;
 
         public void Awake()
         {
@@ -76,7 +85,7 @@ namespace Singleplayer
         public void Start()
         {
             mGameGrid.OnGameEnd += OnGameEnd;
-            mGameGrid.OnTetrominoLocked += linesCleared =>
+            mGameGrid.OnTetrominoLocked += (linesCleared) =>
             {
                 LevelAdvance(0);
                 if (linesCleared != 0)
@@ -99,10 +108,8 @@ namespace Singleplayer
 
                 if (linesCleared != 0)
                 {
-                    mInternalGradePoints +=
-                        mContext.InternalGradePointAward(
-                            linesCleared, mInternalGrade, mCombo,
-                            mLevel);
+                    mInternalGradePoints += mContext.InternalGradePointAward(
+                        linesCleared, mInternalGrade, mCombo, Level);
                     if (mInternalGradePoints >= 100)
                     {
                         ++mInternalGrade;

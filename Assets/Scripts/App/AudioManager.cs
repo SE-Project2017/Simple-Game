@@ -32,6 +32,9 @@ namespace App
         private AudioClip mSingleplayerLevel1Music;
 
         [SerializeField]
+        private AudioClip mSingleplayerLevel2Music;
+
+        [SerializeField]
         private AudioClip mMultiplayerMusic;
 #pragma warning restore 649
 
@@ -69,6 +72,12 @@ namespace App
         public void PlaySingleplayerLevel1Music()
         {
             mBackgroundMusic.clip = mSingleplayerLevel1Music;
+            mBackgroundMusic.Play();
+        }
+
+        public void PlaySingleplayerLevel2Music()
+        {
+            mBackgroundMusic.clip = mSingleplayerLevel2Music;
             mBackgroundMusic.Play();
         }
 

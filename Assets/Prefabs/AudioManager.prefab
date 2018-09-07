@@ -817,4 +817,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: e2331944faab2e646b900617ffbff352, type: 3}
   mSingleplayerLevel1Music: {fileID: 8300000, guid: 3397ccf1f0ac59945a28bb02ece796f6,
     type: 3}
+  mSingleplayerLevel2Music: {fileID: 8300000, guid: babf06fa4d9cb764f91d1b1577c4d30f,
+    type: 3}
   mMultiplayerMusic: {fileID: 8300000, guid: fd3f8ba95b7a88849bfbe8c337d2c204, type: 3}
