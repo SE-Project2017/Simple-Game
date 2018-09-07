@@ -19,18 +19,22 @@ namespace MsfWrapper.Modules.Auth
             return true;
         }
 
-        protected override void HandleLogIn(IIncommingMessage message)
+        protected override async void HandleLogIn(IIncommingMessage message)
         {
             var encryptedData = message.AsBytes();
-            var securityExt = message.Peer.GetExtension<PeerSecurityExtension>();
+            var securityExt =
+                message.Peer.GetExtension<PeerSecurityExtension>();
             var aesKey = securityExt.AesKey;
-            var decrypted = Barebones.MasterServer.Msf.Security.DecryptAES(encryptedData, aesKey);
+            var decrypted =
+                await Msf.Security.DecryptAES(encryptedData, aesKey);
             var data = new Dictionary<string, string>().FromBytes(decrypted);
             int version;
-            if (!data.ContainsKey(Version) || !int.TryParse(data[Version], out version) ||
+            if (!data.ContainsKey(Version) ||
+                !int.TryParse(data[Version], out version) ||
                 version != Utilities.VersionCode)
             {
-                message.Respond("Client outdated".ToBytes(), ResponseStatus.Unauthorized);
+                message.Respond("Client outdated".ToBytes(),
+                                ResponseStatus.Unauthorized);
                 return;
             }
             base.HandleLogIn(message);

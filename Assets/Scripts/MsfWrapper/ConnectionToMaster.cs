@@ -12,9 +12,9 @@ namespace MsfWrapper
     {
         private string mServerAddress =
 #if LOCAL_SERVER
-            "localhost";
+            "127.0.0.1";
 #else
-            "115.159.108.229";
+            "134.175.47.243";
 #endif
 
         private int mServerPort = 5000;

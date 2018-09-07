@@ -1,0 +1,3 @@
+[submodule "Assets/BarebonesMasterServer"]
+	path = Assets/BarebonesMasterServer
+	url = git@github.com:Moandor-y/barebones-masterserver.git
