@@ -73,7 +73,9 @@ namespace Singleplayer
         private int mInternalGrade;
         private int mInternalGradePointDecayFrames;
 
-        private int mMaxLevel = 999;
+        private int mMaxLevel;
+
+        private bool mLevelUpBellPlayed;
 
         public void Awake()
         {
@@ -130,6 +132,9 @@ namespace Singleplayer
                 mAudioManager.PlayTetrominoSound(
                     mGameGrid.GetNextTetromino(0));
             };
+            mGameGrid.OnPlayFallSound += mAudioManager.PlayFallSound;
+            mGameGrid.OnPlayLineClearSound += mAudioManager.PlayLineClearSound;
+            mGameGrid.OnPlayTetrisSound += mAudioManager.PlayTetrisSound;
 
             mInputController.ButtonDown += button => mEvents.Add(
                 new GameGrid.GameButtonEvent
@@ -195,6 +200,8 @@ namespace Singleplayer
             mInternalGrade = 0;
             mInternalGradePointDecayFrames =
                 mContext.InternalGradePointDecayRate(mInternalGrade);
+            mMaxLevel = 999;
+            mLevelUpBellPlayed = false;
             mEvents.Clear();
             mGameUI.ResetState();
         }
@@ -220,6 +227,7 @@ namespace Singleplayer
             {
                 return;
             }
+            int prevLevel = Level;
             if (linesCleared == 0)
             {
                 ++Level;
@@ -233,6 +241,16 @@ namespace Singleplayer
                 Level = mMaxLevel;
                 mGameGrid.StopGame();
                 OnGameEnd();
+            }
+            if (Level % 100 == 99 && !mLevelUpBellPlayed)
+            {
+                mAudioManager.PlayBellSound();
+                mLevelUpBellPlayed = true;
+            }
+            if (Level / 100 > prevLevel / 100)
+            {
+                mAudioManager.PlayLevelUpSound();
+                mLevelUpBellPlayed = false;
             }
         }
 

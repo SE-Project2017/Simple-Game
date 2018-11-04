@@ -108,6 +108,8 @@ namespace Multiplayer
         private int mRemoteEndFrame;
         private int mGameEndFrame = NetworkPlayer.MaxGameDuration;
 
+        private bool mLevelUpBellPlayed;
+
         private State mState = State.Connecting;
         private NetworkManager mNetworkManager;
 
@@ -243,6 +245,10 @@ namespace Multiplayer
                 mAudioManager.PlayTetrominoSound(
                     mLocalGameGrid.GetNextTetromino(0));
             };
+            mLocalGameGrid.OnPlayFallSound += mAudioManager.PlayFallSound;
+            mLocalGameGrid.OnPlayLineClearSound +=
+                mAudioManager.PlayLineClearSound;
+            mLocalGameGrid.OnPlayTetrisSound += mAudioManager.PlayTetrisSound;
 
             ResetState();
 
@@ -424,6 +430,8 @@ namespace Multiplayer
             LocalLevel = 0;
             RemoteLevel = 0;
 
+            mLevelUpBellPlayed = false;
+
             WinText.SetActive(false);
             LoseText.SetActive(false);
             DrawText.SetActive(false);
@@ -481,6 +489,7 @@ namespace Multiplayer
             {
                 return;
             }
+            int prevLevel = LocalLevel;
             if (linesCleared == 0)
             {
                 ++LocalLevel;
@@ -492,6 +501,16 @@ namespace Multiplayer
             if (LocalLevel > MaxLevel)
             {
                 LocalLevel = MaxLevel;
+            }
+            if (LocalLevel % 100 == 99 && !mLevelUpBellPlayed)
+            {
+                mAudioManager.PlayBellSound();
+                mLevelUpBellPlayed = true;
+            }
+            if (LocalLevel / 100 > prevLevel / 100)
+            {
+                mAudioManager.PlayLevelUpSound();
+                mLevelUpBellPlayed = false;
             }
         }
 

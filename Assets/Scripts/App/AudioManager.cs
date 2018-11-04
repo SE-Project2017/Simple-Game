@@ -23,6 +23,21 @@ namespace App
         private AudioSource mPreRotateSound;
 
         [SerializeField]
+        private AudioSource mFallSound;
+
+        [SerializeField]
+        private AudioSource mLineClearSound;
+
+        [SerializeField]
+        private AudioSource mTetrisSound;
+
+        [SerializeField]
+        private AudioSource mLevelUpSound;
+
+        [SerializeField]
+        private AudioSource mBellSound;
+
+        [SerializeField]
         private AudioSource mBackgroundMusic;
 
         [SerializeField]
@@ -62,6 +77,31 @@ namespace App
         public void PlayPreRotateSound()
         {
             mPreRotateSound.Play();
+        }
+
+        public void PlayFallSound()
+        {
+            mFallSound.Play();
+        }
+
+        public void PlayLineClearSound()
+        {
+            mLineClearSound.Play();
+        }
+
+        public void PlayTetrisSound()
+        {
+            mTetrisSound.Play();
+        }
+
+        public void PlayLevelUpSound()
+        {
+            mLevelUpSound.Play();
+        }
+
+        public void PlayBellSound()
+        {
+            mBellSound.Play();
         }
 
         public void StopBackgroundMusic()

@@ -36,6 +36,9 @@ namespace App
         public event Action OnPlayTetrominoSound;
         public event Action OnPlayPreHoldSound;
         public event Action OnPlayPreRotateSound;
+        public event Action OnPlayFallSound;
+        public event Action OnPlayLineClearSound;
+        public event Action OnPlayTetrisSound;
 
         [SerializeField]
         private int mGravity;
@@ -264,18 +267,12 @@ namespace App
 
         public void OnDestroy()
         {
-            if (mTetrominoGenerator != null)
-            {
-                mTetrominoGenerator.Dispose();
-            }
+            mTetrominoGenerator?.Dispose();
         }
 
         public void SeedGenerator(ulong[] seed)
         {
-            if (mTetrominoGenerator != null)
-            {
-                mTetrominoGenerator.Dispose();
-            }
+            mTetrominoGenerator?.Dispose();
             mTetrominoGenerator = new RandomTetrominoGenerator(seed).Generate();
         }
 
@@ -501,10 +498,7 @@ namespace App
             mActivatingItem = GameItem.UpsideDown;
             CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = UpsideDownActivationDuration;
-            if (OnPlayUpsideDownAnimation != null)
-            {
-                OnPlayUpsideDownAnimation.Invoke();
-            }
+            OnPlayUpsideDownAnimation?.Invoke();
         }
 
         public Tetromino GetNextTetromino(int index)
@@ -596,10 +590,7 @@ namespace App
             CurrentTetrominoState = TetrominoState.ActivatingItem;
             mActivatingItemFrames = MirrorBlockActivationDuration;
             FlipMaskAnimator.SetTrigger("Play");
-            if (OnPlayFlipAnimation != null)
-            {
-                OnPlayFlipAnimation.Invoke();
-            }
+            OnPlayFlipAnimation?.Invoke();
         }
 
         private void TetrominoIdleFrame()
@@ -609,10 +600,7 @@ namespace App
             {
                 GenerateNewTetrominos();
                 SpawnTetromino(mNextTetrominos.PopFront());
-                if (OnNextTetrominosChanged != null)
-                {
-                    OnNextTetrominosChanged.Invoke();
-                }
+                OnNextTetrominosChanged?.Invoke();
 
                 CurrentTetrominoState = TetrominoState.Dropping;
                 mMirrorExecuted = false;
@@ -697,15 +685,9 @@ namespace App
             {
                 RemoveItems();
                 mNextGameItem = GameItem.None;
-                if (OnGameItemCreated != null)
-                {
-                    OnGameItemCreated.Invoke();
-                }
+                OnGameItemCreated?.Invoke();
             }
-            if (OnPlayTetrominoSound != null)
-            {
-                OnPlayTetrominoSound.Invoke();
-            }
+            OnPlayTetrominoSound?.Invoke();
         }
 
         private void TetrominoDroppingFrame()
@@ -797,6 +779,7 @@ namespace App
             {
                 CurrentTetrominoState = TetrominoState.ActivatingItem;
             }
+            OnPlayFallSound?.Invoke();
         }
 
         private void ActivatingItemFrame()
@@ -956,11 +939,8 @@ namespace App
                     if (selected.Contains(index))
                     {
                         DestroyBlock(row, col);
-                        if (OnPlayClearEffect != null)
-                        {
-                            OnPlayClearEffect.Invoke(row, col,
-                                                     block.Properties);
-                        }
+                        OnPlayClearEffect?.Invoke(row, col,
+                                                  block.Properties);
                     }
                     ++index;
                 });
@@ -1111,10 +1091,7 @@ namespace App
                 mLockingFrames = 1;
             }
             mHasLanded = true;
-            if (OnPlayLandSound != null)
-            {
-                OnPlayLandSound.Invoke();
-            }
+            OnPlayLandSound?.Invoke();
         }
 
         private void LockTetromino()
@@ -1141,22 +1118,13 @@ namespace App
             }
 
             mHoldEnabled = true;
-            if (OnHoldEnableStateChanged != null)
-            {
-                OnHoldEnableStateChanged.Invoke(mHoldEnabled);
-            }
+            OnHoldEnableStateChanged?.Invoke(mHoldEnabled);
 
             mRotationsRemaining = MaxRotationsAfterLanding;
             mHasLanded = false;
 
-            if (OnTetrominoLocked != null)
-            {
-                OnTetrominoLocked.Invoke(linesCleared);
-            }
-            if (OnPlayLockSound != null)
-            {
-                OnPlayLockSound.Invoke();
-            }
+            OnTetrominoLocked?.Invoke(linesCleared);
+            OnPlayLockSound?.Invoke();
         }
 
         private void DestroyActiveTetromino()
@@ -1170,10 +1138,7 @@ namespace App
         private void EndGame()
         {
             mState = GameState.Ended;
-            if (OnGameEnd != null)
-            {
-                OnGameEnd.Invoke();
-            }
+            OnGameEnd?.Invoke();
         }
 
         private bool CheckTetromino()
@@ -1353,7 +1318,8 @@ namespace App
                     TryHoldTetromino(false);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
+                    throw new ArgumentOutOfRangeException(
+                        nameof(type), type, null);
             }
         }
 
@@ -1382,7 +1348,8 @@ namespace App
                     mHoldPressed = false;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
+                    throw new ArgumentOutOfRangeException(
+                        nameof(type), type, null);
             }
         }
 
@@ -1426,9 +1393,9 @@ namespace App
                 {
                     StartLocking();
                 }
-                if (isPreRotate && OnPlayPreRotateSound != null)
+                if (isPreRotate)
                 {
-                    OnPlayPreRotateSound.Invoke();
+                    OnPlayPreRotateSound?.Invoke();
                 }
                 return;
             }
@@ -1459,9 +1426,9 @@ namespace App
                 {
                     StartLocking();
                 }
-                if (isPreRotate && OnPlayPreRotateSound != null)
+                if (isPreRotate)
                 {
-                    OnPlayPreRotateSound.Invoke();
+                    OnPlayPreRotateSound?.Invoke();
                 }
                 return;
             }
@@ -1676,11 +1643,8 @@ namespace App
                         case GameItem.XRay:
                         case GameItem.Laser:
                         case GameItem.UpsideDown:
-                            if (OnTargetItemActivated != null)
-                            {
-                                OnTargetItemActivated.Invoke(mGrid[row, col]
-                                                                .Item);
-                            }
+                            OnTargetItemActivated?.Invoke(mGrid[row, col]
+                                                             .Item);
                             break;
                         case GameItem.None:
                             break;
@@ -1704,21 +1668,15 @@ namespace App
                 {
                     properties[i, col] = mGrid[row, col].Properties;
                     valid[i, col] = !newlyLockedCells[row, col];
-                    if (OnPlayClearEffect != null)
-                    {
-                        OnPlayClearEffect.Invoke(row, col,
-                                                 mGrid[row, col].Properties);
-                    }
+                    OnPlayClearEffect?.Invoke(row, col,
+                                              mGrid[row, col].Properties);
                 }
             }
-            if (OnLineCleared != null)
+            OnLineCleared?.Invoke(new ClearingBlocks
             {
-                OnLineCleared.Invoke(new ClearingBlocks
-                {
-                    Data = properties,
-                    Valid = valid,
-                });
-            }
+                Data = properties,
+                Valid = valid,
+            });
             foreach (int row in mClearingLines)
             {
                 for (int col = 0; col < mGrid.GetLength(1); ++col)
@@ -1726,6 +1684,13 @@ namespace App
                     DestroyBlock(row, col);
                 }
             }
+
+            OnPlayLineClearSound?.Invoke();
+            if (mClearingLines.Count == 4)
+            {
+                OnPlayTetrisSound?.Invoke();
+            }
+
             return mClearingLines.Count;
         }
 
@@ -1796,10 +1761,7 @@ namespace App
                 return false;
             }
             mHoldEnabled = false;
-            if (OnHoldEnableStateChanged != null)
-            {
-                OnHoldEnableStateChanged.Invoke(mHoldEnabled);
-            }
+            OnHoldEnableStateChanged?.Invoke(mHoldEnabled);
             if (mInitialHold)
             {
                 mInitialHold = false;
@@ -1807,10 +1769,7 @@ namespace App
                 DestroyActiveTetromino();
                 GenerateNewTetrominos();
                 SpawnTetromino(mNextTetrominos.PopFront());
-                if (OnNextTetrominosChanged != null)
-                {
-                    OnNextTetrominosChanged.Invoke();
-                }
+                OnNextTetrominosChanged?.Invoke();
             }
             else
             {
@@ -1820,13 +1779,10 @@ namespace App
                 SpawnTetromino(hold);
             }
             CurrentTetrominoState = TetrominoState.Dropping;
-            if (OnHoldTetrominoChanged != null)
+            OnHoldTetrominoChanged?.Invoke(mHoldTetromino);
+            if (isPreHold)
             {
-                OnHoldTetrominoChanged.Invoke(mHoldTetromino);
-            }
-            if (isPreHold && OnPlayPreHoldSound != null)
-            {
-                OnPlayPreHoldSound.Invoke();
+                OnPlayPreHoldSound?.Invoke();
             }
             return true;
         }
