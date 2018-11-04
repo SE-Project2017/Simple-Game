@@ -9,7 +9,7 @@ namespace Multiplayer
 {
     public class NetworkManager : UnityEngine.Networking.NetworkManager
     {
-        public static NetworkManager Instance { get { return (NetworkManager) singleton; } }
+        public static NetworkManager Instance => (NetworkManager) singleton;
 
         private ServerController mServerController;
         private ClientController mClientController;

@@ -20,7 +20,7 @@ namespace Multiplayer
             var client = mNetworkManager.client;
             if (client != null)
             {
-                mRttText.text = string.Format("RTT: {0}ms", client.GetRTT());
+                mRttText.text = $"RTT: {client.GetRTT()}ms";
             }
         }
     }
