@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
-
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
@@ -56,6 +55,7 @@ namespace Editor
             InternalBuildDebugWindows();
             InternalBuildDebugLinux();
             InternalBuildDebugAndroid();
+            InternalBuildDebugWebGL();
             CleanUp();
         }
 
@@ -83,6 +83,14 @@ namespace Editor
             CleanUp();
         }
 
+        [MenuItem("Build/Build Debug WebGL", false, 140)]
+        public static void BuildDebugWebGL()
+        {
+            Configure();
+            InternalBuildDebugWebGL();
+            CleanUp();
+        }
+
         [MenuItem("Build/Build Release", false, 200)]
         public static void BuildRelease()
         {
@@ -90,6 +98,7 @@ namespace Editor
             InternalBuildReleaseWindows();
             InternalBuildReleaseLinux();
             InternalBuildReleaseAndroid();
+            InternalBuildReleaseWebGL();
             CleanUp();
         }
 
@@ -117,6 +126,14 @@ namespace Editor
             CleanUp();
         }
 
+        [MenuItem("Build/Build Release WebGL", false, 240)]
+        public static void BuildReleaseWebGL()
+        {
+            Configure();
+            InternalBuildReleaseWebGL();
+            CleanUp();
+        }
+
         [MenuItem("Build/Build All", false, 400)]
         public static void BuildAll()
         {
@@ -124,9 +141,11 @@ namespace Editor
             InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
+            InternalBuildReleaseWebGL();
             InternalBuildDebugAndroid();
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
+            InternalBuildDebugWebGL();
             CleanUp();
         }
 
@@ -153,9 +172,11 @@ namespace Editor
             InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
+            InternalBuildReleaseWebGL();
             InternalBuildDebugAndroid();
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
+            InternalBuildDebugWebGL();
             CleanUp();
         }
 
@@ -167,6 +188,7 @@ namespace Editor
                 PlayerSettings.Android.bundleVersionCode = version.VersionCode;
                 PlayerSettings.bundleVersion = version.VersionName;
             }
+
             PlayerSettings.Android.keystoreName = AndroidKeystorePath;
             PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
             PlayerSettings.Android.keyaliasName = AndroidKeyalias;
@@ -267,6 +289,13 @@ namespace Editor
                 BuildOptions.Development | BuildOptions.AllowDebugging);
         }
 
+        private static void InternalBuildDebugWebGL()
+        {
+            FileUtil.DeleteFileOrDirectory(WebGLBuildPath(true));
+            BuildClient(WebGLBuildPath(true) + "client", BuildTarget.WebGL,
+                BuildOptions.Development);
+        }
+
         private static void InternalBuildReleaseWindows()
         {
             FileUtil.DeleteFileOrDirectory(WindowsBuildPath(false));
@@ -318,8 +347,14 @@ namespace Editor
                 BuildOptions.None);
         }
 
+        private static void InternalBuildReleaseWebGL()
+        {
+            FileUtil.DeleteFileOrDirectory(WebGLBuildPath(false));
+            BuildClient(WebGLBuildPath(false) + "client", BuildTarget.WebGL, BuildOptions.None);
+        }
+
         private static void BuildMasterServer(string path, BuildTarget target,
-                                              BuildOptions options)
+            BuildOptions options)
         {
             PlayerSettings.productName = "TetrisMasterServer";
             string[] scenes =
@@ -330,7 +365,7 @@ namespace Editor
         }
 
         private static void BuildSpawnerServer(string path, BuildTarget target,
-                                               BuildOptions options)
+            BuildOptions options)
         {
             PlayerSettings.productName = "TetrisSpawnerServer";
             string[] scenes =
@@ -341,7 +376,7 @@ namespace Editor
         }
 
         private static void BuildGameServer(string path, BuildTarget target,
-                                            BuildOptions options)
+            BuildOptions options)
         {
             PlayerSettings.productName = "TetrisGameServer";
             string[] scenes =
@@ -352,7 +387,7 @@ namespace Editor
         }
 
         private static void BuildClient(string path, BuildTarget target,
-                                        BuildOptions options)
+            BuildOptions options)
         {
             PlayerSettings.productName = "Tetris";
             string[] scenes =
@@ -378,6 +413,11 @@ namespace Editor
         private static string AndroidBuildPath(bool isDebug)
         {
             return BaseBuildPath(isDebug) + "Android/";
+        }
+
+        private static string WebGLBuildPath(bool isDebug)
+        {
+            return BaseBuildPath(isDebug) + "WebGL/";
         }
 
         private static string BaseBuildPath(bool isDebug)

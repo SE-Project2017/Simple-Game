@@ -1,9 +1,6 @@
 ﻿using System.Collections;
-
 using App;
-
 using UnityEngine;
-
 using Utils;
 
 namespace MsfWrapper
@@ -14,10 +11,11 @@ namespace MsfWrapper
 #if LOCAL_SERVER
             "127.0.0.1";
 #else
-            "134.175.47.243";
+            "104.131.151.68";
 #endif
 
         private int mServerPort = 5000;
+
         private float mTimeToConnect = MinTimeToConnect;
 
         private const float MinTimeToConnect = 0.5f;
@@ -37,10 +35,12 @@ namespace MsfWrapper
             {
                 mServerAddress = MsfContext.Args.MasterIp;
             }
+
             if (MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterPort))
             {
                 mServerPort = MsfContext.Args.MasterPort;
             }
+
             Connect();
         }
 
@@ -68,7 +68,7 @@ namespace MsfWrapper
                 if (connection.IsConnecting)
                 {
                     Debug.Log("Retrying to connect to server at: " + mServerAddress + ":" +
-                        mServerPort);
+                              mServerPort);
                 }
                 else
                 {
