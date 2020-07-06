@@ -53,6 +53,8 @@ namespace Multiplayer
 
         public IEnumerator Start()
         {
+            Application.targetFrameRate = 60;
+
             PlayerAToken = new Guid(MsfContext.Args.PlayerAToken);
             PlayerBToken = new Guid(MsfContext.Args.PlayerBToken);
 

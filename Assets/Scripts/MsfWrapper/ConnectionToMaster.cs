@@ -11,7 +11,7 @@ namespace MsfWrapper
 #if LOCAL_SERVER
             "127.0.0.1";
 #else
-            "104.131.151.68";
+            "tetris.moandor.dev";
 #endif
 
         private int mServerPort = 5000;

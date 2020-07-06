@@ -1,4 +1,5 @@
 ﻿using Barebones.MasterServer;
+using UnityEngine;
 
 namespace MsfWrapper
 {
@@ -6,6 +7,7 @@ namespace MsfWrapper
     {
         protected override void Start()
         {
+            Application.targetFrameRate = 60;
             StartCoroutine(StartOnNextFrame());
             var profileModule = FindObjectOfType<ProfilesModule>();
             profileModule.ProfileFactory = (username, peer) => new ObservableServerProfile(username)
