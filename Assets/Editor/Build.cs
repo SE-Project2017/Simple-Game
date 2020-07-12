@@ -51,93 +51,93 @@ namespace Editor
         [MenuItem("Build/Build Debug", false, 100)]
         public static void BuildDebug()
         {
-            Configure();
+            var state = Configure();
             InternalBuildDebugWindows();
             InternalBuildDebugLinux();
             InternalBuildDebugAndroid();
             InternalBuildDebugWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Debug Windows", false, 110)]
         public static void BuildDebugWindows()
         {
-            Configure();
+            var state = Configure();
             InternalBuildDebugWindows();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Debug Linux", false, 120)]
         public static void BuildDebugLinux()
         {
-            Configure();
+            var state = Configure();
             InternalBuildDebugLinux();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Debug Android", false, 130)]
         public static void BuildDebugAndroid()
         {
-            Configure();
+            var state = Configure();
             InternalBuildDebugAndroid();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Debug WebGL", false, 140)]
         public static void BuildDebugWebGL()
         {
-            Configure();
+            var state = Configure();
             InternalBuildDebugWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Release", false, 200)]
         public static void BuildRelease()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseWindows();
             InternalBuildReleaseLinux();
             InternalBuildReleaseAndroid();
             InternalBuildReleaseWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Release Windows", false, 210)]
         public static void BuildReleaseWindows()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseWindows();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Release Linux", false, 220)]
         public static void BuildReleaseLinux()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseLinux();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Release Android", false, 230)]
         public static void BuildReleaseAndroid()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseAndroid();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build Release WebGL", false, 240)]
         public static void BuildReleaseWebGL()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Build All", false, 400)]
         public static void BuildAll()
         {
-            Configure();
+            var state = Configure();
             InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
@@ -146,7 +146,7 @@ namespace Editor
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
             InternalBuildDebugWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
         [MenuItem("Build/Enable Local Server", false, 500)]
@@ -168,7 +168,7 @@ namespace Editor
 
         public static void BuildSilently()
         {
-            Configure(false);
+            var state = Configure(false);
             InternalBuildReleaseAndroid();
             InternalBuildReleaseLinux();
             InternalBuildReleaseWindows();
@@ -177,10 +177,10 @@ namespace Editor
             InternalBuildDebugLinux();
             InternalBuildDebugWindows();
             InternalBuildDebugWebGL();
-            CleanUp();
+            CleanUp(state);
         }
 
-        private static void Configure(bool bumpVersion = true)
+        private static BuildState Configure(bool bumpVersion = true)
         {
             if (bumpVersion)
             {
@@ -189,22 +189,33 @@ namespace Editor
                 PlayerSettings.bundleVersion = version.VersionName;
             }
 
+            var state = new BuildState
+            {
+                PrevAndroidKeystorePath = PlayerSettings.Android.keystoreName,
+                PrevAndroidKeystorePassword = PlayerSettings.Android.keystorePass,
+                PrevAndroidKeyalias = PlayerSettings.Android.keyaliasName,
+                PrevAndroidKeyaliasPassword = PlayerSettings.Android.keyaliasPass,
+                PrevAndroidUseCustomKeystore = PlayerSettings.Android.useCustomKeystore
+            };
             PlayerSettings.Android.keystoreName = AndroidKeystorePath;
             PlayerSettings.Android.keystorePass = AndroidKeystorePassword;
             PlayerSettings.Android.keyaliasName = AndroidKeyalias;
             PlayerSettings.Android.keyaliasPass = AndroidKeyaliasPassword;
+            PlayerSettings.Android.useCustomKeystore = true;
+
             PlayerSettings.runInBackground = true;
-            PlayerSettings.displayResolutionDialog =
-                ResolutionDialogSetting.HiddenByDefault;
             EditorSceneManager.SaveOpenScenes();
+
+            return state;
         }
 
-        private static void CleanUp()
+        private static void CleanUp(BuildState state)
         {
-            PlayerSettings.Android.keystoreName = string.Empty;
-            PlayerSettings.Android.keystorePass = string.Empty;
-            PlayerSettings.Android.keyaliasName = string.Empty;
-            PlayerSettings.Android.keyaliasPass = string.Empty;
+            PlayerSettings.Android.useCustomKeystore = state.PrevAndroidUseCustomKeystore;
+            PlayerSettings.Android.keystoreName = state.PrevAndroidKeystorePath;
+            PlayerSettings.Android.keystorePass = state.PrevAndroidKeystorePassword;
+            PlayerSettings.Android.keyaliasName = state.PrevAndroidKeyalias;
+            PlayerSettings.Android.keyaliasPass = state.PrevAndroidKeyaliasPassword;
             EditorSceneManager.SaveOpenScenes();
         }
 
@@ -434,6 +445,15 @@ namespace Editor
         {
             public int VersionCode;
             public string VersionName;
+        }
+
+        private struct BuildState
+        {
+            public string PrevAndroidKeystorePath;
+            public string PrevAndroidKeystorePassword;
+            public string PrevAndroidKeyalias;
+            public string PrevAndroidKeyaliasPassword;
+            public bool PrevAndroidUseCustomKeystore;
         }
     }
 }
