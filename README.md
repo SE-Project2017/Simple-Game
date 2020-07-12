@@ -8,7 +8,7 @@ Work in progress.
 
 # Requirements
 
-- Unity 2019.2.9f1 or later
+- Unity 2019.4.1f1 or later
 - CN Controls
 
 # Building
