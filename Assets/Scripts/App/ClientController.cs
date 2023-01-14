@@ -163,7 +163,7 @@ namespace App
 
         public void Start()
         {
-            MsfContext.Connection.SetHandler((short) OperationCode.GameFound, OnGameFound);
+            MsfContext.Connection.SetHandler((short)OperationCode.GameFound, OnGameFound);
             MsfContext.Connection.Disconnected += () => { StartCoroutine(OnDisconnected()); };
             MsfContext.Client.Auth.LoggedIn += () =>
             {
@@ -186,7 +186,7 @@ namespace App
         {
             Assert.IsTrue(mState == State.Idle);
             MsfContext.Connection.Peer.SendMessage(
-                MessageHelper.Create((short) OperationCode.StartSearchGame));
+                MessageHelper.Create((short)OperationCode.StartSearchGame));
             mState = State.SearchingGame;
             if (OnSearchStarted != null)
             {
@@ -199,17 +199,18 @@ namespace App
             Assert.IsTrue(mState == State.SearchingGame);
             mState = State.Idle;
             MsfContext.Connection.Peer.SendMessage(
-                MessageHelper.Create((short) OperationCode.CancelSearch));
+                MessageHelper.Create((short)OperationCode.CancelSearch));
             if (OnSearchStopped != null)
             {
                 OnSearchStopped.Invoke();
             }
         }
 
-        public void OnStartSingleplayerGame()
+        public void OnStartSingleplayerGame(bool relax)
         {
             Assert.IsTrue(mState == State.Idle);
             mState = State.PlayingSingleplayer;
+            GlobalContext.Instance.RelaxMode = relax;
             StartCoroutine(Utilities.FadeOutLoadScene("SingleplayerGame"));
         }
 
@@ -343,7 +344,7 @@ namespace App
                 if (mState == State.SearchingGame && MsfContext.Connection.IsConnected)
                 {
                     MsfContext.Connection.Peer.SendMessage(
-                        MessageHelper.Create((short) OperationCode.QuerySearchStatus),
+                        MessageHelper.Create((short)OperationCode.QuerySearchStatus),
                         (status, response) =>
                         {
                             if (status != ResponseStatus.Success && mState == State.SearchingGame)

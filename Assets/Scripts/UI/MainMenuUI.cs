@@ -21,6 +21,7 @@ namespace UI
         public Button SingleButton;
 
         public Button PlaySingleButton;
+        public Button RelaxButton;
 
         public Color TabDefaultColor;
         public Color TabSelectedColor;
@@ -52,7 +53,7 @@ namespace UI
             mController.OnSearchStopped += OnSearchStopped;
             OnNameChange(null);
             SwitchToTab(mController.MainMenuTab);
-            
+
             if (mController.IsOfflineMode)
             {
                 SwitchToTab(Tab.Single);
@@ -96,7 +97,12 @@ namespace UI
 
         public void OnPlaySingleClick()
         {
-            mController.OnStartSingleplayerGame();
+            mController.OnStartSingleplayerGame(/*relax=*/false);
+        }
+
+        public void OnRelaxClick()
+        {
+            mController.OnStartSingleplayerGame(/*relax=*/true);
         }
 
         public void OnPlayerInfoClick()
@@ -125,6 +131,7 @@ namespace UI
         {
             mSearchStartTime = DateTime.Now;
             PlaySingleButton.interactable = false;
+            RelaxButton.interactable = false;
             mSearchButton.SetActive(false);
             mCancelSearchButton.SetActive(true);
             SearchingUI.SetActive(true);
@@ -136,6 +143,7 @@ namespace UI
             mCancelSearchButton.SetActive(false);
             mSearchButton.SetActive(true);
             PlaySingleButton.interactable = true;
+            RelaxButton.interactable = true;
         }
 
         private void SwitchToTab(Tab tab)

@@ -77,11 +77,15 @@ namespace Singleplayer
 
         private bool mLevelUpBellPlayed;
 
+        private bool mRelaxMode = false;
+
         public void Awake()
         {
             mContext = GlobalContext.Instance;
             mController = ClientController.Instance;
             mAudioManager = AudioManager.Instance;
+
+            mRelaxMode = mContext.RelaxMode;
         }
 
         public void Start()
@@ -89,10 +93,13 @@ namespace Singleplayer
             mGameGrid.OnGameEnd += OnGameEnd;
             mGameGrid.OnTetrominoLocked += (linesCleared) =>
             {
-                LevelAdvance(0);
-                if (linesCleared != 0)
+                if (!mRelaxMode)
                 {
-                    LevelAdvance(linesCleared);
+                    LevelAdvance(0);
+                    if (linesCleared != 0)
+                    {
+                        LevelAdvance(linesCleared);
+                    }
                 }
 
                 if (linesCleared == 0)
@@ -262,8 +269,8 @@ namespace Singleplayer
             }
 
             MsfContext.Connection.Peer.SendMessage(
-                (short) OperationCode.UploadSingleplayerResult,
-                new SingleplayerResultPacket {Grade = grade});
+                (short)OperationCode.UploadSingleplayerResult,
+                new SingleplayerResultPacket { Grade = grade });
         }
 
         private static GameGrid.GameButtonEvent.ButtonType ButtonToType(

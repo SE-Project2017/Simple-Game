@@ -14,13 +14,15 @@ namespace App
 
         public GameObject GameResultDialogPrefab;
 
+        public bool RelaxMode = false;
+
         public readonly int[] LevelGravity = new int[2000];
         public readonly int[] LevelEntryDelay = new int[2000];
         public readonly int[] LevelClearEntryDelay = new int[2000];
         public readonly int[] LevelDasDelay = new int[2000];
         public readonly int[] LevelLockDelay = new int[2000];
         public readonly int[] LevelClearDelay = new int[2000];
-        public readonly int[] LevelAdvance = {0, 1, 2, 4, 6};
+        public readonly int[] LevelAdvance = { 0, 1, 2, 4, 6 };
 
         public const int MaxInternalGrade = 31;
         public const int MaxCombo = 10;
