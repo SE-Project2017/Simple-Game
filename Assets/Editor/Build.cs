@@ -253,19 +253,19 @@ namespace Editor
         {
             FileUtil.DeleteFileOrDirectory(WindowsBuildPath(true));
             BuildMasterServer(
-                WindowsBuildPath(true) + "MasterServer.exe",
+                WindowsBuildPath(true) + "master/MasterServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildSpawnerServer(
-                WindowsBuildPath(true) + "SpawnerServer.exe",
+                WindowsBuildPath(true) + "spawner/SpawnerServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildGameServer(
-                WindowsBuildPath(true) + "GameServer.exe",
+                WindowsBuildPath(true) + "server/GameServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildClient(
-                WindowsBuildPath(true) + "Client.exe",
+                WindowsBuildPath(true) + "client/Client.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
         }
@@ -274,19 +274,19 @@ namespace Editor
         {
             FileUtil.DeleteFileOrDirectory(LinuxBuildPath(true));
             BuildMasterServer(
-                LinuxBuildPath(true) + "master",
+                LinuxBuildPath(true) + "master/master",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildSpawnerServer(
-                LinuxBuildPath(true) + "spawner",
+                LinuxBuildPath(true) + "spawner/spawner",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildGameServer(
-                LinuxBuildPath(true) + "server",
+                LinuxBuildPath(true) + "server/server",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
             BuildClient(
-                LinuxBuildPath(true) + "client",
+                LinuxBuildPath(true) + "client/client",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.Development | BuildOptions.AllowDebugging);
         }
@@ -311,19 +311,19 @@ namespace Editor
         {
             FileUtil.DeleteFileOrDirectory(WindowsBuildPath(false));
             BuildMasterServer(
-                WindowsBuildPath(false) + "MasterServer.exe",
+                WindowsBuildPath(false) + "master/MasterServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.None);
             BuildSpawnerServer(
-                WindowsBuildPath(false) + "SpawnerServer.exe",
+                WindowsBuildPath(false) + "spawner/SpawnerServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.None);
             BuildGameServer(
-                WindowsBuildPath(false) + "GameServer.exe",
+                WindowsBuildPath(false) + "server/GameServer.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.None);
             BuildClient(
-                WindowsBuildPath(false) + "Client.exe",
+                WindowsBuildPath(false) + "client/Client.exe",
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.None);
         }
@@ -332,19 +332,19 @@ namespace Editor
         {
             FileUtil.DeleteFileOrDirectory(LinuxBuildPath(false));
             BuildMasterServer(
-                LinuxBuildPath(false) + "master",
+                LinuxBuildPath(false) + "master/master",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.EnableHeadlessMode);
             BuildSpawnerServer(
-                LinuxBuildPath(false) + "spawner",
+                LinuxBuildPath(false) + "spawner/spawner",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.EnableHeadlessMode);
             BuildGameServer(
-                LinuxBuildPath(false) + "server",
+                LinuxBuildPath(false) + "server/server",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.EnableHeadlessMode);
             BuildClient(
-                LinuxBuildPath(false) + "client",
+                LinuxBuildPath(false) + "client/client",
                 BuildTarget.StandaloneLinux64,
                 BuildOptions.None);
         }
