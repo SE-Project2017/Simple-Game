@@ -352,6 +352,14 @@ namespace Editor
         private static void InternalBuildReleaseAndroid()
         {
             FileUtil.DeleteFileOrDirectory(AndroidBuildPath(false));
+
+            EditorUserBuildSettings.buildAppBundle = true;
+            BuildClient(
+                AndroidBuildPath(false) + "client.aab",
+                BuildTarget.Android,
+                BuildOptions.None);
+
+            EditorUserBuildSettings.buildAppBundle = false;
             BuildClient(
                 AndroidBuildPath(false) + "client.apk",
                 BuildTarget.Android,
