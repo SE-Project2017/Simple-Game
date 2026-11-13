@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -155,6 +155,9 @@ namespace Editor
             PlayerSettings.SetScriptingDefineSymbolsForGroup(
                 BuildTargetGroup.Standalone,
                 "LOCAL_SERVER");
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(
+                BuildTargetGroup.WebGL,
+                "LOCAL_SERVER");
             EditorSceneManager.SaveOpenScenes();
         }
 
@@ -163,6 +166,8 @@ namespace Editor
         {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(
                 BuildTargetGroup.Standalone, "");
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(
+                BuildTargetGroup.WebGL, "");
             EditorSceneManager.SaveOpenScenes();
         }
 
