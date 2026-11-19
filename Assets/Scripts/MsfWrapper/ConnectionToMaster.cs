@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using App;
 using UnityEngine;
 using Utils;
@@ -14,7 +15,14 @@ namespace MsfWrapper
             "tetris.moandor.dev";
 #endif
 
-        private int mServerPort = 5000;
+        private int mServerPort =
+#if LOCAL_SERVER
+            5000;
+#else
+            443;
+#endif
+
+        private Uri mServerUri;
 
         private float mTimeToConnect = MinTimeToConnect;
 
@@ -34,12 +42,26 @@ namespace MsfWrapper
             if (MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterIp))
             {
                 mServerAddress = MsfContext.Args.MasterIp;
+                // When -msfMasterIp is passed (e.g. local SpawnerServer -> 127.0.0.1)
+                // without an explicit -msfMasterPort, default to MasterServer's raw
+                // WebSocket port (5000) rather than the reverse-proxy TLS port (443).
+                if (!MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterPort))
+                {
+                    mServerPort = 5000;
+                }
             }
 
             if (MsfContext.Args.IsProvided(MsfContext.Args.Name.MasterPort))
             {
                 mServerPort = MsfContext.Args.MasterPort;
             }
+
+            // .dev domains enforce HTTPS (HSTS), so production connections routed
+            // through Cloudflare/Nginx on port 443 must use wss://; local/internal
+            // connections on raw ports (e.g. 5000) use ws://.
+            string scheme = mServerPort == 443 ? "wss" : "ws";
+            mServerUri = new Uri(
+                string.Format("{0}://{1}:{2}/w", scheme, mServerAddress, mServerPort));
 
             Connect();
         }
@@ -67,15 +89,14 @@ namespace MsfWrapper
 
                 if (connection.IsConnecting)
                 {
-                    Debug.Log("Retrying to connect to server at: " + mServerAddress + ":" +
-                              mServerPort);
+                    Debug.Log("Retrying to connect to server at: " + mServerUri);
                 }
                 else
                 {
-                    Debug.Log("Connecting to server at: " + mServerAddress + ":" + mServerPort);
+                    Debug.Log("Connecting to server at: " + mServerUri);
                 }
 
-                connection.Connect(mServerAddress, mServerPort);
+                connection.Connect(mServerUri);
 
                 yield return new WaitForSecondsRealtime(mTimeToConnect);
                 if (!connection.IsConnected)
@@ -93,7 +114,7 @@ namespace MsfWrapper
         private void Connected()
         {
             mTimeToConnect = MinTimeToConnect;
-            Debug.Log("Connected to: " + mServerAddress + ":" + mServerPort);
+            Debug.Log("Connected to: " + mServerUri);
         }
 
         public void OnApplicationQuit()
