@@ -307,6 +307,7 @@ namespace Editor
 
         private static void InternalBuildDebugWebGL()
         {
+            ConfigureWebGLEnvironment();
             FileUtil.DeleteFileOrDirectory(WebGLBuildPath(true));
             BuildClient(WebGLBuildPath(true) + "client", BuildTarget.WebGL,
                 BuildOptions.Development);
@@ -373,8 +374,30 @@ namespace Editor
 
         private static void InternalBuildReleaseWebGL()
         {
+            ConfigureWebGLEnvironment();
             FileUtil.DeleteFileOrDirectory(WebGLBuildPath(false));
             BuildClient(WebGLBuildPath(false) + "client", BuildTarget.WebGL, BuildOptions.None);
+        }
+
+        private static void ConfigureWebGLEnvironment()
+        {
+#if UNITY_EDITOR_LINUX
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EMSDK_PYTHON")) &&
+                !File.Exists("/usr/bin/python2") &&
+                !File.Exists("/usr/bin/python"))
+            {
+                // Unity 2019.4's bundled Emscripten toolchain looks for EMSDK_PYTHON,
+                // /usr/bin/python2, or /usr/bin/python, and needs distutils.spawn plus
+                // libtinfo.so.5 on modern Linux distros (e.g. Debian 13).
+                var compatPython = Path.Combine(
+                    EditorApplication.applicationContentsPath,
+                    "PlaybackEngines/WebGLSupport/BuildTools/linux_compat/python");
+                if (File.Exists(compatPython))
+                {
+                    Environment.SetEnvironmentVariable("EMSDK_PYTHON", compatPython);
+                }
+            }
+#endif
         }
 
         private static void BuildMasterServer(string path, BuildTarget target,
