@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Multiplayer
@@ -17,10 +17,9 @@ namespace Multiplayer
 
         public void Update()
         {
-            var client = mNetworkManager.client;
-            if (client != null)
+            if (mNetworkManager != null && mNetworkManager.IsClientConnected)
             {
-                mRttText.text = $"RTT: {client.GetRTT()}ms";
+                mRttText.text = $"RTT: {mNetworkManager.RttMs}ms";
             }
         }
     }

@@ -68,8 +68,7 @@ namespace Multiplayer
                 yield return null;
             }
             var manager = NetworkManager.Instance;
-            manager.networkPort = MsfContext.Args.AssignedPort;
-            manager.StartServer();
+            manager.StartServer(MsfContext.Args.AssignedPort);
             MsfContext.Connection.Peer.SendMessage((short) OperationCode.GameServerSpawned,
                 new GameServerDetailsPacket
                 {
@@ -102,8 +101,8 @@ namespace Multiplayer
             if (mPlayerA != null && mPlayerB != null)
             {
                 mState = State.Running;
-                mPlayerA.OnRegisterComplete(mGameInfo);
-                mPlayerB.OnRegisterComplete(mGameInfo);
+                mPlayerA.OnRegisterComplete(mGameInfo, mPlayerBName);
+                mPlayerB.OnRegisterComplete(mGameInfo, mPlayerAName);
             }
         }
 

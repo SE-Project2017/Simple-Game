@@ -130,7 +130,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 0.4-alpha.0.261
+  bundleVersion: 0.4-alpha.0.263
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -177,7 +177,7 @@ PlayerSettings:
     Android: org.seproject.tetris
     Standalone: org.seproject.tetris
   buildNumber: {}
-  AndroidBundleVersionCode: 261
+  AndroidBundleVersionCode: 263
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 34
   AndroidPreferredInstallLocation: 0
@@ -689,7 +689,8 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
-    1: 
+    1: LOCAL_SERVER
+    13: LOCAL_SERVER
   platformArchitecture: {}
   scriptingBackend:
     Android: 1

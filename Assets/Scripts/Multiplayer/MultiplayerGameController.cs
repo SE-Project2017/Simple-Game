@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,8 +36,6 @@ namespace Multiplayer
         public Color WinIconActiveColor;
 
         public NetworkPlayer LocalPlayer;
-
-        public readonly List<NetworkPlayer> Players = new List<NetworkPlayer>();
 
         public readonly List<NetworkPlayer.PlayerEvent[]> LocalPlayerEvents =
             new List<NetworkPlayer.PlayerEvent[]>();
@@ -153,11 +151,9 @@ namespace Multiplayer
 
             ConnectingAnimator.gameObject.SetActive(true);
 
-            mNetworkManager.networkAddress =
-                controller.GameInfo.GameServerDetails.Address;
-            mNetworkManager.networkPort =
-                controller.GameInfo.GameServerDetails.Port;
-            mNetworkManager.StartClient();
+            mNetworkManager.StartClient(
+                controller.GameInfo.GameServerDetails.Address,
+                controller.GameInfo.GameServerDetails.Port);
 
             StartCoroutine(CheckConnection());
 

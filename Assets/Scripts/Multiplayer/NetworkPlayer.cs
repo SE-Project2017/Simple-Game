@@ -1,18 +1,22 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 using App;
 
+using Barebones.MasterServer;
+using Barebones.Networking;
+
 using MsfWrapper;
+
+using Multiplayer.Packets;
 
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Networking;
 
 namespace Multiplayer
 {
-    public class NetworkPlayer : NetworkBehaviour
+    public class NetworkPlayer : MonoBehaviour
     {
         public ServerController.PlayerType Type;
         public string Username;
@@ -22,10 +26,14 @@ namespace Multiplayer
         private const int MaxFrameDiff = 30;
 
         private bool mIsServer;
-        private bool mIsClient;
         private bool mIsLocalPlayer;
+        private bool mHasRemotePlayer;
 
         private int mFrameCount;
+        private int mRemoteFrameCount;
+
+        private IPeer mServerPeer;
+        private IClientSocket mClientSocket;
 
         private State mState = State.Connecting;
         private MultiplayerGameController mGameController;
@@ -46,85 +54,92 @@ namespace Multiplayer
             }
         }
 
-        public void OnDestroy()
+        public void InitializeServer(IPeer peer)
         {
-            if (mIsServer)
-            {
-                if (mState == State.Playing)
-                {
-                    mServerController.OnPlayerDisconnect(Type);
-                    mState = State.Ended;
-                }
-            }
-            if (mIsClient)
-            {
-                mGameController.Players.Remove(this);
-                if (mGameController.LocalPlayer == this)
-                {
-                    mGameController.LocalPlayer = null;
-                }
-            }
-            if (mState == State.Playing && mIsLocalPlayer)
-            {
-                mGameController.OnDisconnected();
-            }
-        }
-
-        [Server]
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
+            Assert.IsTrue(!mIsLocalPlayer);
             mIsServer = true;
+            mServerPeer = peer;
         }
 
-        [Server]
-        public void OnRegisterComplete(ServerController.GameInfo info)
+        public void OnRegisterComplete(ServerController.GameInfo info, string remoteUsername)
         {
+            Assert.IsTrue(mIsServer);
             Assert.IsTrue(mState == State.Connecting);
             mState = State.Playing;
-            RpcOnRegisterComplete(info, Type, Username);
+            SendToClient(GameOperationCode.RegisterComplete, new RegisterCompletePacket
+            {
+                GameInfo = info,
+                LocalPlayerType = Type,
+                LocalUsername = Username,
+                RemoteUsername = remoteUsername,
+            });
         }
 
-        [Server]
+        public void SendFrameUpdateToClient(FrameUpdatePacket packet)
+        {
+            Assert.IsTrue(mIsServer);
+            SendToClient(GameOperationCode.FrameUpdate, packet);
+        }
+
+        public void OnServerFrameUpdate(FrameUpdatePacket packet)
+        {
+            Assert.IsTrue(mIsServer);
+            Assert.IsTrue(packet.FrameCount == mFrameCount + 1);
+            mFrameCount = packet.FrameCount;
+            NetworkManager.Instance.RelayFrameUpdate(this, packet);
+            mServerController.OnPlayerEvents(Type, packet.Events);
+        }
+
+        public void OnServerPlayerEnded(ServerController.GameResult result)
+        {
+            Assert.IsTrue(mIsServer);
+            Assert.IsTrue(mState == State.Connecting || mState == State.Playing);
+            mState = State.Ended;
+            mServerController.OnPlayerGameEnd(Type, result);
+        }
+
+        public void OnServerPeerDisconnected()
+        {
+            Assert.IsTrue(mIsServer);
+            if (mState == State.Playing)
+            {
+                mState = State.Ended;
+                mServerController.OnPlayerDisconnect(Type);
+            }
+        }
+
         public void OnPlayerWin()
         {
-            TargetOnPlayerWin(connectionToClient);
+            Assert.IsTrue(mIsServer);
+            SendGameResultToClient(GameResultPacket.OutcomeType.Win);
         }
 
-        [Server]
         public void OnPlayerLose()
         {
-            TargetOnPlayerLose(connectionToClient);
+            Assert.IsTrue(mIsServer);
+            SendGameResultToClient(GameResultPacket.OutcomeType.Lose);
         }
 
-        [Server]
         public void OnGameDraw()
         {
-            TargetOnGameDraw(connectionToClient);
+            Assert.IsTrue(mIsServer);
+            SendGameResultToClient(GameResultPacket.OutcomeType.Draw);
         }
 
-        [Server]
         public void OnDataOutOfSync()
         {
-            TargetOnDataOutOfSync(connectionToClient);
+            Assert.IsTrue(mIsServer);
+            SendGameResultToClient(GameResultPacket.OutcomeType.DataOutOfSync);
         }
 
-        [Client]
-        public override void OnStartClient()
+        public void InitializeLocalClient(IClientSocket clientSocket)
         {
-            base.OnStartClient();
-            mIsClient = true;
-            mGameController.Players.Add(this);
-            StartCoroutine(CheckConnection());
-        }
-
-        [Client]
-        public override void OnStartLocalPlayer()
-        {
-            base.OnStartLocalPlayer();
+            Assert.IsTrue(!mIsServer);
+            mClientSocket = clientSocket;
             mIsLocalPlayer = true;
             Type = mGameController.LocalPlayerType;
             Username = MsfContext.Client.Auth.AccountInfo.Username;
+
             var inputController = gameObject.AddComponent<InputController>();
             inputController.ButtonDown += button =>
                 mPlayerEvents.Add(new PlayerEvent
@@ -138,21 +153,80 @@ namespace Multiplayer
                     Type = PlayerEvent.EventType.ButtonUp,
                     Data = (int) button,
                 });
+
             mGameController.OnConnected();
+            StartCoroutine(CheckConnection());
         }
 
-        [Client]
+        public void OnClientRegisterComplete(RegisterCompletePacket packet)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            Type = packet.LocalPlayerType;
+            Username = packet.LocalUsername;
+            mHasRemotePlayer = true;
+
+            mGameController.OnGameStart(packet.GameInfo);
+            mGameController.LocalPlayer = this;
+
+            Assert.IsTrue(mState == State.Connecting);
+            mState = State.Playing;
+        }
+
+        public void OnClientRemoteFrameUpdate(FrameUpdatePacket packet)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            Assert.IsTrue(packet.FrameCount == mRemoteFrameCount + 1);
+            mRemoteFrameCount = packet.FrameCount;
+            mGameController.OnRemoteUpdateFrame(packet.FrameCount, packet.Events);
+        }
+
         public void OnLocalGameEnd(ServerController.GameResult result)
         {
             Assert.IsTrue(mIsLocalPlayer);
             Assert.IsTrue(mState == State.Playing);
-            CmdPlayerEnded(result);
+            SendToServer(GameOperationCode.PlayerEnded, new PlayerEndedPacket
+            {
+                Result = result,
+            });
             mState = State.Ended;
         }
 
-        [Client]
+        public void OnClientGameResult(GameResultPacket.OutcomeType outcome)
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            mState = State.Ended;
+            switch (outcome)
+            {
+                case GameResultPacket.OutcomeType.Win:
+                    mGameController.OnLocalPlayerWin();
+                    break;
+                case GameResultPacket.OutcomeType.Lose:
+                    mGameController.OnLocalPlayerLose();
+                    break;
+                case GameResultPacket.OutcomeType.Draw:
+                    mGameController.OnGameDraw();
+                    break;
+                case GameResultPacket.OutcomeType.DataOutOfSync:
+                    mGameController.OnDataOutOfSync();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null);
+            }
+        }
+
+        public void OnClientSocketDisconnected()
+        {
+            Assert.IsTrue(mIsLocalPlayer);
+            if (mState == State.Playing)
+            {
+                mState = State.Ended;
+                mGameController.OnDisconnected();
+            }
+        }
+
         private IEnumerator CheckConnection()
         {
+            Assert.IsTrue(mIsLocalPlayer);
             yield return new WaitForSecondsRealtime(ServerController.MaxConnectTime);
             if (mState == State.Connecting)
             {
@@ -161,109 +235,70 @@ namespace Multiplayer
             }
         }
 
-        [Client]
         private void FixedUpdateLocal()
         {
+            Assert.IsTrue(mIsLocalPlayer);
             if (mState == State.Playing)
             {
-                if (mFrameCount - mGameController.Players.Min(player => player.mFrameCount) >
-                    MaxFrameDiff)
+                if (mFrameCount - Mathf.Min(mFrameCount, mRemoteFrameCount) > MaxFrameDiff)
                 {
                     return;
                 }
                 do
                 {
                     ++mFrameCount;
-                    CmdUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
-                    mGameController.OnLocalUpdateFrame(mFrameCount, mPlayerEvents.ToArray());
+                    var events = mPlayerEvents.ToArray();
+                    SendToServer(GameOperationCode.FrameUpdate, new FrameUpdatePacket
+                    {
+                        FrameCount = mFrameCount,
+                        Events = events,
+                    });
+                    mGameController.OnLocalUpdateFrame(mFrameCount, events);
                     mPlayerEvents.Clear();
                 } while (mState == State.Playing &&
-                    mGameController.Players.Count > 1 &&
-                    mFrameCount == mGameController.Players.Min(player => player.mFrameCount));
+                         mHasRemotePlayer &&
+                         mFrameCount == Mathf.Min(mFrameCount, mRemoteFrameCount));
             }
             mPlayerEvents.Clear();
         }
 
-        [Command]
-        private void CmdUpdateFrame(int frameCount, PlayerEvent[] events)
+        private void SendGameResultToClient(GameResultPacket.OutcomeType outcome)
         {
-            Assert.IsTrue(frameCount == mFrameCount + 1);
-            mFrameCount = frameCount;
-            RpcOnFrameUpdate(frameCount, events);
-            mServerController.OnPlayerEvents(Type, events);
-        }
-
-        [Command]
-        private void CmdPlayerEnded(ServerController.GameResult result)
-        {
-            Assert.IsTrue(mState == State.Connecting || mState == State.Playing);
-            mState = State.Ended;
-            mServerController.OnPlayerGameEnd(Type, result);
-        }
-
-        [Command]
-        private void CmdPlayerLost()
-        {
-            
-        }
-
-        [ClientRpc]
-        private void RpcOnRegisterComplete(ServerController.GameInfo info,
-            ServerController.PlayerType type, string username)
-        {
-            Type = type;
-            Username = username;
-            if (mIsLocalPlayer)
+            Assert.IsTrue(mIsServer);
+            SendToClient(GameOperationCode.GameResult, new GameResultPacket
             {
-                mGameController.OnGameStart(info);
-                mGameController.LocalPlayer = this;
-            }
-            Assert.IsTrue(mState == State.Connecting);
-            mState = State.Playing;
+                Outcome = outcome,
+            });
         }
 
-        [ClientRpc]
-        private void RpcOnFrameUpdate(int frameCount, PlayerEvent[] events)
+        private void SendToClient(GameOperationCode opCode, ISerializablePacket packet)
         {
-            if (mIsLocalPlayer)
+            Assert.IsTrue(mIsServer);
+            if (mServerPeer != null && mServerPeer.IsConnected)
             {
-                return;
+                mServerPeer.SendMessage(
+                    Msf.Create.Message((short) opCode, packet),
+                    DeliveryMethod.Reliable);
             }
-            Assert.IsTrue(frameCount == mFrameCount + 1);
-            mFrameCount = frameCount;
-            mGameController.OnRemoteUpdateFrame(mFrameCount, events);
+            else
+            {
+                Debug.LogWarning(
+                    $"Dropping {opCode} to client ({Type}): peer is not connected.");
+            }
         }
 
-        [TargetRpc]
-        private void TargetOnGameDraw(NetworkConnection conn)
+        private void SendToServer(GameOperationCode opCode, ISerializablePacket packet)
         {
             Assert.IsTrue(mIsLocalPlayer);
-            mState = State.Ended;
-            mGameController.OnGameDraw();
-        }
-
-        [TargetRpc]
-        private void TargetOnDataOutOfSync(NetworkConnection conn)
-        {
-            Assert.IsTrue(mIsLocalPlayer);
-            mState = State.Ended;
-            mGameController.OnDataOutOfSync();
-        }
-
-        [TargetRpc]
-        private void TargetOnPlayerWin(NetworkConnection conn)
-        {
-            Assert.IsTrue(mIsLocalPlayer);
-            mState = State.Ended;
-            mGameController.OnLocalPlayerWin();
-        }
-
-        [TargetRpc]
-        private void TargetOnPlayerLose(NetworkConnection conn)
-        {
-            Assert.IsTrue(mIsLocalPlayer);
-            mState = State.Ended;
-            mGameController.OnLocalPlayerLose();
+            if (mClientSocket != null && mClientSocket.IsConnected)
+            {
+                mClientSocket.SendMessage(Msf.Create.Message((short) opCode, packet));
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"Dropping {opCode} to server: client socket is not connected.");
+            }
         }
 
         public struct PlayerEvent
